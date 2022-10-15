@@ -32,7 +32,7 @@ HandlerHandle makeHandler() {
 	metadata.m_convention = std::make_unique<DefaultConvention>();
 
 	auto handle = createHandler(reinterpret_cast<void*>(&function), std::move(metadata), error);
-	if (error) return error.value();
+	assert(!error);
 
 	return handle;
 }
@@ -41,7 +41,7 @@ void destroyHandler(HandlerHandle const& handle) {
 	std::error_code error;
 
 	removeHandler(handle, error);
-	if (error) return error.value();
+	assert(!error);
 }
 
 HookHandle makeHook() {
@@ -50,7 +50,7 @@ HookHandle makeHook() {
 	HookMetadata metadata;
 
 	auto handle = createHandler(reinterpret_cast<void*>(&hook), std::move(metadata), error);
-	if (error) return error.value();
+	assert(!error);
 
 	return handle;
 }
@@ -59,7 +59,7 @@ void destroyHook(HookHandle const& handle) {
 	std::error_code error;
 
 	removeHook(handle, error);
-	if (error) return error.value();
+	assert(!error);
 }
 
 HookHandle makePriorityHook() {
@@ -69,7 +69,7 @@ HookHandle makePriorityHook() {
 	metadata.m_priority = -1;
 
 	auto handle = createHandler(reinterpret_cast<void*>(&hook), std::move(metadata), error);
-	if (error) return error.value();
+	assert(!error);
 
 	return handle;
 }
@@ -78,7 +78,7 @@ void destroyPriorityHook(HookHandle const& handle) {
 	std::error_code error;
 
 	removeHook(handle, error);
-	if (error) return error.value();
+	assert(!error);
 }
 
 int main() {

@@ -1,49 +1,22 @@
 #include <TulipHook.hpp>
 
+#include "Pool.hpp"
+#include "Handler.hpp"
+
 using namespace tulip::hook;
 
-HandlerHandle createHandler(void* address, HandlerMetadata&& metadata, std::error_code& error) noexcept {
-
-}
-HandlerHandle createHandler(void* address, HandlerMetadata&& metadata) {
-	auto error = std::error_code();
-
-	auto handler = createHandler(address, std::forward<HookMetadata>(metadata), error);
-
-	if (error) throw error.value();
-	return handler;
+HandlerHandle createHandler(void* address, HandlerMetadata metadata) {
+	return Pool::get().createHandler(address, metadata);
 }
 
-void removeHandler(HandlerHandle const& handler, std::error_code& error) noexcept {
-
-}
 void removeHandler(HandlerHandle const& handler) {
-	auto error = std::error_code();
-
-	removeHandler(address, error);
-
-	if (error) throw error.value();
+	Pool::get().removeHandler(handler);
 }
 
-HookHandle createHook(HandlerHandle const& handler, void* function, HookMetadata&& metadata, std::error_code& error) noexcept {
-
-}
-HookHandle createHook(HandlerHandle const& handler, void* function, HookMetadata&& metadata) noexcept {
-	auto error = std::error_code();
-
-	auto hook = addHook(handler, function, std::forward<HookMetadata>(metadata), error);
-
-	if (error) throw error.value();
-	return hook;
+HookHandle createHook(HandlerHandle const& handler, void* function, HookMetadata metadata) noexcept {
+	return Pool::get().getHandler(handler).createHook(function, metadata);
 }
 
-void removeHook(HookHandle const& hook, std::error_code& error) noexcept {
-
-}
-void removeHook(HookHandle const& hook) noexcept {
-	auto error = std::error_code();
-
-	removeHook(hook, error);
-
-	if (error) throw error.value();
+void removeHook(HandlerHandle const& handler, HookHandle const& hook) noexcept {
+	Pool::get().getHandler(handler).removeHook(hook);
 }

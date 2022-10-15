@@ -3,10 +3,7 @@
 #include <cstdint>
 
 namespace tulip::hook {
-	class HookHandle {
-	public:
-		void* m_address;
-	};
+	using HookHandle = size_t;
 
 	class HookMetadata {
 	public:

@@ -10,13 +10,20 @@ CallingConvention::~CallingConvention() {
 
 }
 
-~DefaultConvention::DefaultConvention() {
+DefaultConvention::~DefaultConvention() {
 
 }
 
-std::string DefaultConvention::generateFromDefault(AbstractFunction const& function) override {
+std::string DefaultConvention::generateFromDefault(AbstractFunction const& function) {
 	return "";
 }
-std::string DefaultConvention::generateToDefault(AbstractFunction const& function) override {
+std::string DefaultConvention::generateToDefault(AbstractFunction const& function) {
+	return "";
+}
+
+std::string CallingConvention::generateFromDefault(AbstractFunction const& function) {
+	return "";
+}
+std::string CallingConvention::generateToDefault(AbstractFunction const& function) {
 	return "";
 }
