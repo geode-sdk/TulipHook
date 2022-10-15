@@ -72,13 +72,13 @@ static thread_local std::stack<HandlerContent*> s_addressStack;
 bool Handler::symbolResolver(char const* csymbol, uint64_t* value) {
 	std::string symbol = csymbol;
 
-	if (symbol.find("_addressp") != std::string::npos) {
-		auto in = std::istringstream(symbol.substr(9));
+	if (symbol.find("_address") != std::string::npos) {
+		auto in = std::istringstream(symbol.substr(8));
 
 		HandlerHandle handler;
 		in >> std::hex >> handler;
 
-		*value = reinterpret_cast<uint64_t>(&Pool::get().getHandler(handler).m_address);
+		*value = reinterpret_cast<uint64_t>(Pool::get().getHandler(handler).m_address);
 
 		return true;
 	}
@@ -102,6 +102,21 @@ bool Handler::symbolResolver(char const* csymbol, uint64_t* value) {
 
 		*value = reinterpret_cast<uint64_t>(Pool::get().getHandler(handler).m_content);
 
+		return true;
+	}
+
+	if (symbol.find("_incrementIndex") != std::string::npos) {
+		*value = reinterpret_cast<uint64_t>(&Handler::incrementIndex);
+		return true;
+	}
+
+	if (symbol.find("_decrementIndex") != std::string::npos) {
+		*value = reinterpret_cast<uint64_t>(&Handler::decrementIndex);
+		return true;
+	}
+
+	if (symbol.find("_getNextFunction") != std::string::npos) {
+		*value = reinterpret_cast<uint64_t>(&Handler::getNextFunction);
 		return true;
 	}
 

@@ -5,6 +5,8 @@
 	#define TULIP_HOOK_WINDOWS
 	#define TULIP_HOOK_SUPPORTED_PLATFORM
 
+	#define TULIP_HOOK_DEFAULT_CONV __cdecl
+
 	#ifdef TULIP_HOOK_EXPORTING
 		#define TULIP_HOOK_DLL    __declspec(dllexport)
 	#else
@@ -21,6 +23,8 @@
 
 		#define TULIP_HOOK_MACOS
 		#define TULIP_HOOK_SUPPORTED_PLATFORM
+
+		#define TULIP_HOOK_DEFAULT_CONV
 
 		#ifdef TULIP_HOOK_EXPORTING
 			#define TULIP_HOOK_DLL    __attribute__((visibility("default")))

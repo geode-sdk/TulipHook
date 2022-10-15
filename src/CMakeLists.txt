@@ -10,6 +10,7 @@ add_library(TulipHook STATIC
 	platform/WindowsCallingConvention.cpp
 	platform/MacosTarget.cpp
 	platform/MacosHandler.cpp
+	platform/WindowsHandler.cpp
 )
 
 target_compile_features(TulipHook PUBLIC cxx_std_20)

@@ -7,6 +7,7 @@
 
 #include <HookData.hpp>
 #include <HandlerData.hpp>
+#include <Platform.hpp>
 
 namespace tulip::hook {
 	class Hook;
@@ -47,9 +48,10 @@ namespace tulip::hook {
 		std::string handlerString();
 		std::string intervenerString();
 		static bool symbolResolver(char const* symbol, uint64_t* value);
-		static void incrementIndex(void* address);
-		static void decrementIndex();
-		static void* getNextFunction(HandlerContent* content);
+
+		static TULIP_HOOK_DEFAULT_CONV void incrementIndex(HandlerContent* content);
+		static TULIP_HOOK_DEFAULT_CONV void decrementIndex();
+		static TULIP_HOOK_DEFAULT_CONV void* getNextFunction(HandlerContent* content);
 
 		void interveneFunction();
 		void restoreFunction();
