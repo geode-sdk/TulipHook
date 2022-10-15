@@ -9,3 +9,20 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+
+# Macos be like
+**/.DS_Store
+
+# Cache files for Sublime Text
+**/*.tmlanguage.cache
+**/*.tmPreferences.cache
+**/*.stTheme.cache
+
+# Workspace files are user-specific
+**/*.sublime-workspace
+**/*.sublime-project
+.vscode
+
+# Ignore build folders
+**/build
+build

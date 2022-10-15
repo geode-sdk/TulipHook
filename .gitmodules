@@ -1,0 +1,7 @@
+[submodule "lib/capstone"]
+	path = lib/capstone
+	url = https://github.com/capstone-engine/capstone
+	branch = next
+[submodule "lib/keystone"]
+	path = lib/keystone
+	url = https://github.com/keystone-engine/keystone
