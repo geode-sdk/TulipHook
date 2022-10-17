@@ -5,6 +5,7 @@ project(TulipHook LANGUAGES CXX C)
 add_library(TulipHook STATIC
 	Main.cpp
 	Handler.cpp
+	HandlerGen.cpp
 	Pool.cpp
 	CallingConvention.cpp
 	platform/WindowsCallingConvention.cpp
