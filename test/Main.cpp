@@ -26,60 +26,50 @@ int32_t priorityHook() {
 using namespace tulip::hook;
 
 HandlerHandle makeHandler() {
-	std::error_code error;
-
+	std::cout << "\nmakeHandler\n";
 	HandlerMetadata metadata;
 	metadata.m_convention = std::make_unique<DefaultConvention>();
+	metadata.m_abstract = AbstractFunction::from<int32_t>();
 
-	auto handle = createHandler(reinterpret_cast<void*>(&function), std::move(metadata), error);
-	assert(!error);
+	auto handle = createHandler(reinterpret_cast<void*>(&function), std::move(metadata));
 
 	return handle;
 }
 
 void destroyHandler(HandlerHandle const& handle) {
-	std::error_code error;
-
-	removeHandler(handle, error);
-	assert(!error);
+	std::cout << "\ndestroyHandler\n";
+	removeHandler(handle);
 }
 
-HookHandle makeHook() {
-	std::error_code error;
-
+HookHandle makeHook(HandlerHandle const& handle) {
+	std::cout << "\nmakeHook\n";
 	HookMetadata metadata;
 
-	auto handle = createHandler(reinterpret_cast<void*>(&hook), std::move(metadata), error);
-	assert(!error);
+	auto handle2 = createHook(handle, reinterpret_cast<void*>(&hook), std::move(metadata));
 
-	return handle;
+	return handle2;
 }
 
-void destroyHook(HookHandle const& handle) {
-	std::error_code error;
-
-	removeHook(handle, error);
-	assert(!error);
+void destroyHook(HandlerHandle const& handle, HookHandle const& handle2) {
+	std::cout << "\ndestroyHook\n";
+	removeHook(handle, handle2);
 }
 
-HookHandle makePriorityHook() {
-	std::error_code error;
-
+HookHandle makePriorityHook(HandlerHandle const& handle) {
+	std::cout << "\nmakePriorityHook\n";
 	HookMetadata metadata;
-	metadata.m_priority = -1;
+	metadata.m_priority = -100;
 
-	auto handle = createHandler(reinterpret_cast<void*>(&hook), std::move(metadata), error);
-	assert(!error);
+	auto handle2 = createHook(handle, reinterpret_cast<void*>(&priorityHook), std::move(metadata));
 
-	return handle;
+	return handle2;
 }
 
-void destroyPriorityHook(HookHandle const& handle) {
-	std::error_code error;
-
-	removeHook(handle, error);
-	assert(!error);
+void destroyPriorityHook(HandlerHandle const& handle, HookHandle const& handle2) {
+	std::cout << "\ndestroyPriorityHook\n";
+	removeHook(handle, handle2);
 }
+
 
 int main() {
 	// No handler
@@ -89,23 +79,27 @@ int main() {
 	HandlerHandle handlerHandle = makeHandler();
 	assert(function() == 1);
 
-	// Single hook (hook -> function)
-	HookHandle hookHandle = makeHook();
+	// // Single hook (hook -> function)
+	HookHandle hookHandle = makeHook(handlerHandle);
 	assert(function() == 3);
 
 	// Priority hook (priorityHook -> hook -> function)
-	HookHandle priorityHookHandle = makePriorityHook();
+	HookHandle priorityHookHandle = makePriorityHook(handlerHandle);
 	assert(function() == 6);
 
 	// Remove the hook (priorityHook -> function)
-	destroyHook(hookHandle);
+	destroyHook(handlerHandle, hookHandle);
 	assert(function() == 4);
 
 	// Readd the hook (priorityHook -> hook -> function)
-	hookHandle = makeHook();
+	hookHandle = makeHook(handlerHandle);
 	assert(function() == 6);
 
 	// Remove the handler
 	destroyHandler(handlerHandle);
+	assert(function() == 1);
+
+	// Recreate the handler
+	HandlerHandle handlerHandle2 = makeHandler();
 	assert(function() == 1);
 }

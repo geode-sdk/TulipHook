@@ -16,6 +16,7 @@ add_library(TulipHook STATIC
 target_compile_features(TulipHook PUBLIC cxx_std_20)
 
 target_link_libraries(TulipHook PRIVATE capstone keystone)
+target_compile_definitions(TulipHook PRIVATE -DTULIP_HOOK_EXPORTING)
 
 target_include_directories(TulipHook PRIVATE
 	${TulipHookRoot_SOURCE_DIR}/include/tulip

@@ -39,6 +39,8 @@ public:
 		m_allocatedPage = reinterpret_cast<void*>(ret);
 		m_currentOffset = 0;
 		m_remainingOffset = 0x1000;
+
+		this->protectMemory(m_allocatedPage, m_remainingOffset, VM_PROT_COPY | VM_PROT_ALL);
 	}
 
 	vm_prot_t getProtection(void* address) {
@@ -46,14 +48,14 @@ public:
 		mach_vm_size_t vmsize;
 	    mach_vm_address_t vmaddress = reinterpret_cast<mach_vm_address_t>(address);
 	    vm_region_basic_info_data_t info;
-	    mach_msg_type_number_t infoCount = VM_REGION_BASIC_INFO_COUNT;
+	    mach_msg_type_number_t infoCount = VM_REGION_BASIC_INFO_COUNT_64;
 	    mach_port_t object;
 
 	    status = mach_vm_region(
 	    	mach_task_self(), 
 	    	&vmaddress, 
 	    	&vmsize, 
-	    	VM_REGION_BASIC_INFO, 
+	    	VM_REGION_BASIC_INFO_64, 
 	    	reinterpret_cast<vm_region_info_t>(&info), 
 	    	&infoCount, 
 	    	&object

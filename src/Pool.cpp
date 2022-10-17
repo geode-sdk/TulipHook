@@ -9,17 +9,23 @@ Pool& Pool::get() {
 }
 
 HandlerHandle Pool::createHandler(void* address, HandlerMetadata m_metadata) {
-	auto handler = reinterpret_cast<HandlerHandle>(address);
+	auto handle = reinterpret_cast<HandlerHandle>(address);
 
-	m_handlers.insert({handler, std::make_unique<Handler>(address, m_metadata)});
+	if (m_handlers.find(handle) == m_handlers.end()) {
+		m_handlers.insert({handle, std::make_unique<Handler>(address, m_metadata)});
+		m_handlers[handle]->init();
+	}
 
-	return handler;
+	m_handlers[handle]->interveneFunction();
+
+	return handle;
 }
 
-void Pool::removeHandler(HandlerHandle const& handler) {
-	m_handlers.erase(handler);
+void Pool::removeHandler(HandlerHandle const& handle) {
+	m_handlers[handle]->clearHooks();
+	m_handlers[handle]->restoreFunction();
 }
 
-Handler& Pool::getHandler(HandlerHandle const& handler) {
-	return *m_handlers.at(handler);
+Handler& Pool::getHandler(HandlerHandle const& handle) {
+	return *m_handlers.at(handle);
 }

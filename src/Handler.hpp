@@ -13,7 +13,7 @@ namespace tulip::hook {
 	class Hook;
 
 	struct HandlerContent {
-		size_t m_size;
+		size_t m_size = 0;
 		std::array<void*, 16> m_functions;
 	};
 
@@ -40,18 +40,23 @@ namespace tulip::hook {
 		Handler(void* address, HandlerMetadata metadata);
 		~Handler();
 
+		void init();
+
 		HookHandle createHook(void* address, HookMetadata m_metadata);
 		void removeHook(HookHandle const& hook);
+
+		void clearHooks();
 
 		void reorderFunctions();
 
 		std::string handlerString();
 		std::string intervenerString();
+		std::string trampolineString(size_t offset);
 		static bool symbolResolver(char const* symbol, uint64_t* value);
 
-		static TULIP_HOOK_DEFAULT_CONV void incrementIndex(HandlerContent* content);
-		static TULIP_HOOK_DEFAULT_CONV void decrementIndex();
-		static TULIP_HOOK_DEFAULT_CONV void* getNextFunction(HandlerContent* content);
+		static TULIP_HOOK_DLL TULIP_HOOK_DEFAULT_CONV void incrementIndex(HandlerContent* content);
+		static TULIP_HOOK_DLL TULIP_HOOK_DEFAULT_CONV void decrementIndex();
+		static TULIP_HOOK_DLL TULIP_HOOK_DEFAULT_CONV void* getNextFunction(HandlerContent* content);
 
 		void interveneFunction();
 		void restoreFunction();
