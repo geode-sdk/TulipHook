@@ -13,7 +13,6 @@ namespace tulip::hook {
 
 	class AbstractType {
 	public:
-		std::string m_name;
 		size_t m_size;
 		AbstractTypeType m_type;
 

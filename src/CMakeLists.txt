@@ -3,15 +3,15 @@ cmake_minimum_required(VERSION 3.21)
 project(TulipHook LANGUAGES CXX C)
 
 add_library(TulipHook STATIC
-	Main.cpp
-	Handler.cpp
-	HandlerGen.cpp
-	Pool.cpp
 	CallingConvention.cpp
-	platform/WindowsCallingConvention.cpp
+	Generator.cpp
+	Handler.cpp
+	Main.cpp
+	Pool.cpp
+	Target.cpp
+	platform/MacosGenerator.cpp
 	platform/MacosTarget.cpp
-	platform/MacosHandler.cpp
-	platform/WindowsHandler.cpp
+	platform/WindowsCallingConvention.cpp
 )
 
 target_compile_features(TulipHook PUBLIC cxx_std_20)

@@ -19,8 +19,8 @@ namespace tulip::hook {
 
 	class Handler {
 	public:
-		void* m_address;
-		HandlerMetadata m_metadata;
+		void* const m_address;
+		HandlerMetadata const m_metadata;
 
 		std::map<HookHandle, std::unique_ptr<Hook>> m_hooks;
 
@@ -49,9 +49,6 @@ namespace tulip::hook {
 
 		void reorderFunctions();
 
-		std::string handlerString();
-		std::string intervenerString();
-		std::string trampolineString(size_t offset);
 		static bool symbolResolver(char const* symbol, uint64_t* value);
 
 		static TULIP_HOOK_DLL TULIP_HOOK_DEFAULT_CONV void incrementIndex(HandlerContent* content);

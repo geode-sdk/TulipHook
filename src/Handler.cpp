@@ -1,7 +1,8 @@
 #include "Handler.hpp"
 #include "Hook.hpp"
 #include "Pool.hpp"
-#include "platform/Target.hpp"
+#include "platform/PlatformTarget.hpp"
+#include "platform/PlatformGenerator.hpp"
 
 #include <stack>
 #include <sstream>
@@ -10,7 +11,16 @@
 using namespace tulip::hook;
 
 Handler::Handler(void* address, HandlerMetadata metadata) : m_address(address), m_metadata(metadata) {
-	
+
+	auto area1 = PlatformTarget::get().allocateArea(448);
+	m_content = reinterpret_cast<HandlerContent*>(area1);
+
+	auto content = new (m_content) HandlerContent();
+	m_handler = reinterpret_cast<void*>(reinterpret_cast<HandlerContent*>(area1) + 1);
+
+	auto area2 = PlatformTarget::get().allocateArea(64);
+	m_trampoline = area2;
+
 }
 
 Handler::~Handler() {
@@ -19,11 +29,22 @@ Handler::~Handler() {
 
 void Handler::init() {
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
-	this->generateHandler();
 
-	this->generateIntervener();
+	auto generator = PlatformGenerator(m_address, m_trampoline, m_handler, m_metadata);
 
-	this->generateTrampoline();
+	generator.generateHandler();
+
+	m_modifiedBytes = generator.generateIntervener();
+
+	auto target = m_modifiedBytes.size();
+
+	auto address = reinterpret_cast<uint8_t*>(m_address);
+	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
+	
+	
+	auto trampolineOffset = generator.relocateOriginal(target);
+	generator.generateTrampoline(trampolineOffset);
+
 
 	auto metadata = HookMetadata();
 	metadata.m_priority = INT32_MAX;
@@ -70,11 +91,69 @@ void Handler::reorderFunctions() {
 }
 
 void Handler::interveneFunction() {
-	Target::get().writeMemory(m_address, static_cast<void*>(m_modifiedBytes.data()), m_originalBytes.size());
+	PlatformTarget::get().writeMemory(m_address, static_cast<void*>(m_modifiedBytes.data()), m_originalBytes.size());
 }
 void Handler::restoreFunction() {
-	Target::get().writeMemory(m_address, static_cast<void*>(m_originalBytes.data()), m_originalBytes.size());
+	PlatformTarget::get().writeMemory(m_address, static_cast<void*>(m_originalBytes.data()), m_originalBytes.size());
 }
+
+
+bool Handler::symbolResolver(char const* csymbol, uint64_t* value) {
+	std::string symbol = csymbol;
+
+	if (symbol.find("_address") != std::string::npos) {
+		auto in = std::istringstream(symbol.substr(8));
+
+		std::string input;
+		std::getline(in, input, '_');
+		HandlerHandle handler = std::stoll(input, nullptr, 16);
+		std::getline(in, input, '_');
+		size_t offset = std::stoll(input, nullptr, 10);
+
+		*value = reinterpret_cast<uint64_t>(Pool::get().getHandler(handler).m_address) + offset;
+		return true;
+	}
+
+	if (symbol.find("_handler") != std::string::npos) {
+		auto in = std::istringstream(symbol.substr(8));
+
+		std::string input;
+		std::getline(in, input, '_');
+		HandlerHandle handler = std::stoll(input, nullptr, 16);
+
+		*value = reinterpret_cast<uint64_t>(Pool::get().getHandler(handler).m_handler);
+		return true;
+	}
+
+	if (symbol.find("_content") != std::string::npos) {
+		auto in = std::istringstream(symbol.substr(8));
+
+		std::string input;
+		std::getline(in, input, '_');
+		HandlerHandle handler = std::stoll(input, nullptr, 16);
+
+		*value = reinterpret_cast<uint64_t>(Pool::get().getHandler(handler).m_content);
+		return true;
+	}
+
+	if (symbol.find("_incrementIndex") != std::string::npos) {
+		*value = reinterpret_cast<uint64_t>(&Handler::incrementIndex);
+		return true;
+	}
+
+	if (symbol.find("_decrementIndex") != std::string::npos) {
+		*value = reinterpret_cast<uint64_t>(&Handler::decrementIndex);
+		return true;
+	}
+
+	if (symbol.find("_getNextFunction") != std::string::npos) {
+		*value = reinterpret_cast<uint64_t>(&Handler::getNextFunction);
+		return true;
+	}
+
+	return false;
+}
+
 
 static thread_local std::stack<size_t> s_indexStack;
 static thread_local std::stack<HandlerContent*> s_addressStack;
