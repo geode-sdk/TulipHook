@@ -12,6 +12,8 @@ add_library(TulipHook STATIC
 	platform/MacosGenerator.cpp
 	platform/MacosTarget.cpp
 	platform/WindowsCallingConvention.cpp
+	platform/WindowsGenerator.cpp
+	platform/X86Generator.cpp
 )
 
 target_compile_features(TulipHook PUBLIC cxx_std_20)
