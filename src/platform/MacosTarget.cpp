@@ -18,7 +18,7 @@ void MacosTarget::allocatePage() {
 	status = mach_vm_allocate(
 		mach_task_self(), 
 		&ret, 
-		static_cast<mach_vm_size_t>(0x1000), 
+		static_cast<mach_vm_size_t>(0x4000), 
 		VM_FLAGS_ANYWHERE
 	);
 
@@ -28,7 +28,7 @@ void MacosTarget::allocatePage() {
 
 	m_allocatedPage = reinterpret_cast<void*>(ret);
 	m_currentOffset = 0;
-	m_remainingOffset = 0x1000;
+	m_remainingOffset = 0x4000;
 
 	this->protectMemory(m_allocatedPage, m_remainingOffset, VM_PROT_COPY | VM_PROT_ALL);
 }
