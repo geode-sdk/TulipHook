@@ -2,23 +2,32 @@
 #include <iostream>
 #include <cassert>
 
-int32_t function() {
-	std::cout << "function called!\n";
+int32_t function(int a, int b, int c, int d, int e, int f, int g, int h, int i) {
+	std::cout << "function called!\n" 
+	<< a << " " 
+	<< b << " " 
+	<< c << " " 
+	<< d << " " 
+	<< e << " " 
+	<< f << " " 
+	<< g << " " 
+	<< h << " " 
+	<< i << " \n";
 
 	return 1;
 }
 
-int32_t hook() {
+int32_t hook(int a, int b, int c, int d, int e, int f, int g, int h, int i) {
 	std::cout << "hook begin!\n";
-	auto ret = function();
+	auto ret = function(a, b, c, d, e, f, g, h, i);
 	std::cout << "hook end!\n";
 
 	return 3;
 }
 
-int32_t priorityHook() {
+int32_t priorityHook(int a, int b, int c, int d, int e, int f, int g, int h, int i) {
 	std::cout << "priority hook begin!\n";
-	auto ret = function();
+	auto ret = function(a, b, c, d, e, f, g, h, i);
 	std::cout << "priority hook end!\n";
 
 	return ret + 3;
@@ -28,11 +37,11 @@ using namespace tulip::hook;
 
 HandlerHandle makeHandler() {
 	std::cout << "\nmakeHandler\n";
-	HandlerMetadata metadata;
-	metadata.m_convention = std::make_unique<PlatformConvention>();
-	metadata.m_abstract = AbstractFunction::from<int32_t>();
+	HandlerMetadata handlerMetadata;
+	handlerMetadata.m_convention = std::make_unique<PlatformConvention>();
+	handlerMetadata.m_abstract = AbstractFunction::from<int32_t(int, int, int, int, int, int, int, int, int)>();
 
-	auto handle = createHandler(reinterpret_cast<void*>(&function), std::move(metadata));
+	auto handle = createHandler(reinterpret_cast<void*>(&function), std::move(handlerMetadata));
 
 	std::cout << "\nmakeHandler end\n";
 
@@ -104,37 +113,42 @@ int cconvTest1(Big stack1, int ecx, float stack2, int edx, float stack3) {
 
 #endif
 
+int callFunction() {
+	return function(1, 2, 3, 4, 5, 6, 7, 8, 9);
+}
+
+
 int main() {
 	// No handler
-	assert(function() == 1);
+	assert(callFunction() == 1);
 
 	// Handler, no hooks
 	HandlerHandle handlerHandle = makeHandler();
-	assert(function() == 1);
+	assert(callFunction() == 1);
 
-	// // Single hook (hook -> function)
+	// Single hook (hook -> function)
 	HookHandle hookHandle = makeHook(handlerHandle);
-	assert(function() == 3);
+	assert(callFunction() == 3);
 
 	// Priority hook (priorityHook -> hook -> function)
 	HookHandle priorityHookHandle = makePriorityHook(handlerHandle);
-	assert(function() == 6);
+	assert(callFunction() == 6);
 
 	// Remove the hook (priorityHook -> function)
 	destroyHook(handlerHandle, hookHandle);
-	assert(function() == 4);
+	assert(callFunction() == 4);
 
 	// Readd the hook (priorityHook -> hook -> function)
 	hookHandle = makeHook(handlerHandle);
-	assert(function() == 6);
+	assert(callFunction() == 6);
 
 	// Remove the handler
 	destroyHandler(handlerHandle);
-	assert(function() == 1);
+	assert(callFunction() == 1);
 
 	// Recreate the handler
 	HandlerHandle handlerHandle2 = makeHandler();
-	assert(function() == 1);
+	assert(callFunction() == 1);
 
 	// Calling convention asm
 #ifdef TULIP_HOOK_WINDOWS
