@@ -7,10 +7,14 @@
 
 	#define TULIP_HOOK_DEFAULT_CONV __cdecl
 
-	#ifdef TULIP_HOOK_EXPORTING
-		#define TULIP_HOOK_DLL    __declspec(dllexport)
+	#ifdef TULIP_HOOK_DYNAMIC
+		#ifdef TULIP_HOOK_EXPORTING
+			#define TULIP_HOOK_DLL    __declspec(dllexport)
+		#else
+			#define TULIP_HOOK_DLL    __declspec(dllimport)
+		#endif
 	#else
-		#define TULIP_HOOK_DLL    __declspec(dllimport)
+		#define TULIP_HOOK_DLL
 	#endif
 
 #endif
@@ -42,3 +46,5 @@
 	#error "Unsupported Platform!"
 
 #endif
+
+namespace tulip::hook {}

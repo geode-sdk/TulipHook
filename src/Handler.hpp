@@ -49,11 +49,11 @@ namespace tulip::hook {
 
 		void reorderFunctions();
 
-		static bool symbolResolver(char const* symbol, uint64_t* value);
+		static bool TULIP_HOOK_DEFAULT_CONV symbolResolver(char const* symbol, uint64_t* value);
 
-		static TULIP_HOOK_DLL TULIP_HOOK_DEFAULT_CONV void incrementIndex(HandlerContent* content);
-		static TULIP_HOOK_DLL TULIP_HOOK_DEFAULT_CONV void decrementIndex();
-		static TULIP_HOOK_DLL TULIP_HOOK_DEFAULT_CONV void* getNextFunction(HandlerContent* content);
+		static TULIP_HOOK_DLL void TULIP_HOOK_DEFAULT_CONV incrementIndex(HandlerContent* content);
+		static TULIP_HOOK_DLL void TULIP_HOOK_DEFAULT_CONV decrementIndex();
+		static TULIP_HOOK_DLL void* TULIP_HOOK_DEFAULT_CONV getNextFunction(HandlerContent* content);
 
 		void interveneFunction();
 		void restoreFunction();

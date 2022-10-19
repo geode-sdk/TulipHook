@@ -1,6 +1,8 @@
 #include "MacosTarget.hpp"
 #include <Platform.hpp>
 
+#include <stdexcept>
+
 using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_MACOS)

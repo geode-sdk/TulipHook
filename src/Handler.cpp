@@ -7,6 +7,7 @@
 #include <stack>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 
 using namespace tulip::hook;
 
@@ -30,7 +31,7 @@ Handler::~Handler() {
 void Handler::init() {
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
 
-	auto generator = PlatformGenerator(m_address, m_trampoline, m_handler, m_metadata);
+	auto generator = PlatformGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
 
 	generator.generateHandler();
 
@@ -67,7 +68,7 @@ void Handler::removeHook(HookHandle const& hook) {
 	auto address = reinterpret_cast<void*>(hook);
 
 	m_hooks.erase(hook);
-	std::remove(m_content->m_functions.data(), m_content->m_functions.data() + m_content->m_size, address);
+	(void)std::remove(m_content->m_functions.data(), m_content->m_functions.data() + m_content->m_size, address);
 	--m_content->m_size;
 }
 
@@ -98,7 +99,7 @@ void Handler::restoreFunction() {
 }
 
 
-bool Handler::symbolResolver(char const* csymbol, uint64_t* value) {
+bool TULIP_HOOK_DEFAULT_CONV Handler::symbolResolver(char const* csymbol, uint64_t* value) {
 	std::string symbol = csymbol;
 
 	if (symbol.find("_address") != std::string::npos) {
@@ -158,7 +159,7 @@ bool Handler::symbolResolver(char const* csymbol, uint64_t* value) {
 static thread_local std::stack<size_t> s_indexStack;
 static thread_local std::stack<HandlerContent*> s_addressStack;
 
-void Handler::incrementIndex(HandlerContent* content) {
+void TULIP_HOOK_DEFAULT_CONV Handler::incrementIndex(HandlerContent* content) {
 	// printf("incrementIndex - content addr: 0x%" PRIx64 "\n", (uint64_t)content);
 	if (s_addressStack.size() == 0 || s_addressStack.top() != content) {
 		// new entry
@@ -172,7 +173,7 @@ void Handler::incrementIndex(HandlerContent* content) {
 	// printf("incrementIndex - top: 0x%" PRIx64 "\n", (uint64_t)s_indexStack.top());
 }
 
-void Handler::decrementIndex() {
+void TULIP_HOOK_DEFAULT_CONV Handler::decrementIndex() {
 	// printf("decrementIndex\n");
 	if (s_indexStack.top() == 0) {
 		s_addressStack.pop();
@@ -183,7 +184,7 @@ void Handler::decrementIndex() {
 	}
 }
 
-void* Handler::getNextFunction(HandlerContent* content) {
+void* TULIP_HOOK_DEFAULT_CONV Handler::getNextFunction(HandlerContent* content) {
 	// printf("getNextFunction - content addr: 0x%" PRIx64 " index: %lu\n", (uint64_t)content, s_indexStack.top() % content->m_size);
 	auto ret = content->m_functions[s_indexStack.top() % content->m_size];
 	// printf("getNextFunction - next func addr: 0x%" PRIx64 "\n", (uint64_t)ret);

@@ -1,6 +1,8 @@
 #include "WindowsTarget.hpp"
 #include <Platform.hpp>
 
+#include <stdexcept>
+
 using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_WINDOWS)
@@ -26,7 +28,7 @@ uint32_t WindowsTarget::getProtection(void* address) {
 }
 
 void WindowsTarget::protectMemory(void* address, size_t size, uint32_t protection) {
-	uint32_t oldProtection;
+	DWORD oldProtection;
 
 	VirtualProtect(address, size, protection, &oldProtection);
 }

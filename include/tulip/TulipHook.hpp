@@ -10,7 +10,7 @@
 #include "HandlerData.hpp"
 #include "HookData.hpp"
 
-#include "platform/WindowsCallingConvention.hpp"
+#include "platform/PlatformConvention.hpp"
 
 namespace tulip::hook {
 

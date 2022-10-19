@@ -7,6 +7,6 @@ namespace tulip::hook {
 
 	class HookMetadata {
 	public:
-		int32_t m_priority;
+		int32_t m_priority = 0;
 	};
 }

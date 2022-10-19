@@ -1,5 +1,6 @@
 #include <TulipHook.hpp>
 #include <iostream>
+#include <cassert>
 
 int32_t function() {
 	std::cout << "function called!\n";
@@ -28,10 +29,12 @@ using namespace tulip::hook;
 HandlerHandle makeHandler() {
 	std::cout << "\nmakeHandler\n";
 	HandlerMetadata metadata;
-	metadata.m_convention = std::make_unique<DefaultConvention>();
+	metadata.m_convention = std::make_unique<PlatformConvention>();
 	metadata.m_abstract = AbstractFunction::from<int32_t>();
 
 	auto handle = createHandler(reinterpret_cast<void*>(&function), std::move(metadata));
+
+	std::cout << "\nmakeHandler end\n";
 
 	return handle;
 }
@@ -39,6 +42,8 @@ HandlerHandle makeHandler() {
 void destroyHandler(HandlerHandle const& handle) {
 	std::cout << "\ndestroyHandler\n";
 	removeHandler(handle);
+
+	std::cout << "\ndestroyHandler end\n";
 }
 
 HookHandle makeHook(HandlerHandle const& handle) {
@@ -47,12 +52,16 @@ HookHandle makeHook(HandlerHandle const& handle) {
 
 	auto handle2 = createHook(handle, reinterpret_cast<void*>(&hook), std::move(metadata));
 
+	std::cout << "\nmakeHook end\n";
+
 	return handle2;
 }
 
 void destroyHook(HandlerHandle const& handle, HookHandle const& handle2) {
 	std::cout << "\ndestroyHook\n";
 	removeHook(handle, handle2);
+
+	std::cout << "\ndestroyHook end\n";
 }
 
 HookHandle makePriorityHook(HandlerHandle const& handle) {
@@ -62,12 +71,16 @@ HookHandle makePriorityHook(HandlerHandle const& handle) {
 
 	auto handle2 = createHook(handle, reinterpret_cast<void*>(&priorityHook), std::move(metadata));
 
+	std::cout << "\nmakePriorityHook end\n";
+
 	return handle2;
 }
 
 void destroyPriorityHook(HandlerHandle const& handle, HookHandle const& handle2) {
 	std::cout << "\ndestroyPriorityHook\n";
 	removeHook(handle, handle2);
+
+	std::cout << "\ndestroyPriorityHook end\n";
 }
 
 

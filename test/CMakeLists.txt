@@ -4,3 +4,7 @@ project(TulipHookTest LANGUAGES CXX C)
 
 add_executable(TulipHookTest Main.cpp)
 target_link_libraries(TulipHookTest PUBLIC TulipHook)
+
+if(WIN32)
+	set_target_properties(TulipHookTest PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
+endif()

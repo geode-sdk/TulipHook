@@ -26,6 +26,14 @@ namespace tulip::hook {
 		std::string generateToDefault(AbstractFunction const& function) override;
 	};
 
+	class FastcallConvention : public CallingConvention {
+	public:
+		~FastcallConvention() override;
+
+		std::string generateFromDefault(AbstractFunction const& function) override;
+		std::string generateToDefault(AbstractFunction const& function) override;
+	};
+
 	class OptcallConvention : public CallingConvention {
 	public:
 		~OptcallConvention() override;
@@ -41,6 +49,8 @@ namespace tulip::hook {
 		std::string generateFromDefault(AbstractFunction const& function) override;
 		std::string generateToDefault(AbstractFunction const& function) override;
 	};
+
+	using PlatformConvention = CdeclConvention;
 }
 
 #endif

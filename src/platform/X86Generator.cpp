@@ -3,6 +3,7 @@
 #include "../Handler.hpp"
 
 #include <sstream>
+#include <stdexcept>
 
 #include <CallingConvention.hpp>
 
@@ -94,7 +95,6 @@ void X86Generator::generateTrampoline(size_t offset) {
 
 }
 size_t X86Generator::relocateOriginal(size_t target) {
-
 	std::memcpy(m_trampoline, m_address, 32);
 	size_t offset = 0;
 

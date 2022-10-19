@@ -57,7 +57,7 @@ std::string MacosGenerator::handlerString() {
 	}
 
 	// decrement and return eax and edx
-	out << "mov rbx, rax; mov r14, rdx; call _decrementIndex; mov rax, rbx; mov rdx, r14; add rsp, 8; pop rbx; pop r12; pop r13; pop r14; pop r15; pop rbp; ret; ";
+	out << "mov rbx, rax; mov r14, rdx; call _decrementIndex; mov rax, rbx; mov rdx, r14; add rsp, 8; pop rbx; pop r12; pop r13; pop r14; pop r15; pop rbp; ";
 
 	out << m_metadata.m_convention->generateFromDefault(m_metadata.m_abstract);
 	return out.str();

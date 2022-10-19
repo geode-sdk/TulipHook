@@ -11,9 +11,10 @@ namespace tulip::hook {
 		void* const m_address;
 		void* const m_trampoline;
 		void* const m_handler;
+		void* const m_content;
 		HandlerMetadata const m_metadata;
 
-		Generator(void* address, void* trampoline, void* handler, HandlerMetadata metadata);
+		Generator(void* address, void* trampoline, void* handler, void* content, HandlerMetadata metadata);
 
 		virtual void generateHandler() = 0;
 		virtual std::vector<uint8_t> generateIntervener() = 0;

@@ -9,17 +9,19 @@ add_library(TulipHook STATIC
 	Main.cpp
 	Pool.cpp
 	Target.cpp
+	platform/MacosConvention.cpp
 	platform/MacosGenerator.cpp
 	platform/MacosTarget.cpp
-	platform/WindowsCallingConvention.cpp
+	platform/WindowsConvention.cpp
 	platform/WindowsGenerator.cpp
+	platform/WindowsTarget.cpp
 	platform/X86Generator.cpp
 )
 
 target_compile_features(TulipHook PUBLIC cxx_std_20)
 
 target_link_libraries(TulipHook PRIVATE capstone keystone)
-target_compile_definitions(TulipHook PRIVATE -DTULIP_HOOK_EXPORTING)
+target_compile_definitions(TulipHook PRIVATE -DTULIP_HOOK_EXPORTING=1)
 
 target_include_directories(TulipHook PRIVATE
 	${TulipHookRoot_SOURCE_DIR}/include/tulip
