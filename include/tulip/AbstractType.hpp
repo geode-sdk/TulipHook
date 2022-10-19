@@ -5,7 +5,7 @@
 #include <type_traits>
 
 namespace tulip::hook {
-	enum class AbstractTypeType : uint8_t {
+	enum class AbstractTypeKind : uint8_t {
 		Primitive,
 		FloatingPoint,
 		Other,
@@ -14,23 +14,21 @@ namespace tulip::hook {
 	class AbstractType {
 	public:
 		size_t m_size;
-		AbstractTypeType m_type;
+		AbstractTypeKind m_kind;
 
 		template <class Type>
 		static AbstractType from() {
 			AbstractType type;
 			type.m_size = sizeof(Type);
 			if constexpr(std::is_floating_point_v<Type>) {
-				type.m_type = AbstractTypeType::FloatingPoint;
+				type.m_kind = AbstractTypeKind::FloatingPoint;
 			}
 			else if constexpr(!std::is_class_v<Type>) {
-				type.m_type = AbstractTypeType::Primitive;
+				type.m_kind = AbstractTypeKind::Primitive;
 			}
 			else {
-				type.m_type = AbstractTypeType::Other;
+				type.m_kind = AbstractTypeKind::Other;
 			}
-			
-
 			return type;
 		}
 	};

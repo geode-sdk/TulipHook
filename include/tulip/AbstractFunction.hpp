@@ -19,5 +19,14 @@ namespace tulip::hook {
 
 			return func;
 		}
+
+		template <class Return, class... Parameters>
+		static AbstractFunction from(Return(*)(Parameters...)) {
+			AbstractFunction func;
+			func.m_return = AbstractType::from<Return>();
+			(func.m_parameters.push_back(AbstractType::from<Parameters>()), ...);
+
+			return func;
+		}
 	};
 }

@@ -24,7 +24,7 @@ std::string MacosGenerator::handlerString() {
 
 	auto count = 0;
 	for (auto& param : m_metadata.m_abstract.m_parameters) {
-		if (param.m_type == AbstractTypeType::Primitive) {
+		if (param.m_kind == AbstractTypeKind::Primitive) {
 			count += std::max<size_t>(param.m_size, 8);
 		}
 		else count += 8;

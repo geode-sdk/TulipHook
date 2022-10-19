@@ -83,6 +83,26 @@ void destroyPriorityHook(HandlerHandle const& handle, HookHandle const& handle2)
 	std::cout << "\ndestroyPriorityHook end\n";
 }
 
+#ifdef TULIP_HOOK_WINDOWS
+
+struct Big {
+	int x;
+	int y;
+	int z;
+};
+
+int cconvTest1(Big stack1, int ecx, float stack2, int edx, float stack3) {
+	assert(stack1.x == 1);
+	assert(stack1.y == 2);
+	assert(stack1.z == 3);
+	assert(ecx == 4);
+	assert(stack2 == 5.f);
+	assert(edx == 6);
+	assert(stack3 == 7.f);
+	return 8;
+}
+
+#endif
 
 int main() {
 	// No handler
@@ -115,4 +135,17 @@ int main() {
 	// Recreate the handler
 	HandlerHandle handlerHandle2 = makeHandler();
 	assert(function() == 1);
+
+	// Calling convention asm
+#ifdef TULIP_HOOK_WINDOWS
+
+	auto conv = std::make_unique<FastcallConvention>();
+	auto func = AbstractFunction::from(&cconvTest1);
+
+	std::cout << "cconvTest1 __fastcall => __cdecl\n";
+	std::cout << conv->generateToDefault(func) << "\n";
+	std::cout << "cconvTest1 __cdecl => __fastcall\n";
+	std::cout << conv->generateFromDefault(func) << "\n";
+
+#endif
 }
