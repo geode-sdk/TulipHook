@@ -12,6 +12,7 @@ using namespace tulip::hook;
 
 std::string MacosGenerator::handlerString() {
 	std::ostringstream out;
+	out << std::hex;
 	// out << "nop; nop; nop; nop; ";
 
 	out << m_metadata.m_convention->generateToDefault(m_metadata.m_abstract) << "; ";
@@ -25,9 +26,9 @@ std::string MacosGenerator::handlerString() {
 	auto count = 0;
 	for (auto& param : m_metadata.m_abstract.m_parameters) {
 		if (param.m_type == AbstractTypeType::Primitive) {
-			count += std::max<size_t>(param.m_size, 8);
+			count += (param.m_size + 7) / 8;
 		}
-		else count += 8;
+		else ++count;
 	}
 	if (m_metadata.m_abstract.m_return.m_size > 8 * 2) ++count; // struct return
 
@@ -37,23 +38,21 @@ std::string MacosGenerator::handlerString() {
 
 	out << "mov rdi, rbp; mov rsi, rbx; mov rdx, r13; mov rcx, r12; mov r8, r15; mov r9, r14; ";
 
+	auto oddAdd = count % 2;
+
+	printf("sakdhkhdasjkj %u", count);
+
 	// push the stack params
 	for (auto i = 6; i < count; ++i) {
-		out << "mov rbp, [rsp + " << ((count + 1) * 8) << "]; push rbp; ";
+		out << "mov rbp, [rsp + " << ((count + 1 + oddAdd) * 8) << "]; push rbp; ";
 	}
 
 	// call 
 	out << "call rax; ";
 
 	if (count > 6) {
-		auto fixup = ((count - 6) * 8);
-
-		if (count % 2 == 1) {
-			fixup += 8;
-		}
-
 		// fix stack
-		out << "add rsp, " << fixup << "; ";
+		out << "add rsp, " << ((count - 6 + oddAdd) * 8) << "; ";
 	}
 
 	// decrement and return eax and edx

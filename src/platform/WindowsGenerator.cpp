@@ -12,6 +12,7 @@ using namespace tulip::hook;
 
 std::string WindowsGenerator::handlerString() {
 	std::ostringstream out;
+	out << std::hex;
 	out << m_metadata.m_convention->generateToDefault(m_metadata.m_abstract) << "; ";
 
 	// increment and get function
