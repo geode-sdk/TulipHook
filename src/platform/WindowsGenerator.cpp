@@ -16,7 +16,13 @@ std::string WindowsGenerator::handlerString() {
 	out << m_metadata.m_convention->generateToDefault(m_metadata.m_abstract) << "; ";
 
 	// increment and get function
-	out << "push esi; lea eax, [_content" << m_address << "]; push eax; call _incrementIndex; lea eax, [_content" << m_address << "]; push eax; call _getNextFunction; ";
+	out <<
+		"push esi; "
+		"lea eax, [_content" << m_address << "]; "
+		"push eax; call _incrementIndex; "
+		"lea eax, [_content" << m_address << "]; "
+		"push eax; "
+		"call _getNextFunction; ";
 
 	auto count = 0;
 	for (auto& param : m_metadata.m_abstract.m_parameters) {
@@ -26,14 +32,14 @@ std::string WindowsGenerator::handlerString() {
 
 	// push the stack params
 	for (auto i = 0; i < count; ++i) {
-		out << "push [esp + " << ((count + 3) * 4) << "]; ";
+		out << "push [esp + 0x" << ((count + 3) * 4) << "]; ";
 	}
 
 	// call cdecl
 	out << "call eax; ";
 
 	// fix stack
-	out << "add esp, " << ((count + 2) * 4) << "; ";
+	out << "add esp, 0x" << ((count + 2) * 4) << "; ";
 	
 
 	// decrement and return eax and edx

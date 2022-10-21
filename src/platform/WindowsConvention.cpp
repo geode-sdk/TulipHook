@@ -2,6 +2,7 @@
 #include <Platform.hpp>
 #include <AbstractFunction.hpp>
 #include <sstream>
+#include <ranges>
 
 using namespace tulip::hook;
 
@@ -57,7 +58,7 @@ static void pushParameter(std::ostringstream& out, size_t paramSize, size_t at) 
 	// all struct members need to be pushed separately
 	// push adds 4 to esp so we use the same offset for all of them
 	for (auto i = 0; i < (paramSize + 3) / 4; i++) {
-		out << "push [esp + " << at << "]; ";
+		out << "push [esp + 0x" << at << "]; ";
 	}
 }
 
@@ -73,19 +74,21 @@ CdeclConvention::~CdeclConvention() {}
 
 std::string ThiscallConvention::generateFromDefault(AbstractFunction const& function) {
 	std::ostringstream out;
+	out << std::hex;
 
 	// stack size (divided by 4)
 	auto size = stackSizeFromFunction(function);
 
 	// clean up stack from the ones we added
-	out << "add esp, " << (size * 4) << "; ";
+	out << "add esp, 0x" << (size * 4) << "; ";
 	// `this` is originally in ecx, so 
-	out << "ret " << ((size - 1) * 4);
+	out << "ret 0x" << ((size - 1) * 4);
 
 	return out.str();
 }
 std::string ThiscallConvention::generateToDefault(AbstractFunction const& function) {
 	std::ostringstream out;
+	out << std::hex;
 
 	// stack size (divided by 4)
 	auto size = stackSizeFromFunction(function);
@@ -103,7 +106,7 @@ std::string ThiscallConvention::generateToDefault(AbstractFunction const& functi
 
 	// repush parameters in same order as pushed
 	for (auto i = 1; i < size; i++) {
-		out << "push [esp + " << ((size - 1) * 4) << "]; ";
+		out << "push [esp + 0x" << ((size - 1) * 4) << "]; ";
 	}
 	// the first parameter in __thiscall is always going to be ecx-passable
 	// push `this`
@@ -115,6 +118,7 @@ ThiscallConvention::~ThiscallConvention() {}
 
 std::string FastcallConvention::generateFromDefault(AbstractFunction const& function) {
 	std::ostringstream out;
+	out << std::hex;
 	
 	// stack size (divided by 4)
 	auto size = stackSizeFromFunction(function);
@@ -129,15 +133,16 @@ std::string FastcallConvention::generateFromDefault(AbstractFunction const& func
 	}
 
 	// clean up stack from the ones we added
-	out << "add esp, " << (size * 4) << "; ";
+	out << "add esp, 0x" << (size * 4) << "; ";
 	// some of the original parameters may be passed through ecx and edx so the 
 	// original's stack size may be smaller
-	out << "ret " << ((size - registerCount) * 4);
+	out << "ret 0x" << ((size - registerCount) * 4);
 
 	return out.str();
 }
 std::string FastcallConvention::generateToDefault(AbstractFunction const& function) {
 	std::ostringstream out;
+	out << std::hex;
 
 	// stack size (divided by 4)
 	auto size = stackSizeFromFunction(function);
@@ -172,7 +177,7 @@ std::string FastcallConvention::generateToDefault(AbstractFunction const& functi
 	// push [esp + 0x1c]    <= Big.x        0x18     0x1c
 
 	// repush parameters
-	for (auto& param : function.m_parameters) {
+	for (auto& param : std::ranges::reverse_view(function.m_parameters)) {
 		if (registerCount && param.m_kind == AbstractTypeKind::Primitive) {
 			if (registerCount == 2) out << "push edx; ";
 			if (registerCount == 1) out << "push ecx; ";

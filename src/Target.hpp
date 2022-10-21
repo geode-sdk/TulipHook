@@ -21,11 +21,11 @@ namespace tulip::hook {
 		Result<> writeMemory(void* destination, void* source, size_t size);
 
 		virtual Result<ks_engine*> openKeystone() = 0;
-		void closeKeystone(ks_engine* engine);
+		void closeKeystone();
 		ks_engine* getKeystone();
 
 		virtual Result<csh> openCapstone() = 0;
-		void closeCapstone(csh engine);
+		void closeCapstone();
 		csh getCapstone();
 
 		virtual Result<> allocatePage() = 0;

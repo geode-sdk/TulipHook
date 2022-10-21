@@ -7,6 +7,8 @@
 
 #include <CallingConvention.hpp>
 
+#include <iostream>
+
 using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_MACOS)
@@ -17,9 +19,30 @@ using X86Generator = WindowsGenerator;
 
 #if defined(TULIP_HOOK_MACOS) || defined(TULIP_HOOK_WINDOWS)
 
+template<class T, auto Fun>
+struct RAIIHolder {
+	T m_engine;
+
+	RAIIHolder(T engine) : m_engine(engine) {}
+	~RAIIHolder() {
+		Fun();
+	}
+	operator T() {
+		return m_engine;
+	}
+};
+static void keystoneCloseFun() {
+	PlatformTarget::get().closeKeystone();
+};
+using KSHolder = RAIIHolder<ks_engine*, &keystoneCloseFun>;
+static void capstoneCloseFun() {
+	PlatformTarget::get().closeCapstone();
+};
+using CSHolder = RAIIHolder<csh, &capstoneCloseFun>;
+
 Result<> X86Generator::generateHandler() {
 
-	TULIP_UNWRAP_INTO(auto ks, PlatformTarget::get().openKeystone());
+	TULIP_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
@@ -29,14 +52,14 @@ Result<> X86Generator::generateHandler() {
 
 	auto code = this->handlerString();
 
+	std::cout << code << "\n";
+
 	// std::cout << "handler: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_handler), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		auto err = ks_errno(ks);
-		PlatformTarget::get().closeKeystone(ks);
 		return Err(
 			"Assembling handler failed: " + 
-			std::string(ks_strerror(err))
+			std::string(ks_strerror(ks_errno(ks)))
 		);
 	}
 
@@ -44,13 +67,11 @@ Result<> X86Generator::generateHandler() {
 
 	ks_free(encode);
 
-	PlatformTarget::get().closeKeystone(ks);
-
 	return Ok();
 }
 Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 
-	TULIP_UNWRAP_INTO(auto ks, PlatformTarget::get().openKeystone());
+	TULIP_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
@@ -63,11 +84,9 @@ Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 	// std::cout << "intervener: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		auto err = ks_errno(ks);
-		PlatformTarget::get().closeKeystone(ks);
 		return Err(
 			"Assembling intervener failed: " + 
-			std::string(ks_strerror(err))
+			std::string(ks_strerror(ks_errno(ks)))
 		);
 	}
 
@@ -75,13 +94,11 @@ Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 
 	ks_free(encode);
 
-	PlatformTarget::get().closeKeystone(ks);
-
 	return Ok(ret);
 }
 Result<> X86Generator::generateTrampoline(size_t offset) {
 
-	TULIP_UNWRAP_INTO(auto ks, PlatformTarget::get().openKeystone());
+	TULIP_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
@@ -95,19 +112,15 @@ Result<> X86Generator::generateTrampoline(size_t offset) {
 	// std::cout << "handler: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), address, &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		auto err = ks_errno(ks);
-		PlatformTarget::get().closeKeystone(ks);
 		return Err(
 			"Assembling trampoline failed: " + 
-			std::string(ks_strerror(err))
+			std::string(ks_strerror(ks_errno(ks)))
 		);
 	}
 
 	std::memcpy(reinterpret_cast<void*>(address), encode, size);
 
 	ks_free(encode);
-
-	PlatformTarget::get().closeKeystone(ks);
 
 	return Ok();
 
@@ -116,7 +129,7 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 	std::memcpy(m_trampoline, m_address, 32);
 	size_t offset = 0;
 
-	TULIP_UNWRAP_INTO(auto cs, PlatformTarget::get().openCapstone());
+	TULIP_UNWRAP_INTO(CSHolder cs, PlatformTarget::get().openCapstone());
 
 	cs_option(cs, CS_OPT_DETAIL, CS_OPT_ON);
 
@@ -143,7 +156,6 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 				);
 			}
 			else {
-				PlatformTarget::get().closeCapstone(cs);
 				return Err("Not supported, displacement didn't work");
 			}
 		}
@@ -152,8 +164,6 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 	}
 
 	cs_free(insn, 1);
-
-	PlatformTarget::get().closeCapstone(cs);
 
 	return Ok(address - reinterpret_cast<uint64_t>(m_trampoline));
 }

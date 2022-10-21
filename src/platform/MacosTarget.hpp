@@ -13,7 +13,7 @@ namespace tulip::hook {
 
 		static MacosTarget& get();
 
-		Result<ks_engine*> openKeystone() override;
+		Result<std::shared_ptr<ks_engine>> openKeystone() override;
 		Result<csh> openCapstone() override;
 
 		Result<> allocatePage() override;
