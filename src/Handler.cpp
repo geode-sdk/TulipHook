@@ -11,31 +11,37 @@
 
 using namespace tulip::hook;
 
-Handler::Handler(void* address, HandlerMetadata metadata) : m_address(address), m_metadata(metadata) {
+Handler::Handler(NoPublicConstruct, void* address, HandlerMetadata metadata)
+  : m_address(address),
+  	m_metadata(metadata) {}
 
-	auto area1 = PlatformTarget::get().allocateArea(448);
-	m_content = reinterpret_cast<HandlerContent*>(area1);
+Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata metadata) {
+	auto ret = std::make_unique<Handler>(NoPublicConstruct(), address, metadata);
 
-	auto content = new (m_content) HandlerContent();
-	m_handler = reinterpret_cast<void*>(reinterpret_cast<HandlerContent*>(area1) + 1);
+	TULIP_UNWRAP_INTO(auto area1, PlatformTarget::get().allocateArea(448));
+	ret->m_content = reinterpret_cast<HandlerContent*>(area1);
 
-	auto area2 = PlatformTarget::get().allocateArea(64);
-	m_trampoline = area2;
+	auto content = new (ret->m_content) HandlerContent();
+	ret->m_handler = reinterpret_cast<void*>(reinterpret_cast<HandlerContent*>(area1) + 1);
 
+	TULIP_UNWRAP_INTO(auto area2, PlatformTarget::get().allocateArea(64));
+	ret->m_trampoline = area2;
+
+	return Ok(std::move(ret));
 }
 
 Handler::~Handler() {
 	
 }
 
-void Handler::init() {
+Result<> Handler::init() {
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
 
 	auto generator = PlatformGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
 
-	generator.generateHandler();
+	TULIP_UNWRAP(generator.generateHandler());
 
-	m_modifiedBytes = generator.generateIntervener();
+	TULIP_UNWRAP_INTO(m_modifiedBytes, generator.generateIntervener());
 
 	auto target = m_modifiedBytes.size();
 
@@ -43,19 +49,21 @@ void Handler::init() {
 	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
 	
 	
-	auto trampolineOffset = generator.relocateOriginal(target);
-	generator.generateTrampoline(trampolineOffset);
+	TULIP_UNWRAP_INTO(auto trampolineOffset, generator.relocateOriginal(target));
+	TULIP_UNWRAP(generator.generateTrampoline(trampolineOffset));
 
 
 	auto metadata = HookMetadata();
 	metadata.m_priority = INT32_MAX;
 	this->createHook(m_trampoline, metadata);
+
+	return Ok();
 }
 
 HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
 	auto hook = reinterpret_cast<HookHandle>(address);
 
-	m_hooks.insert({hook, std::make_unique<Hook>(address, m_metadata)});
+	m_hooks.emplace(hook, std::make_unique<Hook>(address, m_metadata));
 	m_content->m_functions[m_content->m_size] = address;
 	++m_content->m_size;
 
@@ -68,7 +76,11 @@ void Handler::removeHook(HookHandle const& hook) {
 	auto address = reinterpret_cast<void*>(hook);
 
 	m_hooks.erase(hook);
-	(void)std::remove(m_content->m_functions.data(), m_content->m_functions.data() + m_content->m_size, address);
+	(void)std::remove(
+		m_content->m_functions.data(),
+		m_content->m_functions.data() + m_content->m_size,
+		address
+	);
 	--m_content->m_size;
 }
 
@@ -86,16 +98,20 @@ void Handler::clearHooks() {
 
 void Handler::reorderFunctions() {
 	std::sort(m_content->m_functions.data(), m_content->m_functions.data() + m_content->m_size, [this](auto const a, auto const b){
-		return (m_hooks[reinterpret_cast<HookHandle>(a)]->m_metadata.m_priority <
-			m_hooks[reinterpret_cast<HookHandle>(b)]->m_metadata.m_priority);
+		return (
+			m_hooks.at(reinterpret_cast<HookHandle>(a))->m_metadata.m_priority <
+			m_hooks.at(reinterpret_cast<HookHandle>(b))->m_metadata.m_priority
+		);
 	});
 }
 
-void Handler::interveneFunction() {
-	PlatformTarget::get().writeMemory(m_address, static_cast<void*>(m_modifiedBytes.data()), m_originalBytes.size());
+Result<> Handler::interveneFunction() {
+	return PlatformTarget::get()
+		.writeMemory(m_address, static_cast<void*>(m_modifiedBytes.data()), m_originalBytes.size());
 }
-void Handler::restoreFunction() {
-	PlatformTarget::get().writeMemory(m_address, static_cast<void*>(m_originalBytes.data()), m_originalBytes.size());
+Result<> Handler::restoreFunction() {
+	return PlatformTarget::get()
+		.writeMemory(m_address, static_cast<void*>(m_originalBytes.data()), m_originalBytes.size());
 }
 
 

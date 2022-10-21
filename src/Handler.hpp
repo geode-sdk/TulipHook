@@ -1,10 +1,10 @@
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <array>
 #include <memory>
 #include <vector>
-
+#include <Result.hpp>
 #include <HookData.hpp>
 #include <HandlerData.hpp>
 #include <Platform.hpp>
@@ -17,12 +17,19 @@ namespace tulip::hook {
 		std::array<void*, 16> m_functions;
 	};
 
-	class Handler {
+	class Handler final {
+	private:
+		struct NoPublicConstruct {
+			explicit NoPublicConstruct() = default;
+		};
+
 	public:
+		Handler(NoPublicConstruct, void* address, HandlerMetadata metadata);
+		
 		void* const m_address;
 		HandlerMetadata const m_metadata;
 
-		std::map<HookHandle, std::unique_ptr<Hook>> m_hooks;
+		std::unordered_map<HookHandle, std::unique_ptr<Hook>> m_hooks {};
 
 		
 		HandlerContent* m_content = nullptr;
@@ -37,10 +44,10 @@ namespace tulip::hook {
 		std::vector<uint8_t> m_originalBytes;
 		std::vector<uint8_t> m_modifiedBytes;
 
-		Handler(void* address, HandlerMetadata metadata);
+		static Result<std::unique_ptr<Handler>> create(void* address, HandlerMetadata metadata);
 		~Handler();
 
-		void init();
+		Result<> init();
 
 		HookHandle createHook(void* address, HookMetadata m_metadata);
 		void removeHook(HookHandle const& hook);
@@ -55,8 +62,8 @@ namespace tulip::hook {
 		static TULIP_HOOK_DLL void TULIP_HOOK_DEFAULT_CONV decrementIndex();
 		static TULIP_HOOK_DLL void* TULIP_HOOK_DEFAULT_CONV getNextFunction(HandlerContent* content);
 
-		void interveneFunction();
-		void restoreFunction();
+		Result<> interveneFunction();
+		Result<> restoreFunction();
 
 		void generateHandler();
 		void generateIntervener();

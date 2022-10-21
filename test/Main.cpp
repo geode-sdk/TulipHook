@@ -1,6 +1,7 @@
 #include <TulipHook.hpp>
 #include <iostream>
 #include <cassert>
+#include <algorithm>
 
 int32_t function(int a, int b, int c, int d, int e, int f, int g, int h, int i) {
 	std::cout << "function called!\n" 
@@ -43,14 +44,23 @@ HandlerHandle makeHandler() {
 
 	auto handle = createHandler(reinterpret_cast<void*>(&function), std::move(handlerMetadata));
 
+	if (handle.isErr()) {
+		std::cout << "unable to create handler: " << handle.unwrapErr() << "\n";
+		exit(1);
+	}
+
 	std::cout << "\nmakeHandler end\n";
 
-	return handle;
+	return handle.unwrap();
 }
 
 void destroyHandler(HandlerHandle const& handle) {
 	std::cout << "\ndestroyHandler\n";
-	removeHandler(handle);
+	auto rem = removeHandler(handle);
+	if (rem.isErr()) {
+		std::cout << "unable to remove handler: " << rem.unwrapErr() << "\n";
+		exit(1);
+	}
 
 	std::cout << "\ndestroyHandler end\n";
 }
@@ -156,10 +166,15 @@ int main() {
 	auto conv = std::make_unique<FastcallConvention>();
 	auto func = AbstractFunction::from(&cconvTest1);
 
+	auto prettify = +[](std::string str) {
+		std::replace(str.begin(), str.end(), ';', '\n');
+		return str;
+	};
+
 	std::cout << "cconvTest1 __fastcall => __cdecl\n";
-	std::cout << conv->generateToDefault(func) << "\n";
+	std::cout << prettify(conv->generateToDefault(func)) << "\n";
 	std::cout << "cconvTest1 __cdecl => __fastcall\n";
-	std::cout << conv->generateFromDefault(func) << "\n";
+	std::cout << prettify(conv->generateFromDefault(func)) << "\n";
 
 #endif
 }

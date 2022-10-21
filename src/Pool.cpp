@@ -8,22 +8,24 @@ Pool& Pool::get() {
 	return ret;
 }
 
-HandlerHandle Pool::createHandler(void* address, HandlerMetadata m_metadata) {
+Result<HandlerHandle> Pool::createHandler(void* address, HandlerMetadata m_metadata) {
 	auto handle = reinterpret_cast<HandlerHandle>(address);
 
 	if (m_handlers.find(handle) == m_handlers.end()) {
-		m_handlers.insert({handle, std::make_unique<Handler>(address, m_metadata)});
-		m_handlers[handle]->init();
+		TULIP_UNWRAP_INTO(auto handler, Handler::create(address, m_metadata));
+		m_handlers.emplace(handle, std::move(handler));
+		TULIP_UNWRAP(m_handlers[handle]->init());
 	}
 
-	m_handlers[handle]->interveneFunction();
+	TULIP_UNWRAP(m_handlers[handle]->interveneFunction());
 
-	return handle;
+	return Ok(std::move(handle));
 }
 
-void Pool::removeHandler(HandlerHandle const& handle) {
+Result<> Pool::removeHandler(HandlerHandle const& handle) {
 	m_handlers[handle]->clearHooks();
-	m_handlers[handle]->restoreFunction();
+	TULIP_UNWRAP(m_handlers[handle]->restoreFunction());
+	return Ok();
 }
 
 Handler& Pool::getHandler(HandlerHandle const& handle) {

@@ -13,7 +13,7 @@ using namespace tulip::hook;
 #include <mach/mach_vm.h>       /* mach_vm_*            */
 #include <mach/mach_init.h>     /* mach_task_self()     */
 
-void MacosTarget::allocatePage() {
+Result<> MacosTarget::allocatePage() {
 	kern_return_t status;
 	mach_vm_address_t ret;
 
@@ -25,17 +25,17 @@ void MacosTarget::allocatePage() {
 	);
 
 	if (status != KERN_SUCCESS) {
-		throw std::runtime_error("TulipHook - couldn't allocate page");
+		return Err("Couldn't allocate page");
 	}
 
 	m_allocatedPage = reinterpret_cast<void*>(ret);
 	m_currentOffset = 0;
 	m_remainingOffset = 0x4000;
 
-	this->protectMemory(m_allocatedPage, m_remainingOffset, VM_PROT_COPY | VM_PROT_ALL);
+	return this->protectMemory(m_allocatedPage, m_remainingOffset, VM_PROT_COPY | VM_PROT_ALL);
 }
 
-uint32_t MacosTarget::getProtection(void* address) {
+Result<uint32_t> MacosTarget::getProtection(void* address) {
 	kern_return_t status;
 	mach_vm_size_t vmsize;
     mach_vm_address_t vmaddress = reinterpret_cast<mach_vm_address_t>(address);
@@ -54,13 +54,13 @@ uint32_t MacosTarget::getProtection(void* address) {
     );
 
 	if (status != KERN_SUCCESS) {
-		throw std::runtime_error("TulipHook - couldn't get protection");
+		return Err("Couldn't get protection");
 	}
 
-	return info.protection;
+	return Ok(info.protection);
 }
 
-void MacosTarget::protectMemory(void* address, size_t size, uint32_t protection) {
+Result<> MacosTarget::protectMemory(void* address, size_t size, uint32_t protection) {
 	kern_return_t status;
 
 	status = mach_vm_protect(
@@ -72,11 +72,12 @@ void MacosTarget::protectMemory(void* address, size_t size, uint32_t protection)
 	);
 
 	if (status != KERN_SUCCESS) {
-		throw std::runtime_error("TulipHook - couldn't protect memory");
+		return Err("Couldn't protect memory");
 	}
+	return Ok();
 }
 
-void MacosTarget::rawWriteMemory(void* destination, void* source, size_t size) {
+Result<> MacosTarget::rawWriteMemory(void* destination, void* source, size_t size) {
 	kern_return_t status;
 
 	status = mach_vm_write(
@@ -87,8 +88,9 @@ void MacosTarget::rawWriteMemory(void* destination, void* source, size_t size) {
 	);
 
 	if (status != KERN_SUCCESS) {
-		throw std::runtime_error("TulipHook - couldn't write memory");
+		return Err("TulipHook - couldn't write memory");
 	}
+	return Ok();
 }
 
 uint32_t MacosTarget::getMaxProtection() {
@@ -100,26 +102,26 @@ MacosTarget& MacosTarget::get() {
 	return ret;
 }
 
-ks_engine* MacosTarget::openKeystone() {
+Result<ks_engine*> MacosTarget::openKeystone() {
 	ks_err status;
 
 	status = ks_open(KS_ARCH_X86, KS_MODE_64, &m_keystone);
 	if (status != KS_ERR_OK) {
-		throw std::runtime_error("TulipHook - couldn't open keystone");
+		return Err("TulipHook - couldn't open keystone");
 	}
 
-	return m_keystone;
+	return Ok(m_keystone);
 }
 
-csh MacosTarget::openCapstone() {
+Result<csh> MacosTarget::openCapstone() {
 	cs_err status;
 
 	status = cs_open(CS_ARCH_X86, CS_MODE_64, &m_capstone);
 	if (status != CS_ERR_OK) {
-		throw std::runtime_error("TulipHook - couldn't open capstone");
+		return Err("TulipHook - couldn't open capstone");
 	}
 
-	return m_capstone;
+	return Ok(m_capstone);
 }
 
 

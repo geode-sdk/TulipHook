@@ -10,7 +10,7 @@ using namespace tulip::hook;
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-void WindowsTarget::allocatePage() {
+Result<> WindowsTarget::allocatePage() {
 	m_allocatedPage = VirtualAlloc(
 		nullptr, 0x4000,
 		MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
@@ -18,23 +18,35 @@ void WindowsTarget::allocatePage() {
 
 	m_currentOffset = 0;
 	m_remainingOffset = 0x4000;
+
+	return Ok();
 }
 
-uint32_t WindowsTarget::getProtection(void* address) {
+Result<uint32_t> WindowsTarget::getProtection(void* address) {
 	MEMORY_BASIC_INFORMATION information;
-	VirtualQuery(address, &information, sizeof(MEMORY_BASIC_INFORMATION));
+	
+	if (!VirtualQuery(address, &information, sizeof(MEMORY_BASIC_INFORMATION))) {
+		return Err("Unable to query memory protection information");
+	}
 
-	return information.Protect;
+	return Ok(information.Protect);
 }
 
-void WindowsTarget::protectMemory(void* address, size_t size, uint32_t protection) {
+Result<> WindowsTarget::protectMemory(void* address, size_t size, uint32_t protection) {
 	DWORD oldProtection;
 
-	VirtualProtect(address, size, protection, &oldProtection);
+	if (!VirtualProtect(address, size, protection, &oldProtection)) {
+		return Err("Unable to apply memory protection");
+	}
+
+	return Ok();
 }
 
-void WindowsTarget::rawWriteMemory(void* destination, void* source, size_t size) {
-	WriteProcessMemory(GetCurrentProcess(), destination, source, size, nullptr);
+Result<> WindowsTarget::rawWriteMemory(void* destination, void* source, size_t size) {
+	if (!WriteProcessMemory(GetCurrentProcess(), destination, source, size, nullptr)) {
+		return Err("Unable to write to memory");
+	}
+	return Ok();
 }
 
 uint32_t WindowsTarget::getMaxProtection() {
@@ -46,26 +58,26 @@ WindowsTarget& WindowsTarget::get() {
 	return ret;
 }
 
-ks_engine* WindowsTarget::openKeystone() {
+Result<ks_engine*> WindowsTarget::openKeystone() {
 	ks_err status;
 
 	status = ks_open(KS_ARCH_X86, KS_MODE_32, &m_keystone);
 	if (status != KS_ERR_OK) {
-		throw std::runtime_error("TulipHook - couldn't open keystone");
+		return Err("Couldn't open keystone");
 	}
 
-	return m_keystone;
+	return Ok(m_keystone);
 }
 
-csh WindowsTarget::openCapstone() {
+Result<csh> WindowsTarget::openCapstone() {
 	cs_err status;
 
 	status = cs_open(CS_ARCH_X86, CS_MODE_32, &m_capstone);
 	if (status != CS_ERR_OK) {
-		throw std::runtime_error("TulipHook - couldn't open capstone");
+		return Err("Couldn't open capstone");
 	}
 
-	return m_capstone;
+	return Ok(m_capstone);
 }
 
 

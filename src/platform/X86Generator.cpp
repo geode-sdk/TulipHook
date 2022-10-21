@@ -17,9 +17,9 @@ using X86Generator = WindowsGenerator;
 
 #if defined(TULIP_HOOK_MACOS) || defined(TULIP_HOOK_WINDOWS)
 
-void X86Generator::generateHandler() {
+Result<> X86Generator::generateHandler() {
 
-	auto ks = PlatformTarget::get().openKeystone();
+	TULIP_UNWRAP_INTO(auto ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
@@ -32,7 +32,11 @@ void X86Generator::generateHandler() {
 	// std::cout << "handler: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_handler), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		throw std::runtime_error("TulipHook - assembling handler failed");
+		PlatformTarget::get().closeKeystone(ks);
+		return Err(
+			"TulipHook - assembling handler failed: " + 
+			std::string(ks_strerror(ks_errno(ks)))
+		);
 	}
 
 	std::memcpy(m_handler, encode, size);
@@ -41,10 +45,11 @@ void X86Generator::generateHandler() {
 
 	PlatformTarget::get().closeKeystone(ks);
 
+	return Ok();
 }
-std::vector<uint8_t> X86Generator::generateIntervener() {
+Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 
-	auto ks = PlatformTarget::get().openKeystone();
+	TULIP_UNWRAP_INTO(auto ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
@@ -57,7 +62,7 @@ std::vector<uint8_t> X86Generator::generateIntervener() {
 	// std::cout << "intervener: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		throw std::runtime_error("TulipHook - assembling intervener failed");
+		return Err("TulipHook - assembling intervener failed");
 	}
 
 	std::vector<uint8_t> ret(encode, encode + size);
@@ -66,11 +71,11 @@ std::vector<uint8_t> X86Generator::generateIntervener() {
 
 	PlatformTarget::get().closeKeystone(ks);
 
-	return ret;
+	return Ok(ret);
 }
-void X86Generator::generateTrampoline(size_t offset) {
+Result<> X86Generator::generateTrampoline(size_t offset) {
 
-	auto ks = PlatformTarget::get().openKeystone();
+	TULIP_UNWRAP_INTO(auto ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
@@ -84,7 +89,7 @@ void X86Generator::generateTrampoline(size_t offset) {
 	// std::cout << "handler: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), address, &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		throw std::runtime_error("TulipHook - assembling trampoline failed");
+		return Err("TulipHook - assembling trampoline failed");
 	}
 
 	std::memcpy(reinterpret_cast<void*>(address), encode, size);
@@ -93,12 +98,14 @@ void X86Generator::generateTrampoline(size_t offset) {
 
 	PlatformTarget::get().closeKeystone(ks);
 
+	return Ok();
+
 }
-size_t X86Generator::relocateOriginal(size_t target) {
+Result<size_t> X86Generator::relocateOriginal(size_t target) {
 	std::memcpy(m_trampoline, m_address, 32);
 	size_t offset = 0;
 
-	auto cs = PlatformTarget::get().openCapstone();
+	TULIP_UNWRAP_INTO(auto cs, PlatformTarget::get().openCapstone());
 
 	cs_option(cs, CS_OPT_DETAIL, CS_OPT_ON);
 
@@ -125,7 +132,7 @@ size_t X86Generator::relocateOriginal(size_t target) {
 				);
 			}
 			else {
-				throw std::runtime_error("Not supported, displacement didn't work");
+				return Err("Not supported, displacement didn't work");
 			}
 		}
 
@@ -136,7 +143,7 @@ size_t X86Generator::relocateOriginal(size_t target) {
 
 	PlatformTarget::get().closeCapstone(cs);
 
-	return address - reinterpret_cast<uint64_t>(m_trampoline);
+	return Ok(address - reinterpret_cast<uint64_t>(m_trampoline));
 }
 
 std::string X86Generator::intervenerString() {

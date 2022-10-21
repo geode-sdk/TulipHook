@@ -11,10 +11,10 @@ namespace tulip::hook {
 	public:
 		using Generator::Generator;
 
-		void generateHandler() override;
-		std::vector<uint8_t> generateIntervener() override;
-		void generateTrampoline(size_t offset) override;
-		size_t relocateOriginal(size_t target) override;
+		Result<> generateHandler() override;
+		Result<std::vector<uint8_t>> generateIntervener() override;
+		Result<> generateTrampoline(size_t offset) override;
+		Result<size_t> relocateOriginal(size_t target) override;
 
 		std::string handlerString() override;
 		std::string intervenerString() override;
