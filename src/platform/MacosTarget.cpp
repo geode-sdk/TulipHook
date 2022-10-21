@@ -88,7 +88,7 @@ Result<> MacosTarget::rawWriteMemory(void* destination, void* source, size_t siz
 	);
 
 	if (status != KERN_SUCCESS) {
-		return Err("TulipHook - couldn't write memory");
+		return Err("Couldn't write memory");
 	}
 	return Ok();
 }
@@ -107,7 +107,7 @@ Result<ks_engine*> MacosTarget::openKeystone() {
 
 	status = ks_open(KS_ARCH_X86, KS_MODE_64, &m_keystone);
 	if (status != KS_ERR_OK) {
-		return Err("TulipHook - couldn't open keystone");
+		return Err("Couldn't open keystone");
 	}
 
 	return Ok(m_keystone);
@@ -118,7 +118,7 @@ Result<csh> MacosTarget::openCapstone() {
 
 	status = cs_open(CS_ARCH_X86, CS_MODE_64, &m_capstone);
 	if (status != CS_ERR_OK) {
-		return Err("TulipHook - couldn't open capstone");
+		return Err("Couldn't open capstone");
 	}
 
 	return Ok(m_capstone);

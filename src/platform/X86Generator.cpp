@@ -32,10 +32,11 @@ Result<> X86Generator::generateHandler() {
 	// std::cout << "handler: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_handler), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
+		auto err = ks_errno(ks);
 		PlatformTarget::get().closeKeystone(ks);
 		return Err(
-			"TulipHook - assembling handler failed: " + 
-			std::string(ks_strerror(ks_errno(ks)))
+			"Assembling handler failed: " + 
+			std::string(ks_strerror(err))
 		);
 	}
 
@@ -62,7 +63,12 @@ Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 	// std::cout << "intervener: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		return Err("TulipHook - assembling intervener failed");
+		auto err = ks_errno(ks);
+		PlatformTarget::get().closeKeystone(ks);
+		return Err(
+			"Assembling intervener failed: " + 
+			std::string(ks_strerror(err))
+		);
 	}
 
 	std::vector<uint8_t> ret(encode, encode + size);
@@ -89,7 +95,12 @@ Result<> X86Generator::generateTrampoline(size_t offset) {
 	// std::cout << "handler: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), address, &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		return Err("TulipHook - assembling trampoline failed");
+		auto err = ks_errno(ks);
+		PlatformTarget::get().closeKeystone(ks);
+		return Err(
+			"Assembling trampoline failed: " + 
+			std::string(ks_strerror(err))
+		);
 	}
 
 	std::memcpy(reinterpret_cast<void*>(address), encode, size);
@@ -132,6 +143,7 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 				);
 			}
 			else {
+				PlatformTarget::get().closeCapstone(cs);
 				return Err("Not supported, displacement didn't work");
 			}
 		}
