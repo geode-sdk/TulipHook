@@ -8,6 +8,10 @@ using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_WINDOWS)
 
+static bool shouldStructReturn(AbstractFunction const& function) {
+	return function.m_return.m_size > 4 * 2;
+}
+
 /**
  * Get stack size for function (divided by 4)
  * This assumes all parameters are pushed through stack, subtract if some 
@@ -23,7 +27,7 @@ static size_t stackSizeFromFunction(
 	// on x86, returning structs over the size of 8 causes a pointer 
 	// to the struct to be pushed as the first parameter through the 
 	// stack
-	if (function.m_return.m_size > 4 * 2) {
+	if (shouldStructReturn(function)) {
 		size += 1;
 		paramCount += 1;
 	}
@@ -185,6 +189,11 @@ std::string FastcallConvention::generateToDefault(AbstractFunction const& functi
 		} else {
 			pushParameter(out, param.m_size, (size - registerCount) * 4);
 		}
+	}
+
+	// repush struct return
+	if (shouldStructReturn(function)) {
+		pushParameter(out, 4, size * 4);
 	}
 
 	return out.str();

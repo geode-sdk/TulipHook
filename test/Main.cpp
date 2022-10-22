@@ -110,6 +110,15 @@ struct Big {
 	int z;
 };
 
+int cconvTest0(Big stack1, int ecx, float stack2) {
+	assert(stack1.x == 1);
+	assert(stack1.y == 2);
+	assert(stack1.z == 3);
+	assert(ecx == 4);
+	assert(stack2 == 5.f);
+	return 6;
+}
+
 int cconvTest1(Big stack1, int ecx, float stack2, int edx, float stack3) {
 	assert(stack1.x == 1);
 	assert(stack1.y == 2);
@@ -119,6 +128,17 @@ int cconvTest1(Big stack1, int ecx, float stack2, int edx, float stack3) {
 	assert(edx == 6);
 	assert(stack3 == 7.f);
 	return 8;
+}
+
+Big cconvTest2(int ecx, Big stack1, float stack2, int edx, float stack3) {
+	assert(stack1.x == 1);
+	assert(stack1.y == 2);
+	assert(stack1.z == 3);
+	assert(ecx == 4);
+	assert(stack2 == 5.f);
+	assert(edx == 6);
+	assert(stack3 == 7.f);
+	return { 8, 9, 10 };
 }
 
 #endif
@@ -164,17 +184,32 @@ int main() {
 #ifdef TULIP_HOOK_WINDOWS
 
 	auto conv = std::make_unique<FastcallConvention>();
-	auto func = AbstractFunction::from(&cconvTest1);
+	auto func0 = AbstractFunction::from(&cconvTest0);
+	auto func1 = AbstractFunction::from(&cconvTest1);
+	auto func2 = AbstractFunction::from(&cconvTest2);
 
 	auto prettify = +[](std::string str) {
-		std::replace(str.begin(), str.end(), ';', '\n');
+		size_t f;
+		while ((f = str.find("; ")) != std::string::npos) {
+			str = str.replace(str.begin() + f, str.begin() + f + 2, "\n", 1);
+		}
 		return str;
 	};
 
-	std::cout << "cconvTest1 __fastcall => __cdecl\n";
-	std::cout << prettify(conv->generateToDefault(func)) << "\n";
-	std::cout << "cconvTest1 __cdecl => __fastcall\n";
-	std::cout << prettify(conv->generateFromDefault(func)) << "\n";
+	std::cout << "cconvTest0 fastcall => cdecl\n";
+	std::cout << prettify(conv->generateToDefault(func0)) << "\n";
+	std::cout << "cconvTest0 cdecl => fastcall\n";
+	std::cout << prettify(conv->generateFromDefault(func0)) << "\n\n";
+
+	std::cout << "cconvTest1 fastcall => cdecl\n";
+	std::cout << prettify(conv->generateToDefault(func1)) << "\n";
+	std::cout << "cconvTest1 cdecl => fastcall\n";
+	std::cout << prettify(conv->generateFromDefault(func1)) << "\n\n";
+
+	std::cout << "cconvTest2 fastcall => cdecl\n";
+	std::cout << prettify(conv->generateToDefault(func2)) << "\n";
+	std::cout << "cconvTest2 cdecl => fastcall\n";
+	std::cout << prettify(conv->generateFromDefault(func2)) << "\n\n";
 
 #endif
 }
