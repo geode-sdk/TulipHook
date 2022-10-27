@@ -145,21 +145,6 @@ std::string FastcallConvention::generateFromDefault(AbstractFunction const& func
 	return out.str();
 }
 std::string FastcallConvention::generateToDefault(AbstractFunction const& function) {
-	std::ostringstream out;
-	out << std::hex;
-
-	// stack size (divided by 4)
-	auto size = stackSizeFromFunction(function);
-
-	size_t registerCount = 0;
-
-	// first two parameters that can go in ecx and edx go in ecx 
-	for (auto& param : function.m_parameters) {
-		if (registerCount < 2 && param.m_kind == AbstractTypeKind::Primitive) {
-			registerCount += 1;
-		}
-	}
-
 	// struct Big { int x; int y; int z; }
 	// test3(Big, int, float, int, float)
 	// 0x4                  <= Big.x
@@ -179,6 +164,21 @@ std::string FastcallConvention::generateToDefault(AbstractFunction const& functi
 	// push [esp + 0x1c]    <= Big.z        0x10     0x14
 	// push [esp + 0x1c]    <= Big.y        0x14     0x18
 	// push [esp + 0x1c]    <= Big.x        0x18     0x1c
+
+	std::ostringstream out;
+	out << std::hex;
+
+	// stack size (divided by 4)
+	auto size = stackSizeFromFunction(function);
+
+	size_t registerCount = 0;
+
+	// first two parameters that can go in ecx and edx go in ecx 
+	for (auto& param : function.m_parameters) {
+		if (registerCount < 2 && param.m_kind == AbstractTypeKind::Primitive) {
+			registerCount += 1;
+		}
+	}
 
 	// repush parameters
 	for (auto& param : std::ranges::reverse_view(function.m_parameters)) {
@@ -207,7 +207,39 @@ std::string OptcallConvention::generateToDefault(AbstractFunction const& functio
 	// __optcall is like __fastcall, except parameters 0..3 are 
 	// passed through xmm0..xmm3 if they are floating-point and 
 	// structs are all passed last
-	return "";
+	
+	std::ostringstream out;
+	out << std::hex;
+
+	// stack size (divided by 4)
+	auto size = stackSizeFromFunction(function);
+
+	size_t registerCount = 0;
+
+	// first two parameters that can go in ecx and edx go in ecx 
+	for (auto& param : function.m_parameters) {
+		if (registerCount < 2 && param.m_kind == AbstractTypeKind::Primitive) {
+			registerCount += 1;
+		}
+	}
+
+	// repush parameters
+	for (auto& param : std::ranges::reverse_view(function.m_parameters)) {
+		if (registerCount && param.m_kind == AbstractTypeKind::Primitive) {
+			if (registerCount == 2) out << "push edx; ";
+			if (registerCount == 1) out << "push ecx; ";
+			registerCount--;
+		} else {
+			pushParameter(out, param.m_size, (size - registerCount) * 4);
+		}
+	}
+
+	// repush struct return
+	if (shouldStructReturn(function)) {
+		pushParameter(out, 4, size * 4);
+	}
+
+	return out.str();
 }
 OptcallConvention::~OptcallConvention() {}
 
