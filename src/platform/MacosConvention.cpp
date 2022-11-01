@@ -14,4 +14,12 @@ std::string DefaultConvention::generateToDefault(AbstractFunction const& functio
 	return "";
 }
 
+std::string generateBackFromDefault(AbstractFunction const& function) {
+	return "";
+}
+
+std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) {
+	return "";
+}
+
 #endif

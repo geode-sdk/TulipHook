@@ -48,18 +48,31 @@ Result<> X86Generator::generateHandler() {
 	unsigned char* encode;
 	size_t size;
 
-	ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver));
+	if (ks_option(
+		ks, KS_OPT_SYM_RESOLVER,
+		reinterpret_cast<size_t>(&Handler::symbolResolver)
+	) != KS_ERR_OK) {
+		return Err(
+			"Unable to set assembler options for handler: " + 
+			std::string(ks_strerror(ks_errno(ks)))
+		);
+	}
 
 	auto code = this->handlerString();
 
 	std::cout << code << "\n";
 
-	// std::cout << "handler: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_handler), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
 		return Err(
 			"Assembling handler failed: " + 
 			std::string(ks_strerror(ks_errno(ks)))
+		);
+	}
+
+	if (!size && code.size()) {
+		return Err(
+			"Assembling handler failed: Unknown error (no bytes were written)"
 		);
 	}
 
@@ -90,6 +103,12 @@ Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 		);
 	}
 
+	if (!size && code.size()) {
+		return Err(
+			"Assembling intervener failed: Unknown error (no bytes were written)"
+		);
+	}
+
 	std::vector<uint8_t> ret(encode, encode + size);
 
 	ks_free(encode);
@@ -109,12 +128,18 @@ Result<> X86Generator::generateTrampoline(size_t offset) {
 	auto code = this->trampolineString(offset);
 	auto address = reinterpret_cast<size_t>(m_trampoline) + offset;
 
-	// std::cout << "handler: " << code << std::endl;
+	std::cout << "trampoline: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), address, &encode, &size, &count);
 	if (status != KS_ERR_OK) {
 		return Err(
 			"Assembling trampoline failed: " + 
 			std::string(ks_strerror(ks_errno(ks)))
+		);
+	}
+
+	if (!size && code.size()) {
+		return Err(
+			"Assembling trampoline failed: Unknown error (no bytes were written)"
 		);
 	}
 
@@ -156,6 +181,7 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 				);
 			}
 			else {
+				cs_free(insn, 1);
 				return Err("Not supported, displacement didn't work");
 			}
 		}
@@ -171,12 +197,6 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 std::string X86Generator::intervenerString() {
 	std::ostringstream out;
 	out << "jmp _handler" << m_address;
-	return out.str();
-}
-
-std::string X86Generator::trampolineString(size_t offset) {
-	std::ostringstream out;
-	out << "jmp _address" << m_address << "_" << offset; 
 	return out.str();
 }
 

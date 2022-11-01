@@ -16,6 +16,10 @@ Result<> WindowsTarget::allocatePage() {
 		MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
 	);
 
+	if (!m_allocatedPage) {
+		return Err("Unable to allocate memory: " + std::to_string(GetLastError()));
+	}
+
 	m_currentOffset = 0;
 	m_remainingOffset = 0x4000;
 
@@ -59,10 +63,8 @@ WindowsTarget& WindowsTarget::get() {
 }
 
 Result<ks_engine*> WindowsTarget::openKeystone() {
-	ks_err status;
 
-	status = ks_open(KS_ARCH_X86, KS_MODE_32, &m_keystone);
-	if (status != KS_ERR_OK) {
+	if (ks_open(KS_ARCH_X86, KS_MODE_32, &m_keystone) != KS_ERR_OK) {
 		return Err("Couldn't open keystone");
 	}
 
