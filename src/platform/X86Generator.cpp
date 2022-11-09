@@ -27,6 +27,9 @@ void X86Generator::generateHandler() {
 
 	ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver));
 
+	// for debuggers to not cry
+	std::fill_n(reinterpret_cast<char*>(reinterpret_cast<size_t>(m_handler) - 10), 10, '\x90');
+
 	auto code = this->handlerString();
 
 	// std::cout << "handler: " << code << std::endl;
@@ -107,6 +110,9 @@ size_t X86Generator::relocateOriginal(size_t target) {
 	uint64_t address = reinterpret_cast<uint64_t>(m_trampoline);
 	uint8_t const* code = reinterpret_cast<uint8_t const*>(m_trampoline);
 	size_t size = 32;
+
+	// for debuggers to not cry
+	std::fill_n(reinterpret_cast<char*>(address - 10), 10, '\x90');
 
 	auto difference = reinterpret_cast<uint64_t>(m_trampoline) - reinterpret_cast<uint64_t>(m_address);
 

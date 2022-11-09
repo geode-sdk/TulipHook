@@ -2,32 +2,32 @@
 #include <iostream>
 #include <cassert>
 
-int32_t function(int a, int b, int c, int d, int e, int f, int g, int h, int i) {
+int32_t function(int a, int b, int c, int d, int e, int f) {
 	std::cout << "function called!\n" 
 	<< a << " " 
 	<< b << " " 
 	<< c << " " 
 	<< d << " " 
 	<< e << " " 
-	<< f << " " 
-	<< g << " " 
-	<< h << " " 
-	<< i << " \n";
+	<< f << " \n"; 
+	// << g << " " 
+	// << h << " " 
+	// << i << " \n";
 
 	return 1;
 }
 
-int32_t hook(int a, int b, int c, int d, int e, int f, int g, int h, int i) {
+int32_t hook(int a, int b, int c, int d, int e, int f) {
 	std::cout << "hook begin!\n";
-	auto ret = function(a, b, c, d, e, f, g, h, i);
+	auto ret = function(a, b, c, d, e, f);
 	std::cout << "hook end!\n";
 
 	return 3;
 }
 
-int32_t priorityHook(int a, int b, int c, int d, int e, int f, int g, int h, int i) {
+int32_t priorityHook(int a, int b, int c, int d, int e, int f) {
 	std::cout << "priority hook begin!\n";
-	auto ret = function(a, b, c, d, e, f, g, h, i);
+	auto ret = function(a, b, c, d, e, f);
 	std::cout << "priority hook end!\n";
 
 	return ret + 3;
@@ -39,7 +39,7 @@ HandlerHandle makeHandler() {
 	std::cout << "\nmakeHandler\n";
 	HandlerMetadata handlerMetadata;
 	handlerMetadata.m_convention = std::make_unique<PlatformConvention>();
-	handlerMetadata.m_abstract = AbstractFunction::from<int32_t(int, int, int, int, int, int, int, int, int)>();
+	handlerMetadata.m_abstract = AbstractFunction::from<int32_t(int, int, int, int, int, int)>();
 
 	auto handle = createHandler(reinterpret_cast<void*>(&function), std::move(handlerMetadata));
 
@@ -93,7 +93,7 @@ void destroyPriorityHook(HandlerHandle const& handle, HookHandle const& handle2)
 }
 
 int callFunction() {
-	return function(1, 2, 3, 4, 5, 6, 7, 8, 9);
+	return function(1, 2, 3, 4, 5, 6);
 }
 
 
@@ -103,7 +103,12 @@ int main() {
 
 	// Handler, no hooks
 	HandlerHandle handlerHandle = makeHandler();
+	int a;
+	std::cin >> a;
+
 	assert(callFunction() == 1);
+
+	std::cin >> a;
 
 	// Single hook (hook -> function)
 	HookHandle hookHandle = makeHook(handlerHandle);
