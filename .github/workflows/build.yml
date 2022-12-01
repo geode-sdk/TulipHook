@@ -18,7 +18,7 @@ jobs:
           os: windows-2022
           # prefixes: ''
           extra_flags: '-DCMAKE_C_COMPILER=ccache -DCMAKE_CXX_COMPILER=ccache -T host=x86 -A win32'
-          out_paths: './build/src/Debug/libTulipHook.lib ./build/test/Debug/TulipHookTest'
+          out_paths: './build/src/Debug/TulipHook.lib ./build/src/Debug/TulipHook.pdb ./build/test/Debug/TulipHookTest.exe'
           cli_cmd: ''
 
         - name: "macOS"
@@ -42,10 +42,17 @@ jobs:
         arch: x86
       if: matrix.config.os_identifier == 'win'
 
+    - name: Update ccache
+      shell: bash
+      run: |
+        choco install ccache
+        ccache --version
+      if: matrix.config.os_identifier == 'win'
+
     - name: Configure ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
-        key: ${{ matrix.config.os }}
+        key: v1-${{ matrix.config.os }}-${{ github.ref }}
 
     - name: Configure CMake
       shell: bash
