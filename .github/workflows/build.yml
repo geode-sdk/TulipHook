@@ -16,7 +16,7 @@ jobs:
         - name: "Windows"
           os_identifier: "win"
           os: windows-2022
-          # prefixes: ''
+          prefixes: ''
           extra_flags: '-DCMAKE_C_COMPILER=ccache -DCMAKE_CXX_COMPILER=ccache -T host=x86 -A win32'
           out_paths: './build/src/Debug/TulipHook.lib ./build/src/Debug/TulipHook.pdb ./build/test/Debug/TulipHookTest.exe'
           cli_cmd: ''
@@ -24,8 +24,8 @@ jobs:
         - name: "macOS"
           os_identifier: "mac"
           os: macos-latest
-          # prefixes: 'PATH="/usr/local/opt/ccache/libexec:$PATH"'
-          extra_flags: "-DCMAKE_C_COMPILER=ccache -DCMAKE_CXX_COMPILER=ccache -DCMAKE_BUILD_TYPE=Debug"
+          prefixes: 'PATH="/usr/local/opt/ccache/libexec:$PATH"'
+          extra_flags: "-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug"
           out_paths: './build/src/libTulipHook.a ./build/test/TulipHookTest'
           cli_cmd: 'chmod +x $GITHUB_WORKSPACE/cli/geode'
           
@@ -58,9 +58,7 @@ jobs:
       shell: bash
       working-directory: ${{ github.workspace }}
       run: >
-        ${{ matrix.config.prefixes }} cmake -B 
-        ./build 
-        ${{ matrix.config.extra_flags }}
+        ${{ matrix.config.prefixes }} cmake -B ./build ${{ matrix.config.extra_flags }}
 
     - name: Build
       shell: bash
