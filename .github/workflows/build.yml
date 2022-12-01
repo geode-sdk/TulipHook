@@ -49,13 +49,15 @@ jobs:
 
     - name: Configure CMake
       shell: bash
+      working-directory: ${{ github.workspace }}
       run: >
         ${{ matrix.config.prefixes }} cmake -B 
-        ${{ github.workspace }}/build 
+        ./build 
         ${{ matrix.config.extra_flags }}
 
     - name: Build
       shell: bash
+      working-directory: ${{ github.workspace }}
       run: |
         cd build
         cmake --build . --config Debug --parallel
