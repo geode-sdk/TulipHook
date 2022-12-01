@@ -13,14 +13,21 @@ using namespace tulip::hook;
 
 Handler::Handler(void* address, HandlerMetadata metadata) : m_address(address), m_metadata(metadata) {
 
-	auto area1 = PlatformTarget::get().allocateArea(448);
+	auto area1 = PlatformTarget::get().allocateArea(512);
 	m_content = reinterpret_cast<HandlerContent*>(area1);
-
 	auto content = new (m_content) HandlerContent();
-	m_handler = reinterpret_cast<void*>(reinterpret_cast<HandlerContent*>(area1) + 1);
 
-	auto area2 = PlatformTarget::get().allocateArea(64);
-	m_trampoline = area2;
+	std::cout << std::hex << "m_content: " << (void*)m_content << std::endl;
+
+	auto area2 = PlatformTarget::get().allocateArea(448);
+	m_handler = reinterpret_cast<void*>(area2);
+
+	std::cout << std::hex << "m_handler: " << (void*)m_handler << std::endl;
+
+	auto area3 = PlatformTarget::get().allocateArea(64);
+	m_trampoline = area3;
+
+	std::cout << std::hex << "m_trampoline: " << (void*)m_trampoline << std::endl;
 
 }
 
@@ -158,8 +165,9 @@ bool TULIP_HOOK_DEFAULT_CONV Handler::symbolResolver(char const* csymbol, uint64
 
 static thread_local std::stack<size_t> s_indexStack;
 static thread_local std::stack<HandlerContent*> s_addressStack;
+static thread_local std::stack<void*> s_dataStack;
 
-void TULIP_HOOK_DEFAULT_CONV Handler::incrementIndex(HandlerContent* content) {
+void Handler::incrementIndex(HandlerContent* content) {
 	// printf("incrementIndex - content addr: 0x%" PRIx64 "\n", (uint64_t)content);
 	if (s_addressStack.size() == 0 || s_addressStack.top() != content) {
 		// new entry
@@ -173,7 +181,7 @@ void TULIP_HOOK_DEFAULT_CONV Handler::incrementIndex(HandlerContent* content) {
 	// printf("incrementIndex - top: 0x%" PRIx64 "\n", (uint64_t)s_indexStack.top());
 }
 
-void TULIP_HOOK_DEFAULT_CONV Handler::decrementIndex() {
+void Handler::decrementIndex() {
 	// printf("decrementIndex\n");
 	if (s_indexStack.top() == 0) {
 		s_addressStack.pop();
@@ -184,10 +192,19 @@ void TULIP_HOOK_DEFAULT_CONV Handler::decrementIndex() {
 	}
 }
 
-void* TULIP_HOOK_DEFAULT_CONV Handler::getNextFunction(HandlerContent* content) {
+void* Handler::getNextFunction(HandlerContent* content) {
 	// printf("getNextFunction - content addr: 0x%" PRIx64 " index: %lu\n", (uint64_t)content, s_indexStack.top() % content->m_size);
 	auto ret = content->m_functions[s_indexStack.top() % content->m_size];
 	// printf("getNextFunction - next func addr: 0x%" PRIx64 "\n", (uint64_t)ret);
 	return ret;
 }
 
+
+void* Handler::popData() {
+	auto ret = s_dataStack.top();
+	s_dataStack.pop();
+	return ret;
+}
+void Handler::pushData(void* data) {
+	s_dataStack.push(data);
+}

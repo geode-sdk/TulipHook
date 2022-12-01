@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 #include <CallingConvention.hpp>
+#include <iostream>
 
 using namespace tulip::hook;
 
@@ -32,11 +33,16 @@ void X86Generator::generateHandler() {
 
 	auto code = this->handlerString();
 
-	// std::cout << "handler: " << code << std::endl;
+	std::cout << "handler: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_handler), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		throw std::runtime_error("TulipHook - assembling handler failed");
+		throw std::runtime_error(std::string("TulipHook - assembling handler failed: ") + ks_strerror(ks_errno(ks)));
 	}
+	std::cout << "size: " << size << "\n";
+	for (auto i = 0; i < size; ++i) {
+		std::cout << std::hex << +encode[i] << " ";
+	}
+	std::cout << "\n";
 
 	std::memcpy(m_handler, encode, size);
 
@@ -57,11 +63,16 @@ std::vector<uint8_t> X86Generator::generateIntervener() {
 
 	auto code = this->intervenerString();
 
-	// std::cout << "intervener: " << code << std::endl;
+	std::cout << "intervener: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		throw std::runtime_error("TulipHook - assembling intervener failed");
+		throw std::runtime_error(std::string("TulipHook - assembling intervener failed: ") + ks_strerror(ks_errno(ks)));
 	}
+	std::cout << "size: " << size << "\n";
+	for (auto i = 0; i < size; ++i) {
+		std::cout << std::hex << +encode[i] << " ";
+	}
+	std::cout << "\n";
 
 	std::vector<uint8_t> ret(encode, encode + size);
 
@@ -147,13 +158,25 @@ size_t X86Generator::relocateOriginal(size_t target) {
 
 std::string X86Generator::intervenerString() {
 	std::ostringstream out;
+
 	out << "jmp _handler" << m_address;
+
 	return out.str();
 }
 
 std::string X86Generator::trampolineString(size_t offset) {
 	std::ostringstream out;
-	out << "jmp _address" << m_address << "_" << offset; 
+	out << std::hex;
+	
+	out << R"ASM(
+	mov rax, [rip + _offsetAddress]
+	jmp rax
+)ASM";
+
+	out << R"ASM(
+_offsetAddress:
+	dq 0x)ASM" << reinterpret_cast<uint64_t>(m_address) + offset;
+
 	return out.str();
 }
 

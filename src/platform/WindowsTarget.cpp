@@ -50,6 +50,7 @@ ks_engine* WindowsTarget::openKeystone() {
 	ks_err status;
 
 	status = ks_open(KS_ARCH_X86, KS_MODE_32, &m_keystone);
+	ks_option(m_keystone, KS_OPT_SYNTAX, KS_OPT_SYNTAX_NASM);
 	if (status != KS_ERR_OK) {
 		throw std::runtime_error("TulipHook - couldn't open keystone");
 	}

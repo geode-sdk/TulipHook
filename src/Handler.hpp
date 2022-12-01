@@ -51,9 +51,12 @@ namespace tulip::hook {
 
 		static bool TULIP_HOOK_DEFAULT_CONV symbolResolver(char const* symbol, uint64_t* value);
 
-		static TULIP_HOOK_DLL void TULIP_HOOK_DEFAULT_CONV incrementIndex(HandlerContent* content);
-		static TULIP_HOOK_DLL void TULIP_HOOK_DEFAULT_CONV decrementIndex();
-		static TULIP_HOOK_DLL void* TULIP_HOOK_DEFAULT_CONV getNextFunction(HandlerContent* content);
+		static void incrementIndex(HandlerContent* content);
+		static void decrementIndex();
+		static void* getNextFunction(HandlerContent* content);
+
+		static void* popData();
+		static void pushData(void* data);
 
 		void interveneFunction();
 		void restoreFunction();

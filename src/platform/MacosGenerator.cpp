@@ -11,12 +11,21 @@ using namespace tulip::hook;
 #if defined(TULIP_HOOK_MACOS)
 
 namespace {
-	inline auto align16(auto in) {
-		return (((in + 15) / 16) * 16);
+	void* TULIP_HOOK_DEFAULT_CONV preHandler(
+		HandlerContent* content,
+		void* originalReturn
+	) {
+		Handler::incrementIndex(content);
+		auto ret = Handler::getNextFunction(content);
+		Handler::pushData(originalReturn);
+
+		return ret;
 	}
 
-	inline auto align8(auto in) {
-		return (((in + 7) / 8) * 8);
+	void* TULIP_HOOK_DEFAULT_CONV postHandler() {
+		auto ret = Handler::popData();
+		Handler::decrementIndex();
+		return ret;
 	}
 }
 
@@ -25,115 +34,109 @@ std::string MacosGenerator::handlerString() {
 	// keystone uses hex by default
 	out << std::hex;
 
-	// how many stack space is used by parameters
-	auto totalCount = 0;
-	auto floatingCount = 0;
-	auto registerCount = 0;
-	for (auto& param : m_metadata.m_abstract.m_parameters) {
-		switch (param.m_type) {
-			case AbstractTypeType::Primitive:
-				registerCount += (param.m_size + 7) / 8;
-				break;
-			case AbstractTypeType::FloatingPoint:
-				if (floatingCount < 8) ++floatingCount;
-			default:
-				++registerCount;
-		}
-	}
-	if (m_metadata.m_abstract.m_return.m_size > 16) ++registerCount; // struct return
+	out << R"ASM(
 
-	auto stackCount = std::max(registerCount - 6, 0) + std::max(floatingCount - 8, 0);
-	auto stackParamSize = 
-	auto xmmStartOffset = align16(stackCount * 8) + 8;
-	auto localSize = align16(floatingCount * 8 + xmmStartOffset) + 8;
+	; preserve registers
+	sub rsp, 0xb8
 
-	// function start
-	out << "push rbp; push r15; push r14; push r13; push r12; push rbx; push rax; sub rsp, " << localSize << ";";
+	mov [rsp + 0xa8], r9
+	mov [rsp + 0xa0], r8
+	mov [rsp + 0x98], rcx
+	mov [rsp + 0x90], rdx
+	mov [rsp + 0x88], rsi
+	mov [rsp + 0x80], rdi
+	movaps [rsp + 0x70], xmm7
+	movaps [rsp + 0x60], xmm6
+	movaps [rsp + 0x50], xmm5
+	movaps [rsp + 0x40], xmm4
+	movaps [rsp + 0x30], xmm3
+	movaps [rsp + 0x20], xmm2
+	movaps [rsp + 0x10], xmm1
+	movaps [rsp + 0x00], xmm0
 
-	// retain register parameters
-	switch (registerCount) {
-		default:
-		case 6: 
-			out << "mov r14, r9; ";
-			[[fallthrough]];
-		case 5:
-			out << "mov r15, r8; ";
-			[[fallthrough]];
-		case 4:
-			out << "mov r12, rcx; ";
-			[[fallthrough]];
-		case 3:
-			out << "mov r13, rdx; ";
-			[[fallthrough]];
-		case 2:
-			out << "mov rbx, rsi; ";
-			[[fallthrough]];
-		case 1:
-			out << "mov rbp, rdi; ";
-			[[fallthrough]];
-	}
+	; preserve the original return
+	mov rax, [rsp + 0xb8]
 
-	// retain sse parameters
-	for (auto i = std::min(floatingCount, 7); i > 0; --i) {
-		out << "movsd qword ptr [rsp + " << xmmStartOffset + i * 8 << "], xmm" << i << "; ";
-	}
+	; set the new return
+	lea rdi, [rip + _handlerCont]
+	mov [rsp + 0xb8], rdi
 
-	// increment and get function
-	out << "lea rdi, [rip + _content" << m_address << "]; call _incrementIndex; lea rdi, [rip + _content" << m_address << "]; call _getNextFunction; ";
+	; set the parameters
+	mov rdi, [rip + _content]
+	mov rsi, rax
+
+	; call the pre handler, incrementing
+	mov rax, [rip + _handlerPre]
+	call rax
+
+	; recover registers
+	mov r9, [rsp + 0xa8]
+	mov r8, [rsp + 0xa0]
+	mov rcx, [rsp + 0x98]
+	mov rdx, [rsp + 0x90]
+	mov rsi, [rsp + 0x88]
+	mov rdi, [rsp + 0x80]
+	movaps xmm7, [rsp + 0x70]
+	movaps xmm6, [rsp + 0x60]
+	movaps xmm5, [rsp + 0x50]
+	movaps xmm4, [rsp + 0x40]
+	movaps xmm3, [rsp + 0x30]
+	movaps xmm2, [rsp + 0x20]
+	movaps xmm1, [rsp + 0x10]
+	movaps xmm0, [rsp + 0x00]
+
+	add rsp, 0xb8
 
 
-	// restore register parameters
-	out << "mov rdi, rbp; mov rsi, rbx; mov rdx, r13; mov rcx, r12; mov r8, r15; mov r9, r14; ";
+	; call the func
+	jmp rax
 
-	// restore register parameters
-	switch (registerCount) {
-		default:
-		case 6: 
-			out << "mov r9, r14; ";
-			[[fallthrough]];
-		case 5:
-			out << "mov r8, r15; ";
-			[[fallthrough]];
-		case 4:
-			out << "mov rcx, r12; ";
-			[[fallthrough]];
-		case 3:
-			out << "mov rdx, r13; ";
-			[[fallthrough]];
-		case 2:
-			out << "mov rsi, rbx; ";
-			[[fallthrough]];
-		case 1:
-			out << "mov rdi, rbp; ";
-			[[fallthrough]];
-	}
+_handlerCont:
+	sub rsp, 0x8
 
-	auto oddAdd = totalCount % 2;
-	static constexpr auto xmmAdd = 4;
+	; preserve the return values
+	sub rsp, 0x38
 
-	// push the stack parameters
-	for (auto i = 6; i < totalCount; ++i) {
-		out << "mov rbp, [rsp + " << ((totalCount + 1 + oddAdd + xmmAdd) * 8) << "]; push rbp; ";
-	}
+	mov [rsp + 0x28], rdx
+	mov [rsp + 0x20], rax
+	movaps [rsp + 0x10], xmm1
+	movaps [rsp + 0x00], xmm0
 
-	// call 
-	out << "call rax; ";
+	; call the post handler, decrementing
+	mov rax, [rip + _handlerPost]
+	call rax
 
-	if (totalCount > 6) {
-		// fix stack
-		out << "add rsp, " << ((totalCount - 6 + oddAdd + xmmAdd) * 8) << "; ";
-	}
+	; recover the original return
+	mov [rsp + 0x38], rax
 
-	// decrement and return eax and edx
+	; recover the return values
+	mov rdx, [rsp + 0x28]
+	mov rax, [rsp + 0x20]
+	movaps xmm1, [rsp + 0x10]
+	movaps xmm0, [rsp + 0x00]
 
-	// retain returns
-	out << "mov rbx, rax; mov r14, rdx; movaps xmmword ptr [rsp + 16], xmm0; movaps xmmword ptr [rsp], xmm1; "
-	// decrease the function index
-	<< "call _decrementIndex; " 
-	// restore returns
-	<< "movaps  xmm0, xmmword ptr [rsp + 16]; movaps  xmm1, xmmword ptr [rsp]; mov rax, rbx; mov rdx, r14; " 
-	// function end
-	<< "add rsp, 40; pop rbx; pop r12; pop r13; pop r14; pop r15; pop rbp ";
+	add rsp, 0x38
+	
+	; done!
+	ret
+)ASM";
+
+	out << R"ASM(
+_handlerPre: 
+	dq 0x)ASM" << reinterpret_cast<uint64_t>(preHandler);
+
+	out << R"ASM(
+_handlerPost: 
+	dq 0x)ASM" << reinterpret_cast<uint64_t>(postHandler);
+
+	out << R"ASM(
+_content: 
+	dq 0x)ASM" << reinterpret_cast<uint64_t>(m_content);
+
+	out << R"ASM(
+_originalReturn: 
+	dq 0x0)ASM";
+
 	return out.str();
 }
 
