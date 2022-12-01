@@ -71,8 +71,6 @@ jobs:
       shell: bash
       working-directory: ${{ github.workspace }}
       run: |
-        ls ./build/src/Debug
-        ls ./build/test/Debug
         mkdir ./out
         mv ${{ matrix.config.out_paths }} ./out
     
