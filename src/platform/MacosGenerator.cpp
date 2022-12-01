@@ -10,6 +10,16 @@ using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_MACOS)
 
+namespace {
+	inline auto align16(auto in) {
+		return (((in + 15) / 16) * 16);
+	}
+
+	inline auto align8(auto in) {
+		return (((in + 7) / 8) * 8);
+	}
+}
+
 std::string MacosGenerator::handlerString() {
 	std::ostringstream out;
 	// keystone uses hex by default
@@ -33,13 +43,14 @@ std::string MacosGenerator::handlerString() {
 	if (m_metadata.m_abstract.m_return.m_size > 16) ++registerCount; // struct return
 
 	auto stackCount = std::max(registerCount - 6, 0) + std::max(floatingCount - 8, 0);
-	auto xmmStartOffset = std::max(registerCount - 6, 0) * 8;
-	auto localSize = floatingCount * 8 + xmmStartOffset;
+	auto stackParamSize = 
+	auto xmmStartOffset = align16(stackCount * 8) + 8;
+	auto localSize = align16(floatingCount * 8 + xmmStartOffset) + 8;
 
 	// function start
 	out << "push rbp; push r15; push r14; push r13; push r12; push rbx; push rax; sub rsp, " << localSize << ";";
 
-	// retain parameters
+	// retain register parameters
 	switch (registerCount) {
 		default:
 		case 6: 
@@ -62,7 +73,7 @@ std::string MacosGenerator::handlerString() {
 			[[fallthrough]];
 	}
 
-	// retain xmm parameters
+	// retain sse parameters
 	for (auto i = std::min(floatingCount, 7); i > 0; --i) {
 		out << "movsd qword ptr [rsp + " << xmmStartOffset + i * 8 << "], xmm" << i << "; ";
 	}
@@ -70,13 +81,32 @@ std::string MacosGenerator::handlerString() {
 	// increment and get function
 	out << "lea rdi, [rip + _content" << m_address << "]; call _incrementIndex; lea rdi, [rip + _content" << m_address << "]; call _getNextFunction; ";
 
-	// align stack to 16
-	if (totalCount % 2 == 1) {
-		out << "sub rsp, 8; ";
-	}
 
 	// restore register parameters
 	out << "mov rdi, rbp; mov rsi, rbx; mov rdx, r13; mov rcx, r12; mov r8, r15; mov r9, r14; ";
+
+	// restore register parameters
+	switch (registerCount) {
+		default:
+		case 6: 
+			out << "mov r9, r14; ";
+			[[fallthrough]];
+		case 5:
+			out << "mov r8, r15; ";
+			[[fallthrough]];
+		case 4:
+			out << "mov rcx, r12; ";
+			[[fallthrough]];
+		case 3:
+			out << "mov rdx, r13; ";
+			[[fallthrough]];
+		case 2:
+			out << "mov rsi, rbx; ";
+			[[fallthrough]];
+		case 1:
+			out << "mov rdi, rbp; ";
+			[[fallthrough]];
+	}
 
 	auto oddAdd = totalCount % 2;
 	static constexpr auto xmmAdd = 4;
