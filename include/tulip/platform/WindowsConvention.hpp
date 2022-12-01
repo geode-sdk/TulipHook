@@ -16,6 +16,8 @@ namespace tulip::hook {
 
 		std::string generateFromDefault(AbstractFunction const& function) override;
 		std::string generateToDefault(AbstractFunction const& function) override;
+		std::string generateBackFromDefault(AbstractFunction const& function) override;
+		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
 	};
 
 	class ThiscallConvention : public CallingConvention {
@@ -24,6 +26,8 @@ namespace tulip::hook {
 
 		std::string generateFromDefault(AbstractFunction const& function) override;
 		std::string generateToDefault(AbstractFunction const& function) override;
+		std::string generateBackFromDefault(AbstractFunction const& function) override;
+		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
 	};
 
 	class FastcallConvention : public CallingConvention {
@@ -32,6 +36,8 @@ namespace tulip::hook {
 
 		std::string generateFromDefault(AbstractFunction const& function) override;
 		std::string generateToDefault(AbstractFunction const& function) override;
+		std::string generateBackFromDefault(AbstractFunction const& function) override;
+		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
 	};
 
 	class OptcallConvention : public CallingConvention {
@@ -40,6 +46,8 @@ namespace tulip::hook {
 
 		std::string generateFromDefault(AbstractFunction const& function) override;
 		std::string generateToDefault(AbstractFunction const& function) override;
+		std::string generateBackFromDefault(AbstractFunction const& function) override;
+		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
 	};
 
 	class MembercallConvention : public CallingConvention {
@@ -48,6 +56,8 @@ namespace tulip::hook {
 
 		std::string generateFromDefault(AbstractFunction const& function) override;
 		std::string generateToDefault(AbstractFunction const& function) override;
+		std::string generateBackFromDefault(AbstractFunction const& function) override;
+		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
 	};
 
 	using PlatformConvention = CdeclConvention;

@@ -16,6 +16,8 @@ namespace tulip::hook {
 
 		std::string generateFromDefault(AbstractFunction const& function) override;
 		std::string generateToDefault(AbstractFunction const& function) override;
+		std::string generateBackFromDefault(AbstractFunction const& function) override;
+		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
 	};
 
 	using PlatformConvention = DefaultConvention;

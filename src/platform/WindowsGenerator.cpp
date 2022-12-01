@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include <CallingConvention.hpp>
+#include <iostream>
 
 using namespace tulip::hook;
 
@@ -126,6 +127,13 @@ _content:
 _originalReturn: 
 	dd 0x0)ASM";
 
+	return out.str();
+}
+
+std::string WindowsGenerator::trampolineString(size_t offset) {
+	std::ostringstream out;
+	out << m_metadata.m_convention->generateBackToDefault(m_metadata.m_abstract, 0x8) << "; ";
+	out << "jmp _address" << m_address << "_" << offset;
 	return out.str();
 }
 

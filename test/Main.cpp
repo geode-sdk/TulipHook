@@ -1,6 +1,7 @@
 #include <TulipHook.hpp>
 #include <iostream>
 #include <cassert>
+#include <algorithm>
 
 template <class... Params>
 int32_t function(Params... params) {
@@ -53,14 +54,23 @@ HandlerHandle makeHandler() {
 
 	auto handle = createHandler(reinterpret_cast<void*>(static_cast<FunctionPtrType>(&function)), std::move(handlerMetadata));
 
+	if (handle.isErr()) {
+		std::cout << "unable to create handler: " << handle.unwrapErr() << "\n";
+		exit(1);
+	}
+
 	std::cout << "\nmakeHandler end\n";
 
-	return handle;
+	return handle.unwrap();
 }
 
 void destroyHandler(HandlerHandle const& handle) {
 	std::cout << "\ndestroyHandler\n";
-	removeHandler(handle);
+	auto rem = removeHandler(handle);
+	if (rem.isErr()) {
+		std::cout << "unable to remove handler: " << rem.unwrapErr() << "\n";
+		exit(1);
+	}
 
 	std::cout << "\ndestroyHandler end\n";
 }
@@ -101,6 +111,46 @@ void destroyPriorityHook(HandlerHandle const& handle, HookHandle const& handle2)
 
 	std::cout << "\ndestroyPriorityHook end\n";
 }
+
+#ifdef TULIP_HOOK_WINDOWS
+
+struct Big {
+	int x;
+	int y;
+	int z;
+};
+
+int cconvTest0(Big stack1, int ecx, float stack2) {
+	assert(stack1.x == 1);
+	assert(stack1.y == 2);
+	assert(stack1.z == 3);
+	assert(ecx == 4);
+	assert(stack2 == 5.f);
+	return 6;
+}
+
+int cconvTest1(Big stack1, int ecx, float stack2, int edx, float stack3) {
+	assert(stack1.x == 1);
+	assert(stack1.y == 2);
+	assert(stack1.z == 3);
+	assert(ecx == 4);
+	assert(stack2 == 5.f);
+	assert(edx == 6);
+	assert(stack3 == 7.f);
+	return 8;
+}
+
+Big cconvTest2(Big stack1, float stack2, int edx, float stack3) {
+	assert(stack1.x == 1);
+	assert(stack1.y == 2);
+	assert(stack1.z == 3);
+	assert(stack2 == 5.f);
+	assert(edx == 6);
+	assert(stack3 == 7.f);
+	return { 8, 9, 10 };
+}
+
+#endif
 
 int callFunction() {
 	return function(
@@ -148,4 +198,37 @@ int main() {
 	// Recreate the handler
 	HandlerHandle handlerHandle2 = makeHandler();
 	assert(callFunction() == 1);
+
+	// Calling convention asm
+#ifdef TULIP_HOOK_WINDOWS
+
+	auto conv = std::make_unique<OptcallConvention>();
+	auto func0 = AbstractFunction::from(&cconvTest0);
+	auto func1 = AbstractFunction::from(&cconvTest1);
+	auto func2 = AbstractFunction::from(&cconvTest2);
+
+	auto prettify = +[](std::string str) {
+		size_t f;
+		while ((f = str.find("; ")) != std::string::npos) {
+			str = str.replace(str.begin() + f, str.begin() + f + 2, "\n", 1);
+		}
+		return str;
+	};
+
+	std::cout << "cconvTest0 optcall => cdecl\n";
+	std::cout << prettify(conv->generateToDefault(func0)) << "\n";
+	std::cout << "cconvTest0 cdecl => optcall\n";
+	std::cout << prettify(conv->generateFromDefault(func0)) << "\n\n";
+
+	std::cout << "cconvTest1 optcall => cdecl\n";
+	std::cout << prettify(conv->generateToDefault(func1)) << "\n";
+	std::cout << "cconvTest1 cdecl => optcall\n";
+	std::cout << prettify(conv->generateFromDefault(func1)) << "\n\n";
+
+	std::cout << "cconvTest2 optcall => cdecl\n";
+	std::cout << prettify(conv->generateToDefault(func2)) << "\n";
+	std::cout << "cconvTest2 cdecl => optcall\n";
+	std::cout << prettify(conv->generateFromDefault(func2)) << "\n\n";
+
+#endif
 }

@@ -13,13 +13,13 @@ namespace tulip::hook {
 
 		static MacosTarget& get();
 
-		ks_engine* openKeystone() override;
-		csh openCapstone() override;
+		Result<ks_engine*> openKeystone() override;
+		Result<csh> openCapstone() override;
 
-		void allocatePage() override;
-		uint32_t getProtection(void* address) override;
-		void protectMemory(void* address, size_t size, uint32_t protection) override;
-		void rawWriteMemory(void* destination, void* source, size_t size) override;
+		Result<> allocatePage() override;
+		Result<uint32_t> getProtection(void* address) override;
+		Result<> protectMemory(void* address, size_t size, uint32_t protection) override;
+		Result<> rawWriteMemory(void* destination, void* source, size_t size) override;
 		uint32_t getMaxProtection() override;
 	};
 
