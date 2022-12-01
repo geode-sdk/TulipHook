@@ -140,4 +140,10 @@ _originalReturn:
 	return out.str();
 }
 
+std::string MacosGenerator::trampolineString(size_t offset) {
+	std::ostringstream out;
+	out << "jmp _address" << m_address << "_" << offset; 
+	return out.str();
+}
+
 #endif

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <HandlerData.hpp>
-
+#include <Result.hpp>
 #include <memory>
 
 namespace tulip::hook {
@@ -16,10 +16,10 @@ namespace tulip::hook {
 
 		Generator(void* address, void* trampoline, void* handler, void* content, HandlerMetadata metadata);
 
-		virtual void generateHandler() = 0;
-		virtual std::vector<uint8_t> generateIntervener() = 0;
-		virtual void generateTrampoline(size_t offset) = 0;
-		virtual size_t relocateOriginal(size_t target) = 0;
+		virtual Result<> generateHandler() = 0;
+		virtual Result<std::vector<uint8_t>> generateIntervener() = 0;
+		virtual Result<> generateTrampoline(size_t offset) = 0;
+		virtual Result<size_t> relocateOriginal(size_t target) = 0;
 
 		virtual std::string handlerString() = 0;
 		virtual std::string intervenerString() = 0;

@@ -26,3 +26,6 @@ _deps
 # Ignore build folders
 **/build
 build
+
+balls.asm
+balls2.asm

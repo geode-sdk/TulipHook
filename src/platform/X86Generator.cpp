@@ -8,6 +8,8 @@
 #include <CallingConvention.hpp>
 #include <iostream>
 
+#include <iostream>
+
 using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_MACOS)
@@ -18,25 +20,64 @@ using X86Generator = WindowsGenerator;
 
 #if defined(TULIP_HOOK_MACOS) || defined(TULIP_HOOK_WINDOWS)
 
-void X86Generator::generateHandler() {
+template<class T, auto Fun>
+struct RAIIHolder {
+	T m_engine;
 
-	auto ks = PlatformTarget::get().openKeystone();
+	RAIIHolder(T engine) : m_engine(engine) {}
+	~RAIIHolder() {
+		Fun();
+	}
+	operator T() {
+		return m_engine;
+	}
+};
+static void keystoneCloseFun() {
+	PlatformTarget::get().closeKeystone();
+};
+using KSHolder = RAIIHolder<ks_engine*, &keystoneCloseFun>;
+static void capstoneCloseFun() {
+	PlatformTarget::get().closeCapstone();
+};
+using CSHolder = RAIIHolder<csh, &capstoneCloseFun>;
+
+Result<> X86Generator::generateHandler() {
+
+	TULIP_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
 	size_t size;
 
-	ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver));
+	if (ks_option(
+		ks, KS_OPT_SYM_RESOLVER,
+		reinterpret_cast<size_t>(&Handler::symbolResolver)
+	) != KS_ERR_OK) {
+		return Err(
+			"Unable to set assembler options for handler: " + 
+			std::string(ks_strerror(ks_errno(ks)))
+		);
+	}
 
 	// for debuggers to not cry
 	std::fill_n(reinterpret_cast<char*>(reinterpret_cast<size_t>(m_handler) - 10), 10, '\x90');
 
 	auto code = this->handlerString();
 
-	std::cout << "handler: " << code << std::endl;
+	std::cout << code << "\n";
+
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_handler), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		throw std::runtime_error(std::string("TulipHook - assembling handler failed: ") + ks_strerror(ks_errno(ks)));
+		return Err(
+			"Assembling handler failed: " + 
+			std::string(ks_strerror(ks_errno(ks)))
+		);
+	}
+
+	if (!size && code.size()) {
+		return Err(
+			"Assembling handler failed: Unknown error (no bytes were written)"
+		);
 	}
 	std::cout << "size: " << size << "\n";
 	for (auto i = 0; i < size; ++i) {
@@ -48,12 +89,11 @@ void X86Generator::generateHandler() {
 
 	ks_free(encode);
 
-	PlatformTarget::get().closeKeystone(ks);
-
+	return Ok();
 }
-std::vector<uint8_t> X86Generator::generateIntervener() {
+Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 
-	auto ks = PlatformTarget::get().openKeystone();
+	TULIP_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
@@ -66,7 +106,16 @@ std::vector<uint8_t> X86Generator::generateIntervener() {
 	std::cout << "intervener: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		throw std::runtime_error(std::string("TulipHook - assembling intervener failed: ") + ks_strerror(ks_errno(ks)));
+		return Err(
+			"Assembling intervener failed: " + 
+			std::string(ks_strerror(ks_errno(ks)))
+		);
+	}
+
+	if (!size && code.size()) {
+		return Err(
+			"Assembling intervener failed: Unknown error (no bytes were written)"
+		);
 	}
 	std::cout << "size: " << size << "\n";
 	for (auto i = 0; i < size; ++i) {
@@ -78,13 +127,11 @@ std::vector<uint8_t> X86Generator::generateIntervener() {
 
 	ks_free(encode);
 
-	PlatformTarget::get().closeKeystone(ks);
-
-	return ret;
+	return Ok(ret);
 }
-void X86Generator::generateTrampoline(size_t offset) {
+Result<> X86Generator::generateTrampoline(size_t offset) {
 
-	auto ks = PlatformTarget::get().openKeystone();
+	TULIP_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
@@ -95,24 +142,33 @@ void X86Generator::generateTrampoline(size_t offset) {
 	auto code = this->trampolineString(offset);
 	auto address = reinterpret_cast<size_t>(m_trampoline) + offset;
 
-	// std::cout << "handler: " << code << std::endl;
+	std::cout << "trampoline: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), address, &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		throw std::runtime_error("TulipHook - assembling trampoline failed");
+		return Err(
+			"Assembling trampoline failed: " + 
+			std::string(ks_strerror(ks_errno(ks)))
+		);
+	}
+
+	if (!size && code.size()) {
+		return Err(
+			"Assembling trampoline failed: Unknown error (no bytes were written)"
+		);
 	}
 
 	std::memcpy(reinterpret_cast<void*>(address), encode, size);
 
 	ks_free(encode);
 
-	PlatformTarget::get().closeKeystone(ks);
+	return Ok();
 
 }
-size_t X86Generator::relocateOriginal(size_t target) {
+Result<size_t> X86Generator::relocateOriginal(size_t target) {
 	std::memcpy(m_trampoline, m_address, 32);
 	size_t offset = 0;
 
-	auto cs = PlatformTarget::get().openCapstone();
+	TULIP_UNWRAP_INTO(CSHolder cs, PlatformTarget::get().openCapstone());
 
 	cs_option(cs, CS_OPT_DETAIL, CS_OPT_ON);
 
@@ -142,7 +198,8 @@ size_t X86Generator::relocateOriginal(size_t target) {
 				);
 			}
 			else {
-				throw std::runtime_error("Not supported, displacement didn't work");
+				cs_free(insn, 1);
+				return Err("Not supported, displacement didn't work");
 			}
 		}
 
@@ -151,31 +208,13 @@ size_t X86Generator::relocateOriginal(size_t target) {
 
 	cs_free(insn, 1);
 
-	PlatformTarget::get().closeCapstone(cs);
-
-	return address - reinterpret_cast<uint64_t>(m_trampoline);
+	return Ok(address - reinterpret_cast<uint64_t>(m_trampoline));
 }
 
 std::string X86Generator::intervenerString() {
 	std::ostringstream out;
 
 	out << "jmp _handler" << m_address;
-
-	return out.str();
-}
-
-std::string X86Generator::trampolineString(size_t offset) {
-	std::ostringstream out;
-	out << std::hex;
-	
-	out << R"ASM(
-	mov rax, [rip + _offsetAddress]
-	jmp rax
-)ASM";
-
-	out << R"ASM(
-_offsetAddress:
-	dq 0x)ASM" << reinterpret_cast<uint64_t>(m_address) + offset;
 
 	return out.str();
 }

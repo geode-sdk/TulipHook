@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include <CallingConvention.hpp>
+#include <iostream>
 
 using namespace tulip::hook;
 
@@ -13,76 +14,60 @@ using namespace tulip::hook;
 
 namespace {
 	void* TULIP_HOOK_DEFAULT_CONV preHandler(
-		HandlerContent* content,
-		void* originalReturn
+		HandlerContent* content
 	) {
 		Handler::incrementIndex(content);
 		auto ret = Handler::getNextFunction(content);
-		Handler::pushData(originalReturn);
 
 		return ret;
 	}
 
-	void* TULIP_HOOK_DEFAULT_CONV postHandler() {
-		auto ret = Handler::popData();
+	void TULIP_HOOK_DEFAULT_CONV postHandler() {
 		Handler::decrementIndex();
-		return ret;
 	}
 }
 
 std::string WindowsGenerator::handlerString() {
 	std::ostringstream out;
-	// keystone uses hex by default
 	out << std::hex;
+	out << m_metadata.m_convention->generateToDefault(m_metadata.m_abstract) << "; ";
 
+	// increment and get function
 	out << R"ASM(
-
-	; preserve registers
-	sub esp, 0x68
-
-	mov [esp + 0x64], edx
-	mov [esp + 0x60], ecx
-	movaps [esp + 0x50], xmm5
-	movaps [esp + 0x40], xmm4
-	movaps [esp + 0x30], xmm3
-	movaps [esp + 0x20], xmm2
-	movaps [esp + 0x10], xmm1
-	movaps [esp + 0x00], xmm0
-
-	; preserve the original return
-	mov eax, [esp + 0x68]
-
-	; set the new return
-	lea ecx, [eip + _handlerCont]
-	mov [esp + 0x68], ecx
+	push esi
 
 	; set the parameters
-	mov ecx, [eip + _content]
-	mov edx, eax
-
+	mov eax, [eip + _content]
+	push eax
+	
 	; call the pre handler, incrementing
 	mov eax, [eip + _handlerPre]
 	call eax
+)ASM";
 
-	; recover registers
-	mov edx, [esp + 0x64]
-	mov ecx, [esp + 0x60]
-	movaps xmm5, [esp + 0x50]
-	movaps xmm4, [esp + 0x40]
-	movaps xmm3, [esp + 0x30]
-	movaps xmm2, [esp + 0x20]
-	movaps xmm1, [esp + 0x10]
-	movaps xmm0, [esp + 0x00]
+	size_t stackSize = 0;
+	for (auto& param : m_metadata.m_abstract.m_parameters) {
+		stackSize += (param.m_size + 3) / 4 * 4;
+	}
+	// struct return
+	if (m_metadata.m_abstract.m_return.m_size > 4 * 2) {
+		stackSize += 4;
+	}
 
-	add esp, 0x68
+	// push the stack params
+	for (size_t i = 0; i < stackSize; i += 4) {
+		out << "push [esp + 0x" << (stackSize + 8) << "]\n";
+	}
 
+	// call cdecl
+	out << "call eax\n";
 
-	; call the func
-	jmp eax
-
-_handlerCont:
-	sub esp, 0x8
-
+	// fix stack
+	out << "add esp, 0x" << stackSize << "\n";
+	
+	// decrement and return eax and edx
+	out << R"ASM(
+	
 	; preserve the return values
 	sub esp, 0x28
 
@@ -95,9 +80,6 @@ _handlerCont:
 	mov eax, [eip + _handlerPost]
 	call eax
 
-	; recover the original return
-	mov [esp + 0x28], eax
-
 	; recover the return values
 	mov edx, [esp + 0x24]
 	mov eax, [esp + 0x20]
@@ -105,11 +87,12 @@ _handlerCont:
 	movaps xmm0, [esp + 0x00]
 
 	add esp, 0x28
-	
-	; done!
-	ret
+
+	pop esi
 )ASM";
 
+	out << m_metadata.m_convention->generateFromDefault(m_metadata.m_abstract);
+	
 	out << R"ASM(
 _handlerPre: 
 	dd 0x)ASM" << reinterpret_cast<uint64_t>(preHandler);
@@ -122,10 +105,14 @@ _handlerPost:
 _content: 
 	dd 0x)ASM" << reinterpret_cast<uint64_t>(m_content);
 
-	out << R"ASM(
-_originalReturn: 
-	dd 0x0)ASM";
 
+	return out.str();
+}
+
+std::string WindowsGenerator::trampolineString(size_t offset) {
+	std::ostringstream out;
+	out << m_metadata.m_convention->generateBackToDefault(m_metadata.m_abstract, 0x8) << "; ";
+	out << "jmp _address" << m_address << "_" << offset;
 	return out.str();
 }
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <memory>
-
+#include <Result.hpp>
 #include <HandlerData.hpp>
 
 namespace tulip::hook {
@@ -10,12 +10,12 @@ namespace tulip::hook {
 
 	class Pool {
 	public:
-		std::map<HandlerHandle, std::unique_ptr<Handler>> m_handlers;
+		std::unordered_map<HandlerHandle, std::unique_ptr<Handler>> m_handlers;
 
 		static Pool& get();
 
-		HandlerHandle createHandler(void* address, HandlerMetadata m_metadata);
-		void removeHandler(HandlerHandle const& handler);
+		Result<HandlerHandle> createHandler(void* address, HandlerMetadata m_metadata);
+		Result<> removeHandler(HandlerHandle const& handler);
 
 		Handler& getHandler(HandlerHandle const& handler);
 	};
