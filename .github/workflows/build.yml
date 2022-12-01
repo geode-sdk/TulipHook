@@ -7,9 +7,6 @@ on:
     - '**'              # every branch
     - '!no-build-**'    # unless marked as no-build
 
-env:
-  CCACHE_DIR: ${{ github.workspace }}/ccache
-
 jobs:
   build:
     strategy:
@@ -19,16 +16,16 @@ jobs:
         - name: "Windows"
           os_identifier: "win"
           os: windows-2022
-          prefixes: 'GITHUB_PATH="$CCACHE_DIR/libexec:$GITHUB_PATH"'
-          extra_flags: '-T host=x86 -A win32'
+          # prefixes: ''
+          extra_flags: '-DCMAKE_C_COMPILER=ccache -DCMAKE_CXX_COMPILER=ccache -T host=x86 -A win32'
           out_paths: './build/src/Debug/libTulipHook.lib ./build/Debug/test/TulipHookTest'
           cli_cmd: ''
 
         - name: "macOS"
           os_identifier: "mac"
           os: macos-latest
-          prefixes: 'GITHUB_PATH="$CCACHE_DIR/libexec:$GITHUB_PATH"'
-          extra_flags: "-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug"
+          # prefixes: 'PATH="/usr/local/opt/ccache/libexec:$PATH"'
+          extra_flags: "-DCMAKE_C_COMPILER=ccache -DCMAKE_CXX_COMPILER=ccache -DCMAKE_BUILD_TYPE=Debug"
           out_paths: './build/src/libTulipHook.a ./build/test/TulipHookTest'
           cli_cmd: 'chmod +x $GITHUB_WORKSPACE/cli/geode'
           
