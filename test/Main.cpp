@@ -1,7 +1,7 @@
 #include <TulipHook.hpp>
-#include <iostream>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <iostream>
 
 template <class... Params>
 int32_t function(Params... params) {
@@ -32,93 +32,100 @@ int32_t priorityHook(Params... params) {
 
 using namespace tulip::hook;
 
-using FunctionPtrType = int32_t(*)(
-	int, int, int, int, int, int, 
-	int, int, int,
-	float, float, float, float, float, float, float, float,
-	float, float
+using FunctionPtrType = int32_t (*)(
+	int, int, int, int, int, int, int, int, int, float, float, float, float, float, float, float, float, float, float
 );
 
 HandlerHandle makeHandler() {
-	std::cout << "\nmakeHandler\n";
+	// std::cout << "\nmakeHandler\n";
 	HandlerMetadata handlerMetadata;
 	handlerMetadata.m_convention = std::make_unique<PlatformConvention>();
-	handlerMetadata.m_abstract = AbstractFunction::from<
-		int32_t(
-			int, int, int, int, int, int, 
-			int, int, int,
-			float, float, float, float, float, float, float, float,
-			float, float
-		)
-	>();
+	handlerMetadata.m_abstract = AbstractFunction::from<int32_t(
+		int, int, int, int, int, int, int, int, int, float, float, float, float, float, float, float, float, float, float
+	)>();
 
-	auto handle = createHandler(reinterpret_cast<void*>(static_cast<FunctionPtrType>(&function)), std::move(handlerMetadata));
+	auto handle =
+		createHandler(reinterpret_cast<void*>(static_cast<FunctionPtrType>(&function)), std::move(handlerMetadata));
 
 	if (handle.isErr()) {
 		std::cout << "unable to create handler: " << handle.unwrapErr() << "\n";
 		exit(1);
 	}
 
-	std::cout << "\nmakeHandler end\n";
+	// std::cout << "\nmakeHandler end\n";
 
 	return handle.unwrap();
 }
 
 void destroyHandler(HandlerHandle const& handle) {
-	std::cout << "\ndestroyHandler\n";
+	// std::cout << "\ndestroyHandler\n";
 	auto rem = removeHandler(handle);
 	if (rem.isErr()) {
 		std::cout << "unable to remove handler: " << rem.unwrapErr() << "\n";
 		exit(1);
 	}
 
-	std::cout << "\ndestroyHandler end\n";
+	// std::cout << "\ndestroyHandler end\n";
 }
 
 HookHandle makeHook(HandlerHandle const& handle) {
-	std::cout << "\nmakeHook\n";
+	// std::cout << "\nmakeHook\n";
 	HookMetadata metadata;
 
 	auto handle2 = createHook(handle, reinterpret_cast<void*>(static_cast<FunctionPtrType>(&hook)), std::move(metadata));
 
-	std::cout << "\nmakeHook end\n";
+	// std::cout << "\nmakeHook end\n";
 
 	return handle2;
 }
 
 void destroyHook(HandlerHandle const& handle, HookHandle const& handle2) {
-	std::cout << "\ndestroyHook\n";
+	// std::cout << "\ndestroyHook\n";
 	removeHook(handle, handle2);
 
-	std::cout << "\ndestroyHook end\n";
+	// std::cout << "\ndestroyHook end\n";
 }
 
 HookHandle makePriorityHook(HandlerHandle const& handle) {
-	std::cout << "\nmakePriorityHook\n";
+	// std::cout << "\nmakePriorityHook\n";
 	HookMetadata metadata;
 	metadata.m_priority = -100;
 
-	auto handle2 = createHook(handle, reinterpret_cast<void*>(static_cast<FunctionPtrType>(&priorityHook)), std::move(metadata));
+	auto handle2 =
+		createHook(handle, reinterpret_cast<void*>(static_cast<FunctionPtrType>(&priorityHook)), std::move(metadata));
 
-	std::cout << "\nmakePriorityHook end\n";
+	// std::cout << "\nmakePriorityHook end\n";
 
 	return handle2;
 }
 
 void destroyPriorityHook(HandlerHandle const& handle, HookHandle const& handle2) {
-	std::cout << "\ndestroyPriorityHook\n";
+	// std::cout << "\ndestroyPriorityHook\n";
 	removeHook(handle, handle2);
 
-	std::cout << "\ndestroyPriorityHook end\n";
+	// std::cout << "\ndestroyPriorityHook end\n";
 }
-
-#ifdef TULIP_HOOK_WINDOWS
 
 struct Big {
 	int x;
 	int y;
 	int z;
 };
+
+class TextArea;
+
+using GDString = std::array<char, 0x18>;
+using CCPoint = std::array<float, 2>;
+
+TextArea* TextArea_create(GDString stack1, char const* ecx, float xmm1, float xmm2, CCPoint stack2, float xmm3, bool edx) {
+	return nullptr;
+}
+
+bool TextArea_init(
+	TextArea* ecx, GDString stack4, char const* stack1, float xmm2, float xmm3, CCPoint stack5, float stack2, bool stack3
+) {
+	return true;
+}
 
 int cconvTest0(Big stack1, int ecx, float stack2) {
 	assert(stack1.x == 1);
@@ -147,26 +154,19 @@ Big cconvTest2(Big stack1, float stack2, int edx, float stack3) {
 	assert(stack2 == 5.f);
 	assert(edx == 6);
 	assert(stack3 == 7.f);
-	return { 8, 9, 10 };
+	return {8, 9, 10};
 }
-
-#endif
 
 int callFunction() {
-	return function(
-		1, 2, 3, 4, 5, 6, 
-		7, 8, 9, 
-		1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 
-		9.0f, 10.0f
-	);
+	return function(1, 2, 3, 4, 5, 6, 7, 8, 9, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f);
 }
-
 
 int main() {
 	// No handler
 	assert(callFunction() == 1);
 
 	// Handler, no hooks
+	std::cout << "\nHandler, no hooks\n";
 	HandlerHandle handlerHandle = makeHandler();
 	int a;
 	// std::cin >> a;
@@ -176,31 +176,43 @@ int main() {
 	// std::cin >> a;
 
 	// Single hook (hook -> function)
+	std::cout << "\nSingle hook (hook -> function)\n";
 	HookHandle hookHandle = makeHook(handlerHandle);
 	assert(callFunction() == 3);
 
 	// Priority hook (priorityHook -> hook -> function)
+	std::cout << "\nPriority hook (priorityHook -> hook -> function)\n";
 	HookHandle priorityHookHandle = makePriorityHook(handlerHandle);
 	assert(callFunction() == 6);
 
 	// Remove the hook (priorityHook -> function)
+	std::cout << "\nRemove the hook (priorityHook -> function)\n";
 	destroyHook(handlerHandle, hookHandle);
 	assert(callFunction() == 4);
 
 	// Readd the hook (priorityHook -> hook -> function)
+	std::cout << "\nReadd the hook (priorityHook -> hook -> function)\n";
 	hookHandle = makeHook(handlerHandle);
 	assert(callFunction() == 6);
 
+	// Multiple instances of same function
+	std::cout << "\nMultiple instances of same function\n";
+	HookHandle mult1 = makePriorityHook(handlerHandle);
+	HookHandle mult2 = makePriorityHook(handlerHandle);
+	HookHandle mult3 = makePriorityHook(handlerHandle);
+	assert(callFunction() == 15);
+
 	// Remove the handler
+	std::cout << "\nRemove the handler\n";
 	destroyHandler(handlerHandle);
 	assert(callFunction() == 1);
 
 	// Recreate the handler
+	std::cout << "\nRecreate the handler\n";
 	HandlerHandle handlerHandle2 = makeHandler();
 	assert(callFunction() == 1);
 
 	// Calling convention asm
-#ifdef TULIP_HOOK_WINDOWS
 
 	auto conv = std::make_unique<OptcallConvention>();
 	auto func0 = AbstractFunction::from(&cconvTest0);
@@ -214,6 +226,20 @@ int main() {
 		}
 		return str;
 	};
+
+	auto optcall = std::make_unique<OptcallConvention>();
+	auto textArea_create = AbstractFunction::from(&TextArea_create);
+	std::cout << "TextArea::create optcall => cdecl\n";
+	std::cout << prettify(optcall->generateToDefault(textArea_create)) << "\n";
+	std::cout << "TextArea::create cdecl => optcall\n";
+	std::cout << prettify(optcall->generateFromDefault(textArea_create)) << "\n\n";
+
+	auto membercall = std::make_unique<MembercallConvention>();
+	auto textArea_init = AbstractFunction::from(&TextArea_init);
+	std::cout << "TextArea::init membercall => cdecl\n";
+	std::cout << prettify(membercall->generateToDefault(textArea_init)) << "\n";
+	std::cout << "TextArea::init cdecl => membercall\n";
+	std::cout << prettify(membercall->generateFromDefault(textArea_init)) << "\n\n";
 
 	std::cout << "cconvTest0 optcall => cdecl\n";
 	std::cout << prettify(conv->generateToDefault(func0)) << "\n";
@@ -229,6 +255,4 @@ int main() {
 	std::cout << prettify(conv->generateToDefault(func2)) << "\n";
 	std::cout << "cconvTest2 cdecl => optcall\n";
 	std::cout << prettify(conv->generateFromDefault(func2)) << "\n\n";
-
-#endif
 }

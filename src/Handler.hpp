@@ -1,37 +1,31 @@
 #pragma once
 
-#include <unordered_map>
+#include <HandlerData.hpp>
+#include <HookData.hpp>
+#include <Platform.hpp>
+#include <Result.hpp>
 #include <array>
 #include <memory>
+#include <unordered_map>
 #include <vector>
-#include <Result.hpp>
-#include <HookData.hpp>
-#include <HandlerData.hpp>
-#include <Platform.hpp>
 
 namespace tulip::hook {
 	class Hook;
 
 	struct HandlerContent {
-		size_t m_size = 0;
-		std::array<void*, 16> m_functions;
+		std::vector<void*> m_functions;
 	};
 
 	class Handler final {
-	private:
-		struct NoPublicConstruct {
-			explicit NoPublicConstruct() = default;
-		};
-
 	public:
-		Handler(NoPublicConstruct, void* address, HandlerMetadata metadata);
-		
+		Handler(void* address, HandlerMetadata metadata);
+
 		void* const m_address;
 		HandlerMetadata const m_metadata;
 
 		std::unordered_map<HookHandle, std::unique_ptr<Hook>> m_hooks;
+		std::unordered_map<void*, HookHandle> m_handles;
 
-		
 		HandlerContent* m_content = nullptr;
 
 		void* m_trampoline = nullptr;
@@ -39,7 +33,6 @@ namespace tulip::hook {
 
 		void* m_handler = nullptr;
 		size_t m_handlerSize = 0;
-		
 
 		std::vector<uint8_t> m_originalBytes;
 		std::vector<uint8_t> m_modifiedBytes;

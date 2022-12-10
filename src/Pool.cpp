@@ -1,4 +1,5 @@
 #include "Pool.hpp"
+
 #include "Handler.hpp"
 
 using namespace tulip::hook;
@@ -12,19 +13,19 @@ Result<HandlerHandle> Pool::createHandler(void* address, HandlerMetadata m_metad
 	auto handle = reinterpret_cast<HandlerHandle>(address);
 
 	if (m_handlers.find(handle) == m_handlers.end()) {
-		TULIP_UNWRAP_INTO(auto handler, Handler::create(address, m_metadata));
+		TULIP_HOOK_UNWRAP_INTO(auto handler, Handler::create(address, m_metadata));
 		m_handlers.emplace(handle, std::move(handler));
-		TULIP_UNWRAP(m_handlers[handle]->init());
+		TULIP_HOOK_UNWRAP(m_handlers[handle]->init());
 	}
 
-	TULIP_UNWRAP(m_handlers[handle]->interveneFunction());
+	TULIP_HOOK_UNWRAP(m_handlers[handle]->interveneFunction());
 
 	return Ok(std::move(handle));
 }
 
 Result<> Pool::removeHandler(HandlerHandle const& handle) {
 	m_handlers[handle]->clearHooks();
-	TULIP_UNWRAP(m_handlers[handle]->restoreFunction());
+	TULIP_HOOK_UNWRAP(m_handlers[handle]->restoreFunction());
 	return Ok();
 }
 

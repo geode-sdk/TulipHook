@@ -1,10 +1,10 @@
 #pragma once
 
-#include <vector>
+#include "AbstractType.hpp"
+
 #include <string>
 #include <type_traits>
-
-#include "AbstractType.hpp"
+#include <vector>
 
 namespace tulip::hook {
 	class AbstractFunction {
@@ -25,6 +25,7 @@ namespace tulip::hook {
 				return func;
 			}
 		};
+
 	public:
 		AbstractType m_return;
 		std::vector<AbstractType> m_parameters;
@@ -35,7 +36,7 @@ namespace tulip::hook {
 		}
 
 		template <class Return, class... Parameters>
-		static AbstractFunction from(Return(*)(Parameters...)) {
+		static AbstractFunction from(Return (*)(Parameters...)) {
 			AbstractFunction func;
 			func.m_return = AbstractType::from<Return>();
 			(func.m_parameters.push_back(AbstractType::from<Parameters>()), ...);

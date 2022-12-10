@@ -1,8 +1,7 @@
 #pragma once
 
-#include <map>
-
 #include <HookData.hpp>
+#include <map>
 
 namespace tulip::hook {
 
@@ -13,6 +12,7 @@ namespace tulip::hook {
 		void* m_address;
 
 		Hook(void* address, HookMetadata metadata) : m_address(address), m_metadata(metadata) {}
+
 		~Hook() {}
 	};
 }

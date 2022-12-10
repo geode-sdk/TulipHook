@@ -1,6 +1,6 @@
 #include "MacosTarget.hpp"
-#include <Platform.hpp>
 
+#include <Platform.hpp>
 #include <stdexcept>
 
 using namespace tulip::hook;
@@ -8,21 +8,16 @@ using namespace tulip::hook;
 #if defined(TULIP_HOOK_MACOS)
 
 #include <mach/mach.h>
-#include <mach/task.h>
+#include <mach/mach_init.h> /* mach_task_self()     */
 #include <mach/mach_port.h>
-#include <mach/mach_vm.h>       /* mach_vm_*            */
-#include <mach/mach_init.h>     /* mach_task_self()     */
+#include <mach/mach_vm.h> /* mach_vm_*            */
+#include <mach/task.h>
 
 Result<> MacosTarget::allocatePage() {
 	kern_return_t status;
 	mach_vm_address_t ret;
 
-	status = mach_vm_allocate(
-		mach_task_self(), 
-		&ret, 
-		static_cast<mach_vm_size_t>(0x4000), 
-		VM_FLAGS_ANYWHERE
-	);
+	status = mach_vm_allocate(mach_task_self(), &ret, static_cast<mach_vm_size_t>(0x4000), VM_FLAGS_ANYWHERE);
 
 	if (status != KERN_SUCCESS) {
 		return Err("Couldn't allocate page");
@@ -38,20 +33,20 @@ Result<> MacosTarget::allocatePage() {
 Result<uint32_t> MacosTarget::getProtection(void* address) {
 	kern_return_t status;
 	mach_vm_size_t vmsize;
-    mach_vm_address_t vmaddress = reinterpret_cast<mach_vm_address_t>(address);
-    vm_region_basic_info_data_t info;
-    mach_msg_type_number_t infoCount = VM_REGION_BASIC_INFO_COUNT_64;
-    mach_port_t object;
+	mach_vm_address_t vmaddress = reinterpret_cast<mach_vm_address_t>(address);
+	vm_region_basic_info_data_t info;
+	mach_msg_type_number_t infoCount = VM_REGION_BASIC_INFO_COUNT_64;
+	mach_port_t object;
 
-    status = mach_vm_region(
-    	mach_task_self(), 
-    	&vmaddress, 
-    	&vmsize, 
-    	VM_REGION_BASIC_INFO_64, 
-    	reinterpret_cast<vm_region_info_t>(&info), 
-    	&infoCount, 
-    	&object
-    );
+	status = mach_vm_region(
+		mach_task_self(),
+		&vmaddress,
+		&vmsize,
+		VM_REGION_BASIC_INFO_64,
+		reinterpret_cast<vm_region_info_t>(&info),
+		&infoCount,
+		&object
+	);
 
 	if (status != KERN_SUCCESS) {
 		return Err("Couldn't get protection");
@@ -63,13 +58,7 @@ Result<uint32_t> MacosTarget::getProtection(void* address) {
 Result<> MacosTarget::protectMemory(void* address, size_t size, uint32_t protection) {
 	kern_return_t status;
 
-	status = mach_vm_protect(
-		mach_task_self(), 
-		reinterpret_cast<mach_vm_address_t>(address), 
-		size, 
-		false, 
-		protection
-	);
+	status = mach_vm_protect(mach_task_self(), reinterpret_cast<mach_vm_address_t>(address), size, false, protection);
 
 	if (status != KERN_SUCCESS) {
 		return Err("Couldn't protect memory");
@@ -81,9 +70,9 @@ Result<> MacosTarget::rawWriteMemory(void* destination, void* source, size_t siz
 	kern_return_t status;
 
 	status = mach_vm_write(
-		mach_task_self(), 
-		reinterpret_cast<mach_vm_address_t>(destination), 
-		reinterpret_cast<vm_offset_t>(source), 
+		mach_task_self(),
+		reinterpret_cast<mach_vm_address_t>(destination),
+		reinterpret_cast<vm_offset_t>(source),
 		static_cast<mach_msg_type_number_t>(size)
 	);
 
@@ -124,7 +113,5 @@ Result<csh> MacosTarget::openCapstone() {
 
 	return Ok(m_capstone);
 }
-
-
 
 #endif

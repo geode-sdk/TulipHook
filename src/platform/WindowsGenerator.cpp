@@ -1,21 +1,18 @@
 #include "WindowsGenerator.hpp"
-#include "PlatformTarget.hpp"
-#include "../Handler.hpp"
 
-#include <sstream>
+#include "../Handler.hpp"
+#include "PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
 #include <iostream>
+#include <sstream>
 
 using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_WINDOWS)
 
-
 namespace {
-	void* TULIP_HOOK_DEFAULT_CONV preHandler(
-		HandlerContent* content
-	) {
+	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content) {
 		Handler::incrementIndex(content);
 		auto ret = Handler::getNextFunction(content);
 
@@ -64,7 +61,7 @@ std::string WindowsGenerator::handlerString() {
 
 	// fix stack
 	out << "add esp, 0x" << stackSize << "\n";
-	
+
 	// decrement and return eax and edx
 	out << R"ASM(
 	
@@ -92,19 +89,21 @@ std::string WindowsGenerator::handlerString() {
 )ASM";
 
 	out << m_metadata.m_convention->generateFromDefault(m_metadata.m_abstract);
-	
+
 	out << R"ASM(
 _handlerPre: 
-	dd 0x)ASM" << reinterpret_cast<uint64_t>(preHandler);
+	dd 0x)ASM"
+		<< reinterpret_cast<uint64_t>(preHandler);
 
 	out << R"ASM(
 _handlerPost: 
-	dd 0x)ASM" << reinterpret_cast<uint64_t>(postHandler);
+	dd 0x)ASM"
+		<< reinterpret_cast<uint64_t>(postHandler);
 
 	out << R"ASM(
 _content: 
-	dd 0x)ASM" << reinterpret_cast<uint64_t>(m_content);
-
+	dd 0x)ASM"
+		<< reinterpret_cast<uint64_t>(m_content);
 
 	return out.str();
 }

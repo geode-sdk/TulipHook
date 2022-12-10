@@ -1,14 +1,11 @@
+#include "../Handler.hpp"
 #include "PlatformGenerator.hpp"
 #include "PlatformTarget.hpp"
-#include "../Handler.hpp"
-
-#include <sstream>
-#include <stdexcept>
 
 #include <CallingConvention.hpp>
 #include <iostream>
-
-#include <iostream>
+#include <sstream>
+#include <stdexcept>
 
 using namespace tulip::hook;
 
@@ -20,43 +17,43 @@ using X86Generator = WindowsGenerator;
 
 #if defined(TULIP_HOOK_MACOS) || defined(TULIP_HOOK_WINDOWS)
 
-template<class T, auto Fun>
+template <class T, auto Fun>
 struct RAIIHolder {
 	T m_engine;
 
-	RAIIHolder(T engine) : m_engine(engine) {}
+	RAIIHolder(T engine) :
+		m_engine(engine) {}
+
 	~RAIIHolder() {
 		Fun();
 	}
+
 	operator T() {
 		return m_engine;
 	}
 };
+
 static void keystoneCloseFun() {
 	PlatformTarget::get().closeKeystone();
 };
+
 using KSHolder = RAIIHolder<ks_engine*, &keystoneCloseFun>;
+
 static void capstoneCloseFun() {
 	PlatformTarget::get().closeCapstone();
 };
+
 using CSHolder = RAIIHolder<csh, &capstoneCloseFun>;
 
 Result<> X86Generator::generateHandler() {
-
-	TULIP_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
+	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
 	size_t size;
 
-	if (ks_option(
-		ks, KS_OPT_SYM_RESOLVER,
-		reinterpret_cast<size_t>(&Handler::symbolResolver)
-	) != KS_ERR_OK) {
-		return Err(
-			"Unable to set assembler options for handler: " + 
-			std::string(ks_strerror(ks_errno(ks)))
-		);
+	if (ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver)) != KS_ERR_OK) {
+		return Err("Unable to set assembler options for handler: " + std::string(ks_strerror(ks_errno(ks))));
 	}
 
 	// for debuggers to not cry
@@ -64,20 +61,15 @@ Result<> X86Generator::generateHandler() {
 
 	auto code = this->handlerString();
 
-	std::cout << code << "\n";
+	// std::cout << code << "\n";
 
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_handler), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		return Err(
-			"Assembling handler failed: " + 
-			std::string(ks_strerror(ks_errno(ks)))
-		);
+		return Err("Assembling handler failed: " + std::string(ks_strerror(ks_errno(ks))));
 	}
 
 	if (!size && code.size()) {
-		return Err(
-			"Assembling handler failed: Unknown error (no bytes were written)"
-		);
+		return Err("Assembling handler failed: Unknown error (no bytes were written)");
 	}
 	std::cout << "size: " << size << "\n";
 	for (auto i = 0; i < size; ++i) {
@@ -91,9 +83,9 @@ Result<> X86Generator::generateHandler() {
 
 	return Ok();
 }
-Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 
-	TULIP_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
+Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
+	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
@@ -106,16 +98,11 @@ Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 	std::cout << "intervener: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		return Err(
-			"Assembling intervener failed: " + 
-			std::string(ks_strerror(ks_errno(ks)))
-		);
+		return Err("Assembling intervener failed: " + std::string(ks_strerror(ks_errno(ks))));
 	}
 
 	if (!size && code.size()) {
-		return Err(
-			"Assembling intervener failed: Unknown error (no bytes were written)"
-		);
+		return Err("Assembling intervener failed: Unknown error (no bytes were written)");
 	}
 	std::cout << "size: " << size << "\n";
 	for (auto i = 0; i < size; ++i) {
@@ -129,9 +116,9 @@ Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 
 	return Ok(ret);
 }
-Result<> X86Generator::generateTrampoline(size_t offset) {
 
-	TULIP_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
+Result<> X86Generator::generateTrampoline(size_t offset) {
+	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
 	unsigned char* encode;
@@ -145,16 +132,11 @@ Result<> X86Generator::generateTrampoline(size_t offset) {
 	std::cout << "trampoline: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), address, &encode, &size, &count);
 	if (status != KS_ERR_OK) {
-		return Err(
-			"Assembling trampoline failed: " + 
-			std::string(ks_strerror(ks_errno(ks)))
-		);
+		return Err("Assembling trampoline failed: " + std::string(ks_strerror(ks_errno(ks))));
 	}
 
 	if (!size && code.size()) {
-		return Err(
-			"Assembling trampoline failed: Unknown error (no bytes were written)"
-		);
+		return Err("Assembling trampoline failed: Unknown error (no bytes were written)");
 	}
 
 	std::memcpy(reinterpret_cast<void*>(address), encode, size);
@@ -162,13 +144,13 @@ Result<> X86Generator::generateTrampoline(size_t offset) {
 	ks_free(encode);
 
 	return Ok();
-
 }
+
 Result<size_t> X86Generator::relocateOriginal(size_t target) {
 	std::memcpy(m_trampoline, m_address, 32);
 	size_t offset = 0;
 
-	TULIP_UNWRAP_INTO(CSHolder cs, PlatformTarget::get().openCapstone());
+	TULIP_HOOK_UNWRAP_INTO(CSHolder cs, PlatformTarget::get().openCapstone());
 
 	cs_option(cs, CS_OPT_DETAIL, CS_OPT_ON);
 
@@ -185,7 +167,7 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 
 	auto targetAddress = address + target;
 
-	while(cs_disasm_iter(cs, &code, &size, &address, insn)) {
+	while (cs_disasm_iter(cs, &code, &size, &address, insn)) {
 		auto detail = insn->detail;
 
 		if (detail->x86.encoding.disp_offset > 0) {
@@ -193,8 +175,7 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 				int displaced = detail->x86.disp - difference;
 
 				std::memcpy(
-					reinterpret_cast<void*>(insn->address + detail->x86.encoding.disp_offset),
-					&displaced, sizeof(int)
+					reinterpret_cast<void*>(insn->address + detail->x86.encoding.disp_offset), &displaced, sizeof(int)
 				);
 			}
 			else {
@@ -203,7 +184,9 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 			}
 		}
 
-		if (address >= targetAddress) break;
+		if (address >= targetAddress) {
+			break;
+		}
 	}
 
 	cs_free(insn, 1);

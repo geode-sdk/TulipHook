@@ -1,20 +1,17 @@
 #include "MacosGenerator.hpp"
-#include "PlatformTarget.hpp"
-#include "../Handler.hpp"
 
-#include <sstream>
+#include "../Handler.hpp"
+#include "PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
+#include <sstream>
 
 using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_MACOS)
 
 namespace {
-	void* TULIP_HOOK_DEFAULT_CONV preHandler(
-		HandlerContent* content,
-		void* originalReturn
-	) {
+	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content, void* originalReturn) {
 		Handler::incrementIndex(content);
 		auto ret = Handler::getNextFunction(content);
 		Handler::pushData(originalReturn);
@@ -123,15 +120,18 @@ _handlerCont:
 
 	out << R"ASM(
 _handlerPre: 
-	dq 0x)ASM" << reinterpret_cast<uint64_t>(preHandler);
+	dq 0x)ASM"
+		<< reinterpret_cast<uint64_t>(preHandler);
 
 	out << R"ASM(
 _handlerPost: 
-	dq 0x)ASM" << reinterpret_cast<uint64_t>(postHandler);
+	dq 0x)ASM"
+		<< reinterpret_cast<uint64_t>(postHandler);
 
 	out << R"ASM(
 _content: 
-	dq 0x)ASM" << reinterpret_cast<uint64_t>(m_content);
+	dq 0x)ASM"
+		<< reinterpret_cast<uint64_t>(m_content);
 
 	out << R"ASM(
 _originalReturn: 
@@ -142,7 +142,7 @@ _originalReturn:
 
 std::string MacosGenerator::trampolineString(size_t offset) {
 	std::ostringstream out;
-	out << "jmp _address" << m_address << "_" << offset; 
+	out << "jmp _address" << m_address << "_" << offset;
 	return out.str();
 }
 

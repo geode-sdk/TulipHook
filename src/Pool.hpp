@@ -1,9 +1,9 @@
 #pragma once
 
-#include <unordered_map>
-#include <memory>
-#include <Result.hpp>
 #include <HandlerData.hpp>
+#include <Result.hpp>
+#include <memory>
+#include <unordered_map>
 
 namespace tulip::hook {
 	class Handler;

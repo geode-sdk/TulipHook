@@ -1,8 +1,8 @@
 #pragma once
 
-#include <memory>
-
 #include "AbstractFunction.hpp"
+
+#include <memory>
 
 namespace tulip::hook {
 	class CallingConvention;

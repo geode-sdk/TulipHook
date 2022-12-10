@@ -1,11 +1,8 @@
 #pragma once
 
-#include "../Platform.hpp"
-#if defined(TULIP_HOOK_WINDOWS)
+#include "../CallingConvention.hpp"
 
 #include <string>
-
-#include "../CallingConvention.hpp"
 
 namespace tulip::hook {
 	class AbstractFunction;
@@ -59,8 +56,4 @@ namespace tulip::hook {
 		std::string generateBackFromDefault(AbstractFunction const& function) override;
 		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
 	};
-
-	using PlatformConvention = CdeclConvention;
 }
-
-#endif

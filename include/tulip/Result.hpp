@@ -1,191 +1,208 @@
 #pragma once
 
-#include <string_view>
+#include "../../lib/result/include/result.hpp"
+
 #include <string>
+#include <string_view>
 #include <variant>
 
 namespace tulip::hook {
-    struct AnyType {
-        explicit AnyType() = delete;
-    };
+	namespace impl {
+		using DefaultValue = std::monostate;
+		using DefaultError = std::string;
+		template <class T>
+		using WrappedResult = std::conditional_t<
+			std::is_lvalue_reference_v<T>, std::reference_wrapper<std::remove_reference_t<T>>, std::remove_const_t<T>>;
 
-    template<class V, class RV>
-    concept ConvertibleToResult =
-        std::is_convertible_v<
-            std::remove_reference_t<V>,
-            std::remove_reference_t<RV>
-        > || std::is_same_v<
-            std::remove_reference_t<V>,
-            std::remove_reference_t<RV>
-        >;
-    
-    using DefaultValue = std::monostate;
-    using DefaultError = std::string;
+		template <class E = impl::DefaultError>
+		class [[nodiscard]] Failure {
+		public:
+			WrappedResult<E> m_error;
 
-    template<class T = DefaultValue, class E = DefaultError>
-        requires (
-            std::is_copy_constructible_v<T> || 
-            std::is_move_constructible_v<T>
-        ) && (
-            std::is_copy_constructible_v<E> || 
-            std::is_move_constructible_v<E>
-        )
-    class [[nodiscard]] Result {
-    public:
-        using value_type = std::remove_reference_t<T>;
-        using error_type = std::remove_reference_t<E>;
+			Failure() = default;
 
-    protected:
-        std::variant<value_type, error_type> m_value;
-    
-    public:
-        bool isOk() const {
-            return std::holds_alternative<value_type>(m_value);
-        }
+			template <class E2>
+				requires(std::is_constructible_v<E, E2 const&>)
+			explicit constexpr Failure(E2 const& e) : m_error(e) {}
 
-        bool isErr() const {
-            return std::holds_alternative<error_type>(m_value);
-        }
+			template <class E2>
+				requires(std::is_constructible_v<E, E2 &&>)
+			explicit constexpr Failure(E2&& e) : m_error(std::move(e)) {}
 
-        explicit Result(value_type const& value)
-            requires std::is_copy_constructible_v<value_type>
-          : m_value(value) {}
-        explicit Result(value_type&& value)
-            requires std::is_move_constructible_v<value_type>
-          : m_value(std::forward<value_type>(value)) {}
+			E& error() & noexcept {
+				return m_error;
+			}
 
-        explicit Result(error_type const& value)
-            requires std::is_copy_constructible_v<error_type>
-          : m_value(value) {}
-        explicit Result(error_type&& value)
-            requires std::is_move_constructible_v<error_type>
-          : m_value(std::forward<error_type>(value)) {}
-        
-        Result(Result<T, E> const& other)
-            requires
-                std::is_copy_constructible_v<value_type> &&
-                std::is_copy_constructible_v<error_type>
-          = default;
-        
-        Result(Result<T, E>&& other)
-            requires (
-                !std::is_copy_constructible_v<value_type> ||
-                !std::is_copy_constructible_v<error_type>
-            ) = default;
-        
-        template<class T2, class E2>
-            requires ConvertibleToResult<T2, T> && ConvertibleToResult<E2, E>
-        Result(Result<T2, E2> const& other)
-            requires
-                std::is_copy_constructible_v<value_type> &&
-                std::is_copy_constructible_v<error_type>
-          : m_value(other.isOk() ? other.unwrap() : other.unwrapErr()) {}
-        
-        template<class T2, class E2>
-            requires ConvertibleToResult<T2, T> && ConvertibleToResult<E2, E>
-        Result(Result<T2, E2>&& other)
-            requires (
-                !std::is_copy_constructible_v<value_type> ||
-                !std::is_copy_constructible_v<error_type>
-            ) : m_value(other.isOk() ? other.unwrap() : other.unwrapErr()) {}
-        
-        template<class T2>
-            requires ConvertibleToResult<T2, T>
-        Result(Result<T2, AnyType> const& other)
-            requires
-                std::is_copy_constructible_v<value_type> &&
-                std::is_copy_constructible_v<error_type>
-          : Result(value_type(other.unwrap())) {}
-        
-        template<class E2>
-            requires ConvertibleToResult<E2, E>
-        Result(Result<AnyType, E2> const& other)
-            requires
-                std::is_copy_constructible_v<value_type> &&
-                std::is_copy_constructible_v<error_type>
-          : m_value(std::forward<E2>(other.unwrapErr())) {}
-        
-        template<class T2>
-            requires ConvertibleToResult<T2, T>
-        Result(Result<T2, AnyType>&& other)
-            requires (
-                !std::is_copy_constructible_v<value_type> ||
-                !std::is_copy_constructible_v<error_type>
-            ) : m_value(other.unwrap()) {}
-        
-        template<class E2>
-            requires ConvertibleToResult<E2, E>
-        Result(Result<AnyType, E2>&& other)
-            requires (
-                !std::is_copy_constructible_v<value_type> ||
-                !std::is_copy_constructible_v<error_type>
-            ) : Result(std::forward<error_type>(other.unwrapErr())) {}
+			E const& error() const& noexcept {
+				return m_error;
+			}
 
-        value_type unwrap() const
-            requires std::is_copy_constructible_v<value_type>
-        {
-            return std::get<value_type>(m_value);
-        }
+			E&& error() && noexcept {
+				return static_cast<E&&>(m_error);
+			}
 
-        value_type&& unwrap()
-            requires (!std::is_copy_constructible_v<value_type>)
-        {
-            return std::move(std::get<value_type>(m_value));
-        }
+			E const&& error() const&& noexcept {
+				return static_cast<E&&>(m_error);
+			}
+		};
 
-        error_type unwrapErr() const
-            requires std::is_copy_constructible_v<error_type>
-        {
-            return std::get<error_type>(m_value);
-        }
+		template <class T = impl::DefaultValue>
+		class [[nodiscard]] Success {
+		public:
+			WrappedResult<T> m_value;
 
-        error_type&& unwrapErr()
-            requires (!std::is_copy_constructible_v<error_type>)
-        {
-            return std::get<error_type>(m_value);
-        }
+			Success() = default;
 
-        // no operator bool as if bool is convertible to value, doing 
-        // T = Result<T> will cause unexpected behaviour
-    };
+			template <class T2>
+				requires(std::is_constructible_v<T, T2 const&>)
+			explicit constexpr Success(T2 const& v) : m_value(v) {}
 
-    template<class T = DefaultValue, class E = AnyType>
-        requires std::is_copy_constructible_v<T>
-    Result<T, E> Ok(T value = T()) {
-        return Result<T, E>(value);
-    }
+			template <class T2>
+				requires(std::is_constructible_v<T, T2 &&>)
+			explicit constexpr Success(T2&& v) : m_value(std::forward<T2>(v)) {}
 
-    template<class T = DefaultValue, class E = AnyType>
-        requires (!std::is_copy_constructible_v<T>)
-    Result<T, E> Ok(T&& value) {
-        return Result<T, E>(std::forward<T>(value));
-    }
+			T& value() & noexcept {
+				return m_value;
+			}
 
-    template<class E = DefaultError, class T = AnyType>
-        requires std::is_copy_constructible_v<E>
-    Result<T, E> Err(E error = E()) {
-        return Result<T, E>(error);
-    }
+			T const& value() const& noexcept {
+				return m_value;
+			}
 
-    template<class E = DefaultError, class T = AnyType>
-        requires (!std::is_copy_constructible_v<E>)
-    Result<T, E> Err(E&& error) {
-        return Result<T, E>(std::forward<E>(error));
-    }
+			T&& value() && noexcept {
+				return static_cast<T&&>(m_value);
+			}
 
-    #define TULIP_CONCAT_(a, b) a ## b
-    #define TULIP_CONCAT(a, b) TULIP_CONCAT_(a, b)
+			T const&& value() const&& noexcept {
+				return static_cast<T&&>(m_value);
+			}
+		};
+	}
 
-    #define TULIP_UNWRAP_INTO(into, ...) \
-        auto TULIP_CONCAT(res_, __LINE__) = (__VA_ARGS__);\
-        if (TULIP_CONCAT(res_, __LINE__).isErr()) {\
-            return Err(std::move(TULIP_CONCAT(res_, __LINE__).unwrapErr()));\
-        }\
-        into = std::move(TULIP_CONCAT(res_, __LINE__).unwrap())
+	template <class T = impl::DefaultValue, class E = impl::DefaultError>
+	class [[nodiscard]] Result : public cpp::result<T, E> {
+	public:
+		using Base = cpp::result<T, E>;
+		using ValueType = typename Base::value_type;
+		using ErrorType = typename Base::error_type;
 
-    #define TULIP_UNWRAP(...) \
-        { auto TULIP_CONCAT(res_, __LINE__) = (__VA_ARGS__);\
-        if (TULIP_CONCAT(res_, __LINE__).isErr()) {\
-            return Err(std::move(TULIP_CONCAT(res_, __LINE__).unwrapErr()));\
-        } }
+		using Base::result;
+
+		template <class U>
+			requires(cpp::detail::result_is_implicit_value_convertible<T, U>::value)
+		constexpr Result(U&& value) = delete;
+
+		template <class E2>
+			requires(std::is_constructible_v<E, E2 const&>)
+		constexpr Result(impl::Failure<E2> const& e) : Base(cpp::failure<E>(e.error())) {}
+
+		template <class E2>
+			requires(std::is_constructible_v<E, E2 &&>)
+		constexpr Result(impl::Failure<E2>&& e) : Base(cpp::failure<E>(std::move(e.error()))) {}
+
+		template <class T2>
+			requires(std::is_constructible_v<T, T2 const&>)
+		constexpr Result(impl::Success<T2> const& s) : Base(s.value()) {}
+
+		template <class T2>
+			requires(std::is_constructible_v<T, T2 &&>)
+		constexpr Result(impl::Success<T2>&& s) : Base(std::move(s.value())) {}
+
+		[[nodiscard]] constexpr explicit operator bool() const noexcept {
+			return this->operator bool();
+		}
+
+		[[nodiscard]] constexpr bool isOk() const noexcept {
+			return this->has_value();
+		}
+
+		[[nodiscard]] constexpr bool isErr() const noexcept {
+			return this->has_error();
+		}
+
+		[[nodiscard]] constexpr decltype(auto) unwrap() & {
+			return this->value();
+		}
+
+		[[nodiscard]] constexpr decltype(auto) unwrap() const& {
+			return this->value();
+		}
+
+		[[nodiscard]] constexpr decltype(auto) unwrap() && {
+			return this->value();
+		}
+
+		[[nodiscard]] constexpr decltype(auto) unwrap() const&& {
+			return this->value();
+		}
+
+		[[nodiscard]] constexpr decltype(auto) unwrapErr() & {
+			return this->error();
+		}
+
+		[[nodiscard]] constexpr decltype(auto) unwrapErr() const& {
+			return this->error();
+		}
+
+		[[nodiscard]] constexpr decltype(auto) unwrapErr() && {
+			return this->error();
+		}
+
+		[[nodiscard]] constexpr decltype(auto) unwrapErr() const&& {
+			return this->error();
+		}
+
+		template <class U>
+		[[nodiscard]] constexpr decltype(auto) unwrapOr(U&& val) && {
+			return this->value_or(std::forward<U>(val));
+		}
+
+		template <class U>
+		[[nodiscard]] constexpr decltype(auto) unwrapOr(U&& val) const& {
+			return this->value_or(std::forward<U>(val));
+		}
+
+		template <class U>
+		[[nodiscard]] constexpr decltype(auto) errorOr(U&& val) && {
+			return this->error_or(std::forward<U>(val));
+		}
+
+		template <class U>
+		[[nodiscard]] constexpr decltype(auto) errorOr(U&& val) const& {
+			return this->error_or(std::forward<U>(val));
+		}
+	};
+
+	template <class T = impl::DefaultValue>
+	constexpr impl::Success<T> Ok() {
+		return impl::Success<T>();
+	}
+
+	template <class T>
+	constexpr impl::Success<T> Ok(T&& value) {
+		return impl::Success<T>(std::forward<T>(value));
+	}
+
+	template <class E>
+	constexpr impl::Failure<E> Err(E&& error) {
+		return impl::Failure<E>(std::forward<E>(error));
+	}
 }
+
+#define TULIP_HOOK_CONCAT2(A_, B_) A_##B_
+#define TULIP_HOOK_CONCAT(A_, B_) TULIP_HOOK_CONCAT2(A_, B_)
+
+#define TULIP_HOOK_UNWRAP_INTO(Into_, ...)                                           \
+	auto TULIP_HOOK_CONCAT(unwrap_res_, __LINE__) = (__VA_ARGS__);                   \
+	if (TULIP_HOOK_CONCAT(unwrap_res_, __LINE__).isErr()) {                          \
+		return Err(std::move(TULIP_HOOK_CONCAT(unwrap_res_, __LINE__).unwrapErr())); \
+	}                                                                                \
+	Into_ = std::move(TULIP_HOOK_CONCAT(unwrap_res_, __LINE__).unwrap())
+
+#define TULIP_HOOK_UNWRAP(...)                                                           \
+	{                                                                                    \
+		auto TULIP_HOOK_CONCAT(unwrap_res_, __LINE__) = (__VA_ARGS__);                   \
+		if (TULIP_HOOK_CONCAT(unwrap_res_, __LINE__).isErr()) {                          \
+			return Err(std::move(TULIP_HOOK_CONCAT(unwrap_res_, __LINE__).unwrapErr())); \
+		}                                                                                \
+	}

@@ -9,7 +9,7 @@ add_library(TulipHook STATIC
 	Main.cpp
 	Pool.cpp
 	Target.cpp
-	platform/MacosConvention.cpp
+	platform/DefaultConvention.cpp
 	platform/MacosGenerator.cpp
 	platform/MacosTarget.cpp
 	platform/WindowsConvention.cpp

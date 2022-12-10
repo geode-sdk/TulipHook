@@ -1,15 +1,14 @@
-#include <platform/MacosConvention.hpp>
 #include <Platform.hpp>
+#include <platform/DefaultConvention.hpp>
 
 using namespace tulip::hook;
-
-#if defined(TULIP_HOOK_MACOS)
 
 DefaultConvention::~DefaultConvention() {}
 
 std::string DefaultConvention::generateFromDefault(AbstractFunction const& function) {
 	return "ret";
 }
+
 std::string DefaultConvention::generateToDefault(AbstractFunction const& function) {
 	return "";
 }
@@ -21,5 +20,3 @@ std::string DefaultConvention::generateBackFromDefault(AbstractFunction const& f
 std::string DefaultConvention::generateBackToDefault(AbstractFunction const& function, size_t stackOffset) {
 	return "";
 }
-
-#endif

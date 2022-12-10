@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Platform.hpp>
 #include "../Target.hpp"
+
+#include <Platform.hpp>
 
 #if defined(TULIP_HOOK_MACOS)
 

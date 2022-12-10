@@ -1,6 +1,6 @@
 #include "WindowsTarget.hpp"
-#include <Platform.hpp>
 
+#include <Platform.hpp>
 #include <stdexcept>
 
 using namespace tulip::hook;
@@ -11,10 +11,7 @@ using namespace tulip::hook;
 #include <Windows.h>
 
 Result<> WindowsTarget::allocatePage() {
-	m_allocatedPage = VirtualAlloc(
-		nullptr, 0x4000,
-		MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE
-	);
+	m_allocatedPage = VirtualAlloc(nullptr, 0x4000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
 
 	if (!m_allocatedPage) {
 		return Err("Unable to allocate memory: " + std::to_string(GetLastError()));
@@ -28,7 +25,7 @@ Result<> WindowsTarget::allocatePage() {
 
 Result<uint32_t> WindowsTarget::getProtection(void* address) {
 	MEMORY_BASIC_INFORMATION information;
-	
+
 	if (!VirtualQuery(address, &information, sizeof(MEMORY_BASIC_INFORMATION))) {
 		return Err("Unable to query memory protection information");
 	}
@@ -83,7 +80,5 @@ Result<csh> WindowsTarget::openCapstone() {
 
 	return Ok(m_capstone);
 }
-
-
 
 #endif

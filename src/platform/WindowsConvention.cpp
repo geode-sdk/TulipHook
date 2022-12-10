@@ -1,20 +1,20 @@
-#include <platform/WindowsConvention.hpp>
-#include <Platform.hpp>
-
-#if defined(TULIP_HOOK_WINDOWS)
-
 #include <AbstractFunction.hpp>
-#include <sstream>
-#include <ranges>
-#include <variant>
-#include <optional>
+#include <Platform.hpp>
 #include <algorithm>
+#include <optional>
+#include <platform/WindowsConvention.hpp>
+#include <sstream>
+#include <variant>
 
 using namespace tulip::hook;
 
 enum class Register {
-	ECX, EDX,
-	XMM0, XMM1, XMM2, XMM3,
+	ECX,
+	EDX,
+	XMM0,
+	XMM1,
+	XMM2,
+	XMM3,
 };
 using Stack = size_t;
 using Location = std::variant<Stack, Register>;
@@ -26,11 +26,8 @@ public:
 	AbstractType m_type;
 	size_t m_originalIndex;
 
-	PushParameter(
-		AbstractType const& type,
-		Location loc,
-		size_t originalIndex
-	) : m_type(type),
+	PushParameter(AbstractType const& type, Location loc, size_t originalIndex) :
+		m_type(type),
 		m_location(loc),
 		m_originalIndex(originalIndex) {}
 };
@@ -40,7 +37,7 @@ static bool shouldStructReturn(AbstractFunction const& function) {
 }
 
 // todo: remove
-template<class F>
+template <class F>
 static std::string hexString(F f) {
 	std::stringstream stream;
 	stream << std::hex << f;
@@ -89,8 +86,8 @@ public:
 		}
 		bool ecxUsed = false;
 		// first parameter through ecx
-		// this is in practice always 'this' but for the sake of idk i made 
-		// it safe anyway (so it should work even if someone applied __thiscall 
+		// this is in practice always 'this' but for the sake of idk i made
+		// it safe anyway (so it should work even if someone applied __thiscall
 		// on a non-member function)
 		for (auto& param : function.m_parameters) {
 			if (!ecxUsed && param.m_kind == AbstractTypeKind::Primitive) {
@@ -116,7 +113,7 @@ public:
 			res.push(AbstractType::from<void*>(), Register::ECX);
 			registersUsed = 1;
 		}
-		// first two parameters that can go in ecx and edx go in ecx 
+		// first two parameters that can go in ecx and edx go in ecx
 		for (auto& param : function.m_parameters) {
 			if (registersUsed == 0 && param.m_kind == AbstractTypeKind::Primitive) {
 				res.push(param, Register::ECX);
@@ -152,9 +149,10 @@ public:
 		size_t origIndex = 0;
 		for (auto& param : function.m_parameters) {
 			if (param.m_kind == AbstractTypeKind::Other) {
-				reordered.push_back({ origIndex, param });
-			} else {
-				reordered.insert(reordered.begin() + structsAt, { origIndex, param });
+				reordered.push_back({origIndex, param});
+			}
+			else {
+				reordered.insert(reordered.begin() + structsAt, {origIndex, param});
 				structsAt++;
 			}
 			origIndex++;
@@ -182,10 +180,10 @@ public:
 			}
 			index++;
 		}
-		
+
 		// reorder params to be in original order
 		res.reorder();
-		
+
 		return res;
 	}
 
@@ -205,9 +203,10 @@ public:
 		size_t origIndex = 0;
 		for (auto& param : function.m_parameters) {
 			if (param.m_kind == AbstractTypeKind::Other) {
-				reordered.push_back({ origIndex, param });
-			} else {
-				reordered.insert(reordered.begin() + structsAt, { origIndex, param });
+				reordered.push_back({origIndex, param});
+			}
+			else {
+				reordered.insert(reordered.begin() + structsAt, {origIndex, param});
 				structsAt++;
 			}
 			origIndex++;
@@ -230,10 +229,10 @@ public:
 			}
 			index++;
 		}
-		
+
 		// reorder params to be in original order
 		res.reorder();
-		
+
 		return res;
 	}
 
@@ -245,9 +244,7 @@ public:
 
 	// Push through stack
 	void push(AbstractType const& type, std::optional<size_t> oindex = std::nullopt) {
-		m_params.emplace_back(
-			type, m_originalStackSize, oindex.value_or(m_params.size())
-		);
+		m_params.emplace_back(type, m_originalStackSize, oindex.value_or(m_params.size()));
 		m_originalStackSize += paramSize(type);
 		m_resultStackSize += paramSize(type);
 	}
@@ -260,11 +257,9 @@ public:
 			stackLocation -= paramSize(param.m_type);
 			param.m_resultLocation = stackLocation;
 		}
-		std::sort(
-			m_params.begin(), m_params.end(), [](auto a, auto b) -> bool {
-				return a.m_originalIndex < b.m_originalIndex;
-			}
-		);
+		std::sort(m_params.begin(), m_params.end(), [](auto a, auto b) -> bool {
+			return a.m_originalIndex < b.m_originalIndex;
+		});
 	}
 
 	std::string generateToDefault() {
@@ -272,7 +267,9 @@ public:
 		out << std::hex;
 
 		size_t stackOffset = 0x0;
-		for (auto& param : std::ranges::reverse_view(m_params)) {
+		auto reverseParams = m_params;
+		std::reverse(reverseParams.begin(), reverseParams.end());
+		for (auto& param : reverseParams) {
 			out << "/* " << param.m_originalIndex << " */; ";
 			// repush from stack
 			if (std::holds_alternative<Stack>(param.m_location)) {
@@ -281,11 +278,11 @@ public:
 				for (size_t i = 0; i < paramSize(param.m_type); i += 4) {
 					out << "push [esp + 0x"
 						<< (
-							// we want to repush starting from first member 
-							// since the params are already pushed in reverse 
-							// order
-							offset + stackOffset + paramSize(param.m_type)
-						)
+							   // we want to repush starting from first member
+							   // since the params are already pushed in reverse
+							   // order
+							   offset + stackOffset + paramSize(param.m_type)
+						   )
 						<< "]; ";
 				}
 			}
@@ -298,19 +295,17 @@ public:
 					default: {
 						// double
 						if (param.m_type.m_size == 8) {
-							out << "sub esp, 0x8; movsd [esp], xmm" 
-								<< xmmRegisterName(reg) << "; ";
+							out << "sub esp, 0x8; movsd [esp], xmm" << xmmRegisterName(reg) << "; ";
 						}
 						// float
 						else {
-							out << "sub esp, 0x4; movss [esp], xmm" 
-								<< xmmRegisterName(reg) << "; ";
+							out << "sub esp, 0x4; movss [esp], xmm" << xmmRegisterName(reg) << "; ";
 						}
 					} break;
 				}
 			}
-			// since we pushed parameters to the stack, we need to take into 
-			// account the stack pointer being offset by that amount when 
+			// since we pushed parameters to the stack, we need to take into
+			// account the stack pointer being offset by that amount when
 			// pushing the next parameters
 			stackOffset += paramSize(param.m_type);
 		}
@@ -324,7 +319,7 @@ public:
 
 		// clean up stack from the ones we added
 		out << "add esp, 0x" << m_resultStackSize << "; ";
-		// some of the original parameters may be passed through registers so the 
+		// some of the original parameters may be passed through registers so the
 		// original's stack size may be smaller
 		out << "ret 0x" << m_originalStackSize << "; ";
 
@@ -334,16 +329,15 @@ public:
 	std::string generateBackToDefault(size_t additionalOffset) {
 		std::ostringstream out;
 		out << std::hex;
-		
+
 		size_t stackOffset = additionalOffset;
-		for (auto& param : std::ranges::reverse_view(m_params)) {
+		auto reverseParams = m_params;
+		std::reverse(reverseParams.begin(), reverseParams.end());
+		for (auto& param : reverseParams) {
 			if (std::holds_alternative<Stack>(param.m_location)) {
 				// push all members of struct
 				for (size_t i = 0; i < paramSize(param.m_type); i += 4) {
-					out
-						<< "push [esp + 0x"
-						<< param.m_resultLocation + stackOffset + paramSize(param.m_type)
-						<< "]; ";
+					out << "push [esp + 0x" << param.m_resultLocation + stackOffset + paramSize(param.m_type) << "]; ";
 				}
 				// we're only pushing parameters on the stack back to the stack
 				stackOffset += paramSize(param.m_type);
@@ -351,34 +345,30 @@ public:
 			else {
 				switch (auto reg = std::get<Register>(param.m_location)) {
 					case Register::ECX: {
-						out << "mov ecx, [esp + 0x"
-							<< param.m_resultLocation + stackOffset << "]; ";
+						out << "mov ecx, [esp + 0x" << param.m_resultLocation + stackOffset << "]; ";
 					} break;
 
 					case Register::EDX: {
-						out << "mov edx, [esp + 0x"
-							<< param.m_resultLocation + stackOffset << "]; ";
+						out << "mov edx, [esp + 0x" << param.m_resultLocation + stackOffset << "]; ";
 					} break;
 
 					// xmm registers
 					default: {
 						// double
 						if (param.m_type.m_size == 8) {
-							out << "movsd xmm" 
-								<< xmmRegisterName(reg) << ", [esp + 0x"
+							out << "movsd xmm" << xmmRegisterName(reg) << ", [esp + 0x"
 								<< param.m_resultLocation + stackOffset << "]; ";
 						}
 						// float
 						else {
-							out << "movss xmm" 
-								<< xmmRegisterName(reg) << ", [esp + 0x"
+							out << "movss xmm" << xmmRegisterName(reg) << ", [esp + 0x"
 								<< param.m_resultLocation + stackOffset << "]; ";
 						}
 					} break;
 				}
 			}
 		}
-		
+
 		return out.str();
 	}
 
@@ -391,23 +381,28 @@ std::string CdeclConvention::generateFromDefault(AbstractFunction const& functio
 	// it's the same conv as default
 	return "ret 0";
 }
+
 std::string CdeclConvention::generateToDefault(AbstractFunction const& function) {
 	// it's the same conv as default
 	return "";
 }
+
 std::string CdeclConvention::generateBackFromDefault(AbstractFunction const& function) {
 	// it's the same conv as default
 	return "";
 }
+
 std::string CdeclConvention::generateBackToDefault(AbstractFunction const& function, size_t stackOffset) {
 	// it's the same conv as default
 	return "";
 }
+
 CdeclConvention::~CdeclConvention() {}
 
 std::string ThiscallConvention::generateFromDefault(AbstractFunction const& function) {
 	return PushParameters::fromThiscall(function).generateFromDefault();
 }
+
 std::string ThiscallConvention::generateToDefault(AbstractFunction const& function) {
 	// Class::memberFun(this, int, int, int)
 	// ecx    <= this
@@ -422,17 +417,21 @@ std::string ThiscallConvention::generateToDefault(AbstractFunction const& functi
 
 	return PushParameters::fromThiscall(function).generateToDefault();
 }
+
 std::string ThiscallConvention::generateBackFromDefault(AbstractFunction const& function) {
 	return PushParameters::fromThiscall(function).generateBackFromDefault();
 }
+
 std::string ThiscallConvention::generateBackToDefault(AbstractFunction const& function, size_t stackOffset) {
 	return PushParameters::fromThiscall(function).generateBackToDefault(stackOffset);
 }
+
 ThiscallConvention::~ThiscallConvention() {}
 
 std::string FastcallConvention::generateFromDefault(AbstractFunction const& function) {
 	return PushParameters::fromFastcall(function).generateFromDefault();
 }
+
 std::string FastcallConvention::generateToDefault(AbstractFunction const& function) {
 	// struct Big { int x; int y; int z; }
 	// test3(Big, int, float, int, float)
@@ -443,7 +442,7 @@ std::string FastcallConvention::generateToDefault(AbstractFunction const& functi
 	// 0x10                 <= float
 	// edx                  <= int
 	// 0x14                 <= float
-	// 
+	//
 	// stackSizeFromFunction = 0x1c
 	// ----------------------------- offset before / after
 	// push [esp + 0x14]    <= float        0x0      0x4
@@ -456,20 +455,24 @@ std::string FastcallConvention::generateToDefault(AbstractFunction const& functi
 
 	return PushParameters::fromFastcall(function).generateToDefault();
 }
+
 std::string FastcallConvention::generateBackFromDefault(AbstractFunction const& function) {
 	return PushParameters::fromFastcall(function).generateBackFromDefault();
 }
+
 std::string FastcallConvention::generateBackToDefault(AbstractFunction const& function, size_t stackOffset) {
 	return PushParameters::fromFastcall(function).generateBackToDefault(stackOffset);
 }
+
 FastcallConvention::~FastcallConvention() {}
 
 std::string OptcallConvention::generateFromDefault(AbstractFunction const& function) {
 	return PushParameters::fromOptcall(function).generateFromDefault();
 }
+
 std::string OptcallConvention::generateToDefault(AbstractFunction const& function) {
-	// __optcall is like __fastcall, except parameters 0..3 are 
-	// passed through xmm0..xmm3 if they are floating-point and 
+	// __optcall is like __fastcall, except parameters 0..3 are
+	// passed through xmm0..xmm3 if they are floating-point and
 	// structs are all passed last
 
 	// struct Big { int x; int y; int z; }
@@ -485,7 +488,7 @@ std::string OptcallConvention::generateToDefault(AbstractFunction const& functio
 	// 0xc                  <= Big.x
 	// 0x10                 <= Big.y
 	// 0x14                 <= Big.z
-	// 
+	//
 	// stackSizeFromFunction = 0x20
 	// -----------------------------   stack offset after
 	// push [esp + 0x8]      <= float        0x4
@@ -497,29 +500,34 @@ std::string OptcallConvention::generateToDefault(AbstractFunction const& functio
 	// push [esp + 0x28]     <= Big.z        0x18
 	// push [esp + 0x28]     <= Big.y        0x1c
 	// push [esp + 0x28]     <= Big.x        0x20
-	
+
 	return PushParameters::fromOptcall(function).generateToDefault();
 }
+
 std::string OptcallConvention::generateBackFromDefault(AbstractFunction const& function) {
 	return PushParameters::fromOptcall(function).generateBackFromDefault();
 }
+
 std::string OptcallConvention::generateBackToDefault(AbstractFunction const& function, size_t stackOffset) {
 	return PushParameters::fromOptcall(function).generateBackToDefault(stackOffset);
 }
+
 OptcallConvention::~OptcallConvention() {}
 
 std::string MembercallConvention::generateFromDefault(AbstractFunction const& function) {
 	return PushParameters::fromMembercall(function).generateFromDefault();
 }
+
 std::string MembercallConvention::generateToDefault(AbstractFunction const& function) {
 	return PushParameters::fromMembercall(function).generateToDefault();
 }
+
 std::string MembercallConvention::generateBackFromDefault(AbstractFunction const& function) {
 	return PushParameters::fromMembercall(function).generateBackFromDefault();
 }
+
 std::string MembercallConvention::generateBackToDefault(AbstractFunction const& function, size_t stackOffset) {
 	return PushParameters::fromMembercall(function).generateBackToDefault(stackOffset);
 }
-MembercallConvention::~MembercallConvention() {}
 
-#endif
+MembercallConvention::~MembercallConvention() {}

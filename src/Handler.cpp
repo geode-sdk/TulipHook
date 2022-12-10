@@ -1,76 +1,74 @@
 #include "Handler.hpp"
+
 #include "Hook.hpp"
 #include "Pool.hpp"
-#include "platform/PlatformTarget.hpp"
 #include "platform/PlatformGenerator.hpp"
+#include "platform/PlatformTarget.hpp"
 
-#include <stack>
-#include <sstream>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <sstream>
+#include <stack>
 
 using namespace tulip::hook;
 
-Handler::Handler(NoPublicConstruct, void* address, HandlerMetadata metadata)
-  : m_address(address),
-  	m_metadata(metadata) {}
+Handler::Handler(void* address, HandlerMetadata metadata) :
+	m_address(address),
+	m_metadata(metadata) {}
 
 Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata metadata) {
-	auto ret = std::make_unique<Handler>(NoPublicConstruct(), address, metadata);
+	auto ret = std::make_unique<Handler>(address, metadata);
 
-	TULIP_UNWRAP_INTO(auto area1, PlatformTarget::get().allocateArea(0x200));
+	TULIP_HOOK_UNWRAP_INTO(auto area1, PlatformTarget::get().allocateArea(0x200));
 	ret->m_content = reinterpret_cast<HandlerContent*>(area1);
 	auto content = new (ret->m_content) HandlerContent();
 	std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
 
-
-	TULIP_UNWRAP_INTO(auto area2, PlatformTarget::get().allocateArea(0x1c0));
+	TULIP_HOOK_UNWRAP_INTO(auto area2, PlatformTarget::get().allocateArea(0x1c0));
 	ret->m_handler = reinterpret_cast<void*>(area2);
 	std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
 
-	TULIP_UNWRAP_INTO(auto area3, PlatformTarget::get().allocateArea(0x40));
+	TULIP_HOOK_UNWRAP_INTO(auto area3, PlatformTarget::get().allocateArea(0x40));
 	ret->m_trampoline = area3;
 	std::cout << std::hex << "m_trampoline: " << (void*)ret->m_trampoline << std::endl;
 
 	return Ok(std::move(ret));
 }
 
-Handler::~Handler() {
-	
-}
+Handler::~Handler() {}
 
 Result<> Handler::init() {
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
 
 	auto generator = PlatformGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
 
-	TULIP_UNWRAP(generator.generateHandler());
+	TULIP_HOOK_UNWRAP(generator.generateHandler());
 
-	TULIP_UNWRAP_INTO(m_modifiedBytes, generator.generateIntervener());
+	TULIP_HOOK_UNWRAP_INTO(m_modifiedBytes, generator.generateIntervener());
 
 	auto target = m_modifiedBytes.size();
 
 	auto address = reinterpret_cast<uint8_t*>(m_address);
 	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
-	
-	
-	TULIP_UNWRAP_INTO(auto trampolineOffset, generator.relocateOriginal(target));
-	TULIP_UNWRAP(generator.generateTrampoline(trampolineOffset));
 
+	TULIP_HOOK_UNWRAP_INTO(auto trampolineOffset, generator.relocateOriginal(target));
+	TULIP_HOOK_UNWRAP(generator.generateTrampoline(trampolineOffset));
 
 	auto metadata = HookMetadata();
 	metadata.m_priority = INT32_MAX;
-	this->createHook(m_trampoline, metadata);
+	static_cast<void>(this->createHook(m_trampoline, metadata));
 
 	return Ok();
 }
 
 HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
-	auto hook = reinterpret_cast<HookHandle>(address);
+	static size_t s_nextHookHandle = 0;
+	auto hook = HookHandle(++s_nextHookHandle);
 
 	m_hooks.emplace(hook, std::make_unique<Hook>(address, m_metadata));
-	m_content->m_functions[m_content->m_size] = address;
-	++m_content->m_size;
+	m_handles.insert({address, hook});
+
+	m_content->m_functions.push_back(address);
 
 	this->reorderFunctions();
 
@@ -78,47 +76,41 @@ HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
 }
 
 void Handler::removeHook(HookHandle const& hook) {
-	auto address = reinterpret_cast<void*>(hook);
+	auto address = m_hooks[hook]->m_address;
 
 	m_hooks.erase(hook);
-	(void)std::remove(
-		m_content->m_functions.data(),
-		m_content->m_functions.data() + m_content->m_size,
-		address
-	);
-	--m_content->m_size;
+	m_handles.erase(address);
+
+	auto& vec = m_content->m_functions;
+
+	vec.erase(std::remove(vec.begin(), vec.end(), address), vec.end());
 }
 
 void Handler::clearHooks() {
-	std::vector<HandlerHandle> handles;
-	for (auto& [handle, hook] : m_hooks) {
-		if (reinterpret_cast<void*>(handle) == m_trampoline) continue;
-		handles.push_back(handle);
-	}
+	m_hooks.clear();
+	m_handles.clear();
+	m_content->m_functions.clear();
 
-	for (auto handle : handles) {
-		this->removeHook(handle);
-	}
+	auto metadata = HookMetadata{
+		.m_priority = INT32_MAX,
+	};
+	static_cast<void>(this->createHook(m_trampoline, metadata));
 }
 
 void Handler::reorderFunctions() {
-	std::sort(m_content->m_functions.data(), m_content->m_functions.data() + m_content->m_size, [this](auto const a, auto const b){
-		return (
-			m_hooks.at(reinterpret_cast<HookHandle>(a))->m_metadata.m_priority <
-			m_hooks.at(reinterpret_cast<HookHandle>(b))->m_metadata.m_priority
-		);
+	auto& vec = m_content->m_functions;
+	std::sort(vec.begin(), vec.end(), [this](auto const a, auto const b) {
+		return (m_hooks.at(m_handles[a])->m_metadata.m_priority < m_hooks.at(m_handles[b])->m_metadata.m_priority);
 	});
 }
 
 Result<> Handler::interveneFunction() {
-	return PlatformTarget::get()
-		.writeMemory(m_address, static_cast<void*>(m_modifiedBytes.data()), m_originalBytes.size());
-}
-Result<> Handler::restoreFunction() {
-	return PlatformTarget::get()
-		.writeMemory(m_address, static_cast<void*>(m_originalBytes.data()), m_originalBytes.size());
+	return PlatformTarget::get().writeMemory(m_address, static_cast<void*>(m_modifiedBytes.data()), m_modifiedBytes.size());
 }
 
+Result<> Handler::restoreFunction() {
+	return PlatformTarget::get().writeMemory(m_address, static_cast<void*>(m_originalBytes.data()), m_originalBytes.size());
+}
 
 bool TULIP_HOOK_DEFAULT_CONV Handler::symbolResolver(char const* csymbol, uint64_t* value) {
 	std::string symbol = csymbol;
@@ -176,13 +168,11 @@ bool TULIP_HOOK_DEFAULT_CONV Handler::symbolResolver(char const* csymbol, uint64
 	return false;
 }
 
-
 static thread_local std::stack<size_t> s_indexStack;
 static thread_local std::stack<HandlerContent*> s_addressStack;
 static thread_local std::stack<void*> s_dataStack;
 
 void Handler::incrementIndex(HandlerContent* content) {
-	// printf("incrementIndex - content addr: 0x%" PRIx64 "\n", (uint64_t)content);
 	if (s_addressStack.size() == 0 || s_addressStack.top() != content) {
 		// new entry
 		s_addressStack.push(content);
@@ -191,12 +181,9 @@ void Handler::incrementIndex(HandlerContent* content) {
 	else {
 		++s_indexStack.top();
 	}
-
-	// printf("incrementIndex - top: 0x%" PRIx64 "\n", (uint64_t)s_indexStack.top());
 }
 
 void Handler::decrementIndex() {
-	// printf("decrementIndex\n");
 	if (s_indexStack.top() == 0) {
 		s_addressStack.pop();
 		s_indexStack.pop();
@@ -207,18 +194,17 @@ void Handler::decrementIndex() {
 }
 
 void* Handler::getNextFunction(HandlerContent* content) {
-	// printf("getNextFunction - content addr: 0x%" PRIx64 " index: %lu\n", (uint64_t)content, s_indexStack.top() % content->m_size);
-	auto ret = content->m_functions[s_indexStack.top() % content->m_size];
-	// printf("getNextFunction - next func addr: 0x%" PRIx64 "\n", (uint64_t)ret);
+	auto& vec = content->m_functions;
+	auto ret = vec[s_indexStack.top() % vec.size()];
 	return ret;
 }
-
 
 void* Handler::popData() {
 	auto ret = s_dataStack.top();
 	s_dataStack.pop();
 	return ret;
 }
+
 void Handler::pushData(void* data) {
 	s_dataStack.push(data);
 }
