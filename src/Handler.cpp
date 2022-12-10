@@ -22,15 +22,15 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	TULIP_HOOK_UNWRAP_INTO(auto area1, PlatformTarget::get().allocateArea(0x200));
 	ret->m_content = reinterpret_cast<HandlerContent*>(area1);
 	auto content = new (ret->m_content) HandlerContent();
-	std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
+	// std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
 
 	TULIP_HOOK_UNWRAP_INTO(auto area2, PlatformTarget::get().allocateArea(0x1c0));
 	ret->m_handler = reinterpret_cast<void*>(area2);
-	std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
+	// std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
 
 	TULIP_HOOK_UNWRAP_INTO(auto area3, PlatformTarget::get().allocateArea(0x40));
 	ret->m_trampoline = area3;
-	std::cout << std::hex << "m_trampoline: " << (void*)ret->m_trampoline << std::endl;
+	// std::cout << std::hex << "m_trampoline: " << (void*)ret->m_trampoline << std::endl;
 
 	return Ok(std::move(ret));
 }

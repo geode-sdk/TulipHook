@@ -23,11 +23,13 @@ namespace tulip::hook {
 
 			template <class E2>
 				requires(std::is_constructible_v<E, E2 const&>)
-			explicit constexpr Failure(E2 const& e) : m_error(e) {}
+			explicit constexpr Failure(E2 const& e) :
+				m_error(e) {}
 
 			template <class E2>
 				requires(std::is_constructible_v<E, E2 &&>)
-			explicit constexpr Failure(E2&& e) : m_error(std::move(e)) {}
+			explicit constexpr Failure(E2&& e) :
+				m_error(std::move(e)) {}
 
 			E& error() & noexcept {
 				return m_error;
@@ -55,11 +57,13 @@ namespace tulip::hook {
 
 			template <class T2>
 				requires(std::is_constructible_v<T, T2 const&>)
-			explicit constexpr Success(T2 const& v) : m_value(v) {}
+			explicit constexpr Success(T2 const& v) :
+				m_value(v) {}
 
 			template <class T2>
 				requires(std::is_constructible_v<T, T2 &&>)
-			explicit constexpr Success(T2&& v) : m_value(std::forward<T2>(v)) {}
+			explicit constexpr Success(T2&& v) :
+				m_value(std::forward<T2>(v)) {}
 
 			T& value() & noexcept {
 				return m_value;
@@ -94,19 +98,23 @@ namespace tulip::hook {
 
 		template <class E2>
 			requires(std::is_constructible_v<E, E2 const&>)
-		constexpr Result(impl::Failure<E2> const& e) : Base(cpp::failure<E>(e.error())) {}
+		constexpr Result(impl::Failure<E2> const& e) :
+			Base(cpp::failure<E>(e.error())) {}
 
 		template <class E2>
 			requires(std::is_constructible_v<E, E2 &&>)
-		constexpr Result(impl::Failure<E2>&& e) : Base(cpp::failure<E>(std::move(e.error()))) {}
+		constexpr Result(impl::Failure<E2>&& e) :
+			Base(cpp::failure<E>(std::move(e.error()))) {}
 
 		template <class T2>
 			requires(std::is_constructible_v<T, T2 const&>)
-		constexpr Result(impl::Success<T2> const& s) : Base(s.value()) {}
+		constexpr Result(impl::Success<T2> const& s) :
+			Base(s.value()) {}
 
 		template <class T2>
 			requires(std::is_constructible_v<T, T2 &&>)
-		constexpr Result(impl::Success<T2>&& s) : Base(std::move(s.value())) {}
+		constexpr Result(impl::Success<T2>&& s) :
+			Base(std::move(s.value())) {}
 
 		[[nodiscard]] constexpr explicit operator bool() const noexcept {
 			return this->operator bool();

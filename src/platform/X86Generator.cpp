@@ -71,11 +71,11 @@ Result<> X86Generator::generateHandler() {
 	if (!size && code.size()) {
 		return Err("Assembling handler failed: Unknown error (no bytes were written)");
 	}
-	std::cout << "size: " << size << "\n";
-	for (auto i = 0; i < size; ++i) {
-		std::cout << std::hex << +encode[i] << " ";
-	}
-	std::cout << "\n";
+	// std::cout << "size: " << size << "\n";
+	// for (auto i = 0; i < size; ++i) {
+	// 	std::cout << std::hex << +encode[i] << " ";
+	// }
+	// std::cout << "\n";
 
 	std::memcpy(m_handler, encode, size);
 
@@ -95,7 +95,7 @@ Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 
 	auto code = this->intervenerString();
 
-	std::cout << "intervener: " << code << std::endl;
+	// std::cout << "intervener: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
 	if (status != KS_ERR_OK) {
 		return Err("Assembling intervener failed: " + std::string(ks_strerror(ks_errno(ks))));
@@ -104,11 +104,11 @@ Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 	if (!size && code.size()) {
 		return Err("Assembling intervener failed: Unknown error (no bytes were written)");
 	}
-	std::cout << "size: " << size << "\n";
-	for (auto i = 0; i < size; ++i) {
-		std::cout << std::hex << +encode[i] << " ";
-	}
-	std::cout << "\n";
+	// std::cout << "size: " << size << "\n";
+	// for (auto i = 0; i < size; ++i) {
+	// 	std::cout << std::hex << +encode[i] << " ";
+	// }
+	// std::cout << "\n";
 
 	std::vector<uint8_t> ret(encode, encode + size);
 
@@ -129,7 +129,7 @@ Result<> X86Generator::generateTrampoline(size_t offset) {
 	auto code = this->trampolineString(offset);
 	auto address = reinterpret_cast<size_t>(m_trampoline) + offset;
 
-	std::cout << "trampoline: " << code << std::endl;
+	// std::cout << "trampoline: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), address, &encode, &size, &count);
 	if (status != KS_ERR_OK) {
 		return Err("Assembling trampoline failed: " + std::string(ks_strerror(ks_errno(ks))));
