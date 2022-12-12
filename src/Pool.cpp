@@ -9,11 +9,11 @@ Pool& Pool::get() {
 	return ret;
 }
 
-Result<HandlerHandle> Pool::createHandler(void* address, HandlerMetadata m_metadata) {
+Result<HandlerHandle> Pool::createHandler(void* address, HandlerMetadata const& metadata) {
 	auto handle = reinterpret_cast<HandlerHandle>(address);
 
 	if (m_handlers.find(handle) == m_handlers.end()) {
-		TULIP_HOOK_UNWRAP_INTO(auto handler, Handler::create(address, m_metadata));
+		TULIP_HOOK_UNWRAP_INTO(auto handler, Handler::create(address, metadata));
 		m_handlers.emplace(handle, std::move(handler));
 		TULIP_HOOK_UNWRAP(m_handlers[handle]->init());
 	}

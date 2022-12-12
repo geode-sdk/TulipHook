@@ -5,7 +5,9 @@
 
 using namespace tulip::hook;
 
-Result<HandlerHandle> TULIP_HOOK_DEFAULT_CONV tulip::hook::createHandler(void* address, HandlerMetadata metadata) noexcept {
+Result<HandlerHandle> TULIP_HOOK_DEFAULT_CONV tulip::hook::createHandler(
+	void* address, HandlerMetadata const& metadata
+) noexcept {
 	return Pool::get().createHandler(address, metadata);
 }
 
@@ -15,11 +17,17 @@ Result<> TULIP_HOOK_DEFAULT_CONV tulip::hook::removeHandler(HandlerHandle const&
 }
 
 HookHandle TULIP_HOOK_DEFAULT_CONV tulip::hook::createHook(
-	HandlerHandle const& handler, void* function, HookMetadata metadata
+	HandlerHandle const& handler, void* function, HookMetadata const& metadata
 ) noexcept {
 	return Pool::get().getHandler(handler).createHook(function, metadata);
 }
 
 void TULIP_HOOK_DEFAULT_CONV tulip::hook::removeHook(HandlerHandle const& handler, HookHandle const& hook) noexcept {
 	Pool::get().getHandler(handler).removeHook(hook);
+}
+
+void TULIP_HOOK_DEFAULT_CONV tulip::hook::updateHookMetadata(
+	HandlerHandle const& handler, HookHandle const& hook, HookMetadata const& metadata
+) noexcept {
+	Pool::get().getHandler(handler).updateHookMetadata(hook, metadata);
 }

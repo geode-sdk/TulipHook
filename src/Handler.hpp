@@ -18,7 +18,7 @@ namespace tulip::hook {
 
 	class Handler final {
 	public:
-		Handler(void* address, HandlerMetadata metadata);
+		Handler(void* address, HandlerMetadata const& metadata);
 
 		void* const m_address;
 		HandlerMetadata const m_metadata;
@@ -37,7 +37,7 @@ namespace tulip::hook {
 		std::vector<uint8_t> m_originalBytes;
 		std::vector<uint8_t> m_modifiedBytes;
 
-		static Result<std::unique_ptr<Handler>> create(void* address, HandlerMetadata metadata);
+		static Result<std::unique_ptr<Handler>> create(void* address, HandlerMetadata const& metadata);
 		~Handler();
 
 		Result<> init();
@@ -48,6 +48,8 @@ namespace tulip::hook {
 		void clearHooks();
 
 		void reorderFunctions();
+
+		void updateHookMetadata(HookHandle const& hook, HookMetadata const& metadata);
 
 		static bool TULIP_HOOK_DEFAULT_CONV symbolResolver(char const* symbol, uint64_t* value);
 

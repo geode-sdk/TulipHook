@@ -12,11 +12,11 @@
 
 using namespace tulip::hook;
 
-Handler::Handler(void* address, HandlerMetadata metadata) :
+Handler::Handler(void* address, HandlerMetadata const& metadata) :
 	m_address(address),
 	m_metadata(metadata) {}
 
-Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata metadata) {
+Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata const& metadata) {
 	auto ret = std::make_unique<Handler>(address, metadata);
 
 	TULIP_HOOK_UNWRAP_INTO(auto area1, PlatformTarget::get().allocateArea(0x200));
@@ -95,6 +95,11 @@ void Handler::clearHooks() {
 		.m_priority = INT32_MAX,
 	};
 	static_cast<void>(this->createHook(m_trampoline, metadata));
+}
+
+void Handler::updateHookMetadata(HookHandle const& hook, HookMetadata const& metadata) {
+	m_hooks.at(hook)->m_metadata = metadata;
+	this->reorderFunctions();
 }
 
 void Handler::reorderFunctions() {

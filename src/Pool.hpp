@@ -14,7 +14,7 @@ namespace tulip::hook {
 
 		static Pool& get();
 
-		Result<HandlerHandle> createHandler(void* address, HandlerMetadata m_metadata);
+		Result<HandlerHandle> createHandler(void* address, HandlerMetadata const& metadata);
 		Result<> removeHandler(HandlerHandle const& handler);
 
 		Handler& getHandler(HandlerHandle const& handler);
