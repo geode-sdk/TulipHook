@@ -31,5 +31,4 @@ target_include_directories(TulipHook PRIVATE
 
 target_include_directories(TulipHook INTERFACE
 	$<BUILD_INTERFACE:${TulipHookRoot_SOURCE_DIR}/include>
-	$<BUILD_INTERFACE:${TulipHookRoot_SOURCE_DIR}/include/tulip>
 )
