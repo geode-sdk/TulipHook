@@ -41,5 +41,5 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 target_include_directories(TulipHook INTERFACE 
-	${TulipHookRoot_SOURCE_DIR}/include/tulip
+	${TulipHookRoot_SOURCE_DIR}/include
 )
