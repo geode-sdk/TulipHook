@@ -43,7 +43,7 @@ Result<> WindowsTarget::protectMemory(void* address, size_t size, uint32_t prote
 	return Ok();
 }
 
-Result<> WindowsTarget::rawWriteMemory(void* destination, void* source, size_t size) {
+Result<> WindowsTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	if (!WriteProcessMemory(GetCurrentProcess(), destination, source, size, nullptr)) {
 		return Err("Unable to write to memory");
 	}

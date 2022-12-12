@@ -18,7 +18,7 @@ namespace tulip::hook {
 	public:
 		Result<void*> allocateArea(size_t size);
 
-		Result<> writeMemory(void* destination, void* source, size_t size);
+		Result<> writeMemory(void* destination, void const* source, size_t size);
 
 		virtual Result<ks_engine*> openKeystone() = 0;
 		void closeKeystone();
@@ -31,7 +31,7 @@ namespace tulip::hook {
 		virtual Result<> allocatePage() = 0;
 		virtual Result<uint32_t> getProtection(void* address) = 0;
 		virtual Result<> protectMemory(void* address, size_t size, uint32_t protection) = 0;
-		virtual Result<> rawWriteMemory(void* destination, void* source, size_t size) = 0;
+		virtual Result<> rawWriteMemory(void* destination, void const* source, size_t size) = 0;
 		virtual uint32_t getMaxProtection() = 0;
 	};
 };

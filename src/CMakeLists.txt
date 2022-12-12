@@ -7,6 +7,7 @@ add_library(TulipHook STATIC
 	Generator.cpp
 	Handler.cpp
 	Main.cpp
+	Misc.cpp
 	Pool.cpp
 	Target.cpp
 	platform/DefaultConvention.cpp

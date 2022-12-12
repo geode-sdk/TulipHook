@@ -17,7 +17,7 @@ Result<void*> Target::allocateArea(size_t size) {
 	return Ok(reinterpret_cast<void*>(ret));
 }
 
-Result<> Target::writeMemory(void* destination, void* source, size_t size) {
+Result<> Target::writeMemory(void* destination, void const* source, size_t size) {
 	TULIP_HOOK_UNWRAP_INTO(auto oldProtection, this->getProtection(destination));
 
 	TULIP_HOOK_UNWRAP(this->protectMemory(destination, size, this->getMaxProtection()));

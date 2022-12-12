@@ -66,7 +66,7 @@ Result<> MacosTarget::protectMemory(void* address, size_t size, uint32_t protect
 	return Ok();
 }
 
-Result<> MacosTarget::rawWriteMemory(void* destination, void* source, size_t size) {
+Result<> MacosTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	kern_return_t status;
 
 	status = mach_vm_write(

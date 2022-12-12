@@ -24,4 +24,8 @@ namespace tulip::hook {
 	TULIP_HOOK_DLL void updateHookMetadata(
 		HandlerHandle const& handler, HookHandle const& hook, HookMetadata const& metadata
 	) noexcept;
+
+	TULIP_HOOK_DLL Result<> writeMemory(void* destination, void const* source, size_t size) noexcept;
+
+	TULIP_HOOK_DLL Result<void*> followJumps(void* address) noexcept;
 }
