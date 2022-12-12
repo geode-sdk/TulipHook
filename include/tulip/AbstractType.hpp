@@ -19,15 +19,21 @@ namespace tulip::hook {
 		template <class Type>
 		static AbstractType from() {
 			AbstractType type;
-			type.m_size = sizeof(Type);
-			if constexpr (std::is_floating_point_v<Type>) {
+			if constexpr (std::is_same_v<Type, void>) {
+				type.m_kind = AbstractTypeKind::Primitive;
+				type.m_size = 1;
+			}
+			else if constexpr (std::is_floating_point_v<Type>) {
 				type.m_kind = AbstractTypeKind::FloatingPoint;
+				type.m_size = sizeof(Type);
 			}
 			else if constexpr (!std::is_class_v<Type>) {
 				type.m_kind = AbstractTypeKind::Primitive;
+				type.m_size = sizeof(Type);
 			}
 			else {
 				type.m_kind = AbstractTypeKind::Other;
+				type.m_size = sizeof(Type);
 			}
 			return type;
 		}
