@@ -27,18 +27,18 @@ namespace {
 std::string WindowsGenerator::handlerString() {
 	std::ostringstream out;
 	out << std::hex;
-	out << m_metadata.m_convention->generateToDefault(m_metadata.m_abstract) << "; ";
+	out << m_metadata.m_convention->generateToDefault(m_metadata.m_abstract) << "\n ";
 
 	// increment and get function
 	out << R"ASM(
 	push esi
 
 	; set the parameters
-	mov eax, [eip + _content]
+	mov eax, [_content]
 	push eax
 	
 	; call the pre handler, incrementing
-	mov eax, [eip + _handlerPre]
+	mov eax, [_handlerPre]
 	call eax
 )ASM";
 
@@ -74,7 +74,7 @@ std::string WindowsGenerator::handlerString() {
 	movaps [esp + 0x00], xmm0
 
 	; call the post handler, decrementing
-	mov eax, [eip + _handlerPost]
+	mov eax, [_handlerPost]
 	call eax
 
 	; recover the return values
@@ -93,24 +93,24 @@ std::string WindowsGenerator::handlerString() {
 	out << R"ASM(
 _handlerPre: 
 	dd 0x)ASM"
-		<< reinterpret_cast<uint64_t>(preHandler);
+		<< reinterpret_cast<uintptr_t>(preHandler);
 
 	out << R"ASM(
 _handlerPost: 
 	dd 0x)ASM"
-		<< reinterpret_cast<uint64_t>(postHandler);
+		<< reinterpret_cast<uintptr_t>(postHandler);
 
 	out << R"ASM(
 _content: 
 	dd 0x)ASM"
-		<< reinterpret_cast<uint64_t>(m_content);
+		<< reinterpret_cast<uintptr_t>(m_content);
 
 	return out.str();
 }
 
 std::string WindowsGenerator::trampolineString(size_t offset) {
 	std::ostringstream out;
-	out << m_metadata.m_convention->generateBackToDefault(m_metadata.m_abstract, 0x8) << "; ";
+	out << m_metadata.m_convention->generateBackToDefault(m_metadata.m_abstract, 0x8) << "\n";
 	out << "jmp _address" << m_address << "_" << offset;
 	return out.str();
 }

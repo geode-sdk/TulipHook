@@ -295,11 +295,11 @@ public:
 					default: {
 						// double
 						if (param.m_type.m_size == 8) {
-							out << "sub esp, 0x8; movsd [esp], xmm" << xmmRegisterName(reg) << "; ";
+							out << "sub esp, 0x8\n movsd [esp], xmm" << xmmRegisterName(reg) << "\n";
 						}
 						// float
 						else {
-							out << "sub esp, 0x4; movss [esp], xmm" << xmmRegisterName(reg) << "; ";
+							out << "sub esp, 0x4\n movss [esp], xmm" << xmmRegisterName(reg) << "\n";
 						}
 					} break;
 				}
@@ -318,10 +318,10 @@ public:
 		out << std::hex;
 
 		// clean up stack from the ones we added
-		out << "add esp, 0x" << m_resultStackSize << "; ";
+		out << "add esp, 0x" << m_resultStackSize << "\n";
 		// some of the original parameters may be passed through registers so the
 		// original's stack size may be smaller
-		out << "ret 0x" << m_originalStackSize << "; ";
+		out << "ret 0x" << m_originalStackSize << "\n";
 
 		return out.str();
 	}

@@ -117,7 +117,7 @@ namespace tulip::hook {
 			Base(std::move(s.value())) {}
 
 		[[nodiscard]] constexpr explicit operator bool() const noexcept {
-			return this->operator bool();
+			return Base::operator bool();
 		}
 
 		[[nodiscard]] constexpr bool isOk() const noexcept {
