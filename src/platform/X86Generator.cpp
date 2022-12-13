@@ -217,7 +217,7 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 				trampolineAddress += 6;
 				displaced += 6;
 				std::memcpy(reinterpret_cast<void*>(trampolineAddress + displacedOffset + 1), &displaced, sizeof(int));
-				inBinary[1] = inBinary[0] + 1;
+				inBinary[1] = inBinary[0] + 0x10;
 				inBinary[0] = 0x0f;
 			}
 		}
