@@ -191,34 +191,38 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 		std::memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
 
 		if (jumpGroup) {
-			int displaced = detail->x86.disp - difference - size;
+			int displaced = static_cast<int>(detail->x86.disp) - static_cast<int>(difference) - static_cast<int>(size);
+			std::cout << displaced << "\n";
 			auto displacedOffset = detail->x86.encoding.disp_offset;
 			uint8_t* inBinary = reinterpret_cast<uint8_t*>(trampolineAddress);
 
 			if (detail->x86.encoding.disp_offset > 0 && id == X86_INS_LJMP) {
 				// long jmp size
-				trampolineAddress += 5;
 				displaced += 5;
 				std::memcpy(reinterpret_cast<void*>(trampolineAddress + displacedOffset), &displaced, sizeof(int));
+
+				trampolineAddress += 5;
 			}
 			else if (detail->x86.encoding.disp_offset > 0 && id == X86_INS_JMP) {
 				// should i use keystone or nah
 				// eeh i dont think i should
 				// converting jmp to ljmp
 				// long jmp size
-				trampolineAddress += 5;
 				displaced += 5;
 				std::memcpy(reinterpret_cast<void*>(trampolineAddress + displacedOffset), &displaced, sizeof(int));
 				inBinary[0] = 0xe9;
+
+				trampolineAddress += 5;
 			}
 			else {
 				// conditional jumps
 				// long conditional jmp size
-				trampolineAddress += 6;
 				displaced += 6;
 				std::memcpy(reinterpret_cast<void*>(trampolineAddress + displacedOffset + 1), &displaced, sizeof(int));
 				inBinary[1] = inBinary[0] + 0x10;
 				inBinary[0] = 0x0f;
+
+				trampolineAddress += 6;
 			}
 		}
 		else {
