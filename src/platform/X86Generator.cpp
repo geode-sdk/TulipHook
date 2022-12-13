@@ -147,7 +147,7 @@ Result<> X86Generator::generateTrampoline(size_t offset) {
 }
 
 Result<size_t> X86Generator::relocateOriginal(size_t target) {
-	std::memcpy(m_trampoline, m_address, 32);
+	// std::memcpy(m_trampoline, m_address, 32);
 	size_t offset = 0;
 
 	TULIP_HOOK_UNWRAP_INTO(CSHolder cs, PlatformTarget::get().openCapstone());
@@ -157,7 +157,7 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 	auto insn = cs_malloc(cs);
 
 	uint64_t address = reinterpret_cast<uint64_t>(m_trampoline);
-	uint8_t const* code = reinterpret_cast<uint8_t const*>(m_trampoline);
+	uint8_t const* code = reinterpret_cast<uint8_t const*>(m_address);
 	size_t size = 32;
 
 	// for debuggers to not cry
@@ -167,31 +167,69 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 
 	auto targetAddress = address + target;
 
+	auto originalAddress = reinterpret_cast<uint64_t>(m_address);
+	auto trampolineAddress = reinterpret_cast<uint64_t>(m_trampoline);
+
 	while (cs_disasm_iter(cs, &code, &size, &address, insn)) {
+		auto id = insn->id;
 		auto detail = insn->detail;
+		auto address = insn->address;
+		auto size = insn->size;
 
-		if (detail->x86.encoding.disp_offset > 0) {
-			if (detail->x86.encoding.disp_size == sizeof(int)) {
-				int displaced = detail->x86.disp - difference;
-
-				std::memcpy(
-					reinterpret_cast<void*>(insn->address + detail->x86.encoding.disp_offset), &displaced, sizeof(int)
-				);
-			}
-			else {
-				cs_free(insn, 1);
-				return Err("Not supported, displacement didn't work");
+		auto jumpGroup = false;
+		for (auto i = 0; i < detail->groups_count; ++i) {
+			if (detail->groups[i] == X86_GRP_JUMP) {
+				jumpGroup = true;
+				break;
 			}
 		}
 
 		if (address >= targetAddress) {
 			break;
 		}
+
+		std::memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
+
+		if (jumpGroup) {
+			int displaced = detail->x86.disp - difference - size;
+			auto displacedOffset = detail->x86.encoding.disp_offset;
+			uint8_t* inBinary = reinterpret_cast<uint8_t*>(trampolineAddress);
+
+			if (detail->x86.encoding.disp_offset > 0 && id == X86_INS_LJMP) {
+				// long jmp size
+				trampolineAddress += 5;
+				displaced += 5;
+				std::memcpy(reinterpret_cast<void*>(trampolineAddress + displacedOffset), &displaced, sizeof(int));
+			}
+			else if (detail->x86.encoding.disp_offset > 0 && id == X86_INS_JMP) {
+				// should i use keystone or nah
+				// eeh i dont think i should
+				// converting jmp to ljmp
+				// long jmp size
+				trampolineAddress += 5;
+				displaced += 5;
+				std::memcpy(reinterpret_cast<void*>(trampolineAddress + displacedOffset), &displaced, sizeof(int));
+				inBinary[0] = 0xe9;
+			}
+			else {
+				// conditional jumps
+				// long conditional jmp size
+				trampolineAddress += 6;
+				displaced += 6;
+				std::memcpy(reinterpret_cast<void*>(trampolineAddress + displacedOffset + 1), &displaced, sizeof(int));
+				inBinary[1] = inBinary[0] + 1;
+				inBinary[0] = 0x0f;
+			}
+		}
+		else {
+			trampolineAddress += size;
+		}
+		originalAddress += size;
 	}
 
 	cs_free(insn, 1);
 
-	return Ok(address - reinterpret_cast<uint64_t>(m_trampoline));
+	return Ok(trampolineAddress - reinterpret_cast<uint64_t>(m_trampoline));
 }
 
 std::string X86Generator::intervenerString() {
