@@ -6,22 +6,14 @@
 #ifndef TULIP_HOOK_RESULT_RESULT
 #define TULIP_HOOK_RESULT_RESULT
 
-#ifdef RESULT_RESULT_HPP
-	#undef RESULT_RESULT_HPP
-	#define TULIP_HOOK_RESULT_RESULT_DEFINED
-#endif
-
+#pragma push_macro("RESULT_RESULT_HPP")
 #pragma push_macro("RESULT_NAMESPACE")
 
 #define RESULT_NAMESPACE tulip::hook::lib
 #include "../../lib/result/include/result.hpp"
 
 #pragma pop_macro("RESULT_NAMESPACE")
-
-#ifdef TULIP_HOOK_RESULT_RESULT_DEFINED
-	#undef TULIP_HOOK_RESULT_RESULT_DEFINED
-	#define RESULT_RESULT_HPP
-#endif
+#pragma pop_macro("RESULT_RESULT_HPP")
 
 #endif
 
