@@ -1,11 +1,23 @@
 #pragma once
 
-#pragma push_macro("RESULT_NAMESPACE")
-#define RESULT_NAMESPACE tulip::hook::lib
+// this is worse than i initially thought
+// really worse
+// im just doing this to get rid of weak link warnings
+#ifndef TULIP_HOOK_RESULT_RESULT
+#define TULIP_HOOK_RESULT_RESULT
 
+#undef RESULT_RESULT_HPP
+
+#pragma push_macro("RESULT_NAMESPACE")
+
+#define RESULT_NAMESPACE tulip::hook::lib
 #include "../../lib/result/include/result.hpp"
 
 #pragma pop_macro("RESULT_NAMESPACE")
+
+#define RESULT_RESULT_HPP
+
+#endif
 
 #include <string>
 #include <string_view>
