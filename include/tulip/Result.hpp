@@ -9,6 +9,7 @@
 #pragma push_macro("RESULT_RESULT_HPP")
 #pragma push_macro("RESULT_NAMESPACE")
 
+#undef RESULT_RESULT_HPP
 #define RESULT_NAMESPACE tulip::hook::lib
 #include "../../lib/result/include/result.hpp"
 
