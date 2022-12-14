@@ -57,7 +57,7 @@ if(NOT keystone)
 endif()
 
 target_link_libraries(TulipHook PRIVATE capstone-static keystone)
-target_compile_definitions(TulipHook PRIVATE -DTULIP_HOOK_EXPORTING=1 -DRESULT_NAMESPACE=tulip::hook::lib)
+target_compile_definitions(TulipHook PRIVATE -DTULIP_HOOK_EXPORTING=1)
 
 target_include_directories(TulipHook PRIVATE
 	${TulipHookRoot_SOURCE_DIR}/include/tulip

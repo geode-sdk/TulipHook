@@ -1,12 +1,18 @@
 #pragma once
 
+#pragma push_macro("RESULT_NAMESPACE")
+#define RESULT_NAMESPACE tulip::hook::lib
+
 #include "../../lib/result/include/result.hpp"
+
+#pragma pop_macro("RESULT_NAMESPACE")
 
 #include <string>
 #include <string_view>
 #include <variant>
 
 namespace tulip::hook {
+
 	namespace impl {
 		using DefaultValue = std::monostate;
 		using DefaultError = std::string;
