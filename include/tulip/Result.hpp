@@ -84,27 +84,27 @@ namespace tulip::hook {
 	}
 
 	template <class T = impl::DefaultValue, class E = impl::DefaultError>
-	class [[nodiscard]] Result : public cpp::result<T, E> {
+	class [[nodiscard]] Result : public lib::result<T, E> {
 	public:
-		using Base = cpp::result<T, E>;
+		using Base = lib::result<T, E>;
 		using ValueType = typename Base::value_type;
 		using ErrorType = typename Base::error_type;
 
 		using Base::result;
 
 		template <class U>
-			requires(cpp::detail::result_is_implicit_value_convertible<T, U>::value)
+			requires(lib::detail::result_is_implicit_value_convertible<T, U>::value)
 		constexpr Result(U&& value) = delete;
 
 		template <class E2>
 			requires(std::is_constructible_v<E, E2 const&>)
 		constexpr Result(impl::Failure<E2> const& e) :
-			Base(cpp::failure<E>(e.error())) {}
+			Base(lib::failure<E>(e.error())) {}
 
 		template <class E2>
 			requires(std::is_constructible_v<E, E2 &&>)
 		constexpr Result(impl::Failure<E2>&& e) :
-			Base(cpp::failure<E>(std::move(e.error()))) {}
+			Base(lib::failure<E>(std::move(e.error()))) {}
 
 		template <class T2>
 			requires(std::is_constructible_v<T, T2 const&>)
