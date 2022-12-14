@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Result.hpp>
+#include <TulipResult.hpp>
 
 namespace tulip::hook {
 

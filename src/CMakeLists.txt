@@ -57,6 +57,7 @@ if(NOT keystone)
 endif()
 
 target_link_libraries(TulipHook PRIVATE capstone-static keystone)
+target_link_libraries(TulipHook PUBLIC Result)
 target_compile_definitions(TulipHook PRIVATE -DTULIP_HOOK_EXPORTING=1)
 
 target_include_directories(TulipHook PRIVATE

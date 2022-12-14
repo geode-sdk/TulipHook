@@ -6,13 +6,12 @@
 #include "HandlerData.hpp"
 #include "HookData.hpp"
 #include "Platform.hpp"
-#include "Result.hpp"
+#include "TulipResult.hpp"
 #include "platform/PlatformConvention.hpp"
 
 #include <system_error>
 
 namespace tulip::hook {
-
 	TULIP_HOOK_DLL Result<HandlerHandle> createHandler(void* address, HandlerMetadata const& metadata) noexcept;
 
 	TULIP_HOOK_DLL Result<> removeHandler(HandlerHandle const& handler) noexcept;

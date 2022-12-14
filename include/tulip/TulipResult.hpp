@@ -11,7 +11,7 @@
 
 #undef RESULT_RESULT_HPP
 #define RESULT_NAMESPACE tulip::hook::lib
-#include "../../lib/result/include/result.hpp"
+#include <result.hpp>
 
 #pragma pop_macro("RESULT_NAMESPACE")
 #pragma pop_macro("RESULT_RESULT_HPP")
