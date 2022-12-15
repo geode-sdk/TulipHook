@@ -27,7 +27,8 @@ namespace {
 std::string WindowsGenerator::handlerString() {
 	std::ostringstream out;
 	out << std::hex;
-	out << m_metadata.m_convention->generateToDefault(m_metadata.m_abstract) << "\n ";
+	// out << "int3\n";
+	out << m_metadata.m_convention->generateIntoDefault(m_metadata.m_abstract) << "\n ";
 
 	// increment and get function
 	out << R"ASM(
@@ -40,6 +41,9 @@ std::string WindowsGenerator::handlerString() {
 	; call the pre handler, incrementing
 	mov eax, [_handlerPre]
 	call eax
+
+	; cdecl is caller cleanup
+	add esp, 0x4
 )ASM";
 
 	size_t stackSize = 0;
@@ -53,7 +57,17 @@ std::string WindowsGenerator::handlerString() {
 
 	// push the stack params
 	for (size_t i = 0; i < stackSize; i += 4) {
-		out << "push [esp + 0x" << (stackSize + 8) << "]\n";
+		// esp points to the topmost member in the stack, so since we have 
+		// pushed two things on the stack since our original cconv pushes 
+		// we now must dig those back up from stackSize + 4
+		// the reason it's not stackSize + 8 is because stackSize is 4 
+		// larger than where we need to start to dig up
+		// for example, if only ecx is used (thiscall with no extra params)
+		// then if nothing was pushed afterwards, ecx would be found at [esp]
+		// but the stack size would be 4; and if there were more parameters 
+		// then the stack size would be 4 larger than where we want to start 
+		// digging up
+		out << "push [esp + 0x" << (stackSize) << "]\n";
 	}
 
 	// call cdecl
@@ -64,31 +78,29 @@ std::string WindowsGenerator::handlerString() {
 
 	// decrement and return eax and edx
 	out << R"ASM(
-	
 	; preserve the return values
-	sub esp, 0x28
 
-	mov [esp + 0x24], edx
-	mov [esp + 0x20], eax
-	movaps [esp + 0x10], xmm1
-	movaps [esp + 0x00], xmm0
+	; save space on stack for them
+	sub esp, 0xc
+
+	mov [esp + 0x10], eax
+	movsd [esp], xmm0
 
 	; call the post handler, decrementing
 	mov eax, [_handlerPost]
 	call eax
 
 	; recover the return values
-	mov edx, [esp + 0x24]
-	mov eax, [esp + 0x20]
-	movaps xmm1, [esp + 0x10]
-	movaps xmm0, [esp + 0x00]
+	mov eax, [esp + 0x10]
+	movsd xmm0, [esp]
 
-	add esp, 0x28
+	; give back to the earth what it gave to you
+	add esp, 0xc
 
 	pop esi
 )ASM";
 
-	out << m_metadata.m_convention->generateFromDefault(m_metadata.m_abstract);
+	out << m_metadata.m_convention->generateDefaultCleanup(m_metadata.m_abstract);
 
 	out << R"ASM(
 _handlerPre: 
@@ -110,7 +122,6 @@ _content:
 
 std::string WindowsGenerator::trampolineString(size_t offset) {
 	std::ostringstream out;
-	out << m_metadata.m_convention->generateBackToDefault(m_metadata.m_abstract, 0x8) << "\n";
 	out << "jmp _address" << m_address << "_" << offset;
 	return out.str();
 }

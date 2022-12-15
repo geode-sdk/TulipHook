@@ -11,49 +11,39 @@ namespace tulip::hook {
 	public:
 		~CdeclConvention() override;
 
-		std::string generateFromDefault(AbstractFunction const& function) override;
-		std::string generateToDefault(AbstractFunction const& function) override;
-		std::string generateBackFromDefault(AbstractFunction const& function) override;
-		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
+		std::string generateDefaultCleanup(AbstractFunction const& function) override;
+		std::string generateIntoDefault(AbstractFunction const& function) override;
 	};
 
 	class ThiscallConvention : public CallingConvention {
 	public:
 		~ThiscallConvention() override;
 
-		std::string generateFromDefault(AbstractFunction const& function) override;
-		std::string generateToDefault(AbstractFunction const& function) override;
-		std::string generateBackFromDefault(AbstractFunction const& function) override;
-		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
+		std::string generateDefaultCleanup(AbstractFunction const& function) override;
+		std::string generateIntoDefault(AbstractFunction const& function) override;
 	};
 
 	class FastcallConvention : public CallingConvention {
 	public:
 		~FastcallConvention() override;
 
-		std::string generateFromDefault(AbstractFunction const& function) override;
-		std::string generateToDefault(AbstractFunction const& function) override;
-		std::string generateBackFromDefault(AbstractFunction const& function) override;
-		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
+		std::string generateDefaultCleanup(AbstractFunction const& function) override;
+		std::string generateIntoDefault(AbstractFunction const& function) override;
 	};
 
 	class OptcallConvention : public CallingConvention {
 	public:
 		~OptcallConvention() override;
 
-		std::string generateFromDefault(AbstractFunction const& function) override;
-		std::string generateToDefault(AbstractFunction const& function) override;
-		std::string generateBackFromDefault(AbstractFunction const& function) override;
-		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
+		std::string generateDefaultCleanup(AbstractFunction const& function) override;
+		std::string generateIntoDefault(AbstractFunction const& function) override;
 	};
 
 	class MembercallConvention : public CallingConvention {
 	public:
 		~MembercallConvention() override;
 
-		std::string generateFromDefault(AbstractFunction const& function) override;
-		std::string generateToDefault(AbstractFunction const& function) override;
-		std::string generateBackFromDefault(AbstractFunction const& function) override;
-		std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) override;
+		std::string generateDefaultCleanup(AbstractFunction const& function) override;
+		std::string generateIntoDefault(AbstractFunction const& function) override;
 	};
 }

@@ -231,29 +231,29 @@ int main() {
 	auto optcall = std::make_unique<OptcallConvention>();
 	auto textArea_create = AbstractFunction::from(&TextArea_create);
 	std::cout << "TextArea::create optcall => cdecl\n";
-	std::cout << prettify(optcall->generateToDefault(textArea_create)) << "\n";
+	std::cout << prettify(optcall->generateIntoDefault(textArea_create)) << "\n";
 	std::cout << "TextArea::create cdecl => optcall\n";
-	std::cout << prettify(optcall->generateFromDefault(textArea_create)) << "\n\n";
+	std::cout << prettify(optcall->generateDefaultCleanup(textArea_create)) << "\n\n";
 
 	auto membercall = std::make_unique<MembercallConvention>();
 	auto textArea_init = AbstractFunction::from(&TextArea_init);
 	std::cout << "TextArea::init membercall => cdecl\n";
-	std::cout << prettify(membercall->generateToDefault(textArea_init)) << "\n";
+	std::cout << prettify(membercall->generateIntoDefault(textArea_init)) << "\n";
 	std::cout << "TextArea::init cdecl => membercall\n";
-	std::cout << prettify(membercall->generateFromDefault(textArea_init)) << "\n\n";
+	std::cout << prettify(membercall->generateDefaultCleanup(textArea_init)) << "\n\n";
 
 	std::cout << "cconvTest0 optcall => cdecl\n";
-	std::cout << prettify(conv->generateToDefault(func0)) << "\n";
+	std::cout << prettify(conv->generateIntoDefault(func0)) << "\n";
 	std::cout << "cconvTest0 cdecl => optcall\n";
-	std::cout << prettify(conv->generateFromDefault(func0)) << "\n\n";
+	std::cout << prettify(conv->generateDefaultCleanup(func0)) << "\n\n";
 
 	std::cout << "cconvTest1 optcall => cdecl\n";
-	std::cout << prettify(conv->generateToDefault(func1)) << "\n";
+	std::cout << prettify(conv->generateIntoDefault(func1)) << "\n";
 	std::cout << "cconvTest1 cdecl => optcall\n";
-	std::cout << prettify(conv->generateFromDefault(func1)) << "\n\n";
+	std::cout << prettify(conv->generateDefaultCleanup(func1)) << "\n\n";
 
 	std::cout << "cconvTest2 optcall => cdecl\n";
-	std::cout << prettify(conv->generateToDefault(func2)) << "\n";
+	std::cout << prettify(conv->generateIntoDefault(func2)) << "\n";
 	std::cout << "cconvTest2 cdecl => optcall\n";
-	std::cout << prettify(conv->generateFromDefault(func2)) << "\n\n";
+	std::cout << prettify(conv->generateDefaultCleanup(func2)) << "\n\n";
 }
