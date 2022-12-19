@@ -9,9 +9,15 @@ namespace tulip::hook {
 	public:
 		virtual ~CallingConvention() = 0;
 
-		virtual std::string generateFromDefault(AbstractFunction const& function) = 0;
-		virtual std::string generateToDefault(AbstractFunction const& function) = 0;
-		virtual std::string generateBackToDefault(AbstractFunction const& function, size_t stackOffset) = 0;
-		virtual std::string generateBackFromDefault(AbstractFunction const& function) = 0;
+		/**
+		 * Generate the code for converting the function args from the 
+		 * custom convention to cdecl
+		 */
+		virtual std::string generateIntoDefault(AbstractFunction const& function) = 0;
+		/**
+		 * Generate the code for cleaning up the stack after our cdecl 
+		 * detour is done (since cdecl is caller-cleanup)
+		 */
+		virtual std::string generateDefaultCleanup(AbstractFunction const& function) = 0;
 	};
 }

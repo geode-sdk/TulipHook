@@ -3,7 +3,7 @@
 #include <HandlerData.hpp>
 #include <HookData.hpp>
 #include <Platform.hpp>
-#include <Result.hpp>
+#include <TulipResult.hpp>
 #include <array>
 #include <memory>
 #include <unordered_map>

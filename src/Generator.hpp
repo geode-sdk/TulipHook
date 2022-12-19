@@ -1,7 +1,7 @@
 #pragma once
 
 #include <HandlerData.hpp>
-#include <Result.hpp>
+#include <TulipResult.hpp>
 #include <memory>
 
 namespace tulip::hook {

@@ -13,3 +13,5 @@ endif()
 target_include_directories(TulipHook INTERFACE 
 	${TulipHookRoot_SOURCE_DIR}/include
 )
+
+CPMAddPackage("gh:bitwizeshift/result#a97e66b")

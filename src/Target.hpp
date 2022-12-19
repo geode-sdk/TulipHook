@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Result.hpp>
+#include <TulipResult.hpp>
 #include <capstone/capstone.h>
 #include <keystone/keystone.h>
 #include <memory>
