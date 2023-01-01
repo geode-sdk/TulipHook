@@ -278,50 +278,60 @@ public:
 		std::ostringstream out;
 		out << std::hex;
 
-		size_t stackOffset = 0x0;
-		auto reverseParams = m_params;
+		// allocate space on the stack for our parameters
+		out << "sub esp, 0x" << m_resultStackSize << "\n";
 
-		// cdecl parameters are passed in reverse order
-		std::reverse(reverseParams.begin(), reverseParams.end());
-		for (auto& param : reverseParams) {
+		// cdecl parameters are passed in reverse order; however, since we are 
+		// just moving stuff to from known memory locations to other known 
+		// memory locations, it doesn't matter the order we iterate the params 
+		// in (unlike previously when m_params was reversed for this point).
+		// what matters is that the correct params end up in the correct places
+
+		// keep track of which offset to place the next parameter at
+		// this is the offset from the top of the stack, so we are moving 
+		// the first parameter first, then the second, etc.
+		size_t placeAt = 0x0;
+
+		for (auto& param : m_params) {
 			out << "; " << param.originalIndex << "\n";
 			// repush from stack
 			if (std::holds_alternative<Stack>(param.location)) {
 				auto offset = std::get<Stack>(param.location);
+				
 				// push every member of struct
 				for (size_t i = 0; i < paramSize(param.type); i += 4) {
-					out << "push [esp + 0x"
-						<< (
-							   // we want to repush starting from first member
-							   // since the params are already pushed in reverse
-							   // order
-							   offset + stackOffset + paramSize(param.type)
-						   )
-						<< "]\n";
+					// move value to eax first since we can't have mov [...], [...]
+
+					// push the struct in the same order as it was originally on the stack
+					out << "mov eax, [esp + 0x" << (offset + m_resultStackSize + i) << "]\n";
+
+					// push parameters in order
+					out << "mov [esp + 0x" << (placeAt + i) << "], eax\n";
 				}
 			}
 			// repush from register
 			else {
 				switch (auto reg = std::get<Register>(param.location)) {
-					case Register::ECX: out << "push ecx\n"; break;
-					case Register::EDX: out << "push edx\n"; break;
+					case Register::ECX: out << "mov [esp + 0x" << placeAt << "], ecx\n"; break;
+					case Register::EDX: out << "mov [esp + 0x" << placeAt << "], edx\n"; break;
 					// xmm registers
 					default: {
 						// double
 						if (param.type.m_size == 8) {
-							out << "sub esp, 0x8\n movsd [esp], xmm" << xmmRegisterName(reg) << "\n";
+							out << "movsd [esp + 0x" << placeAt << "], xmm" << xmmRegisterName(reg) << "\n";
 						}
 						// float
 						else {
-							out << "sub esp, 0x4\n movss [esp], xmm" << xmmRegisterName(reg) << "\n";
+							out << "movss [esp + 0x" << placeAt << "], xmm" << xmmRegisterName(reg) << "\n";
 						}
 					} break;
 				}
 			}
+			
 			// since we pushed parameters to the stack, we need to take into
 			// account the stack pointer being offset by that amount when
 			// pushing the next parameters
-			stackOffset += paramSize(param.type);
+			placeAt += paramSize(param.type);
 		}
 
 		return out.str();
