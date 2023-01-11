@@ -10,6 +10,7 @@ add_library(TulipHook STATIC
 	Misc.cpp
 	Pool.cpp
 	Target.cpp
+	Wrapper.cpp
 	platform/DefaultConvention.cpp
 	platform/MacosGenerator.cpp
 	platform/MacosTarget.cpp

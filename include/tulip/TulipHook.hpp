@@ -7,6 +7,7 @@
 #include "HookData.hpp"
 #include "Platform.hpp"
 #include "TulipResult.hpp"
+#include "WrapperData.hpp"
 #include "platform/PlatformConvention.hpp"
 
 #include <system_error>
@@ -27,4 +28,6 @@ namespace tulip::hook {
 	TULIP_HOOK_DLL Result<> writeMemory(void* destination, void const* source, size_t size) noexcept;
 
 	TULIP_HOOK_DLL Result<void*> followJumps(void* address) noexcept;
+
+	TULIP_HOOK_DLL Result<void*> createWrapper(void* address, WrapperMetadata const& metadata) noexcept;
 }
