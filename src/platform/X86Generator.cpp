@@ -171,54 +171,11 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 	auto trampolineAddress = reinterpret_cast<uint64_t>(m_trampoline);
 
 	while (cs_disasm_iter(cs, &code, &size, &address, insn)) {
-		auto id = insn->id;
-		auto detail = insn->detail;
-		auto address = insn->address;
-		auto size = insn->size;
-
-		auto jumpGroup = false;
-		for (auto i = 0; i < detail->groups_count; ++i) {
-			if (detail->groups[i] == X86_GRP_JUMP) {
-				jumpGroup = true;
-				break;
-			}
-		}
-
-		if (address >= targetAddress) {
+		if (insn->address >= targetAddress) {
 			break;
 		}
 
-		std::memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
-
-		if (jumpGroup) {
-			intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) - static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
-			uint8_t* inBinary = reinterpret_cast<uint8_t*>(trampolineAddress);
-
-			if (id == X86_INS_JMP) {
-				// res = dst - src - 5
-				int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-				std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
-				inBinary[0] = 0xe9;
-
-				trampolineAddress += 5;
-			}
-			else {
-				std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
-				// conditional jumps
-				// long conditional jmp size
-				// this is like probably not right idk what instruction this is supposed to be
-				int addrBytes = jmpTargetAddr - trampolineAddress - 6;
-				std::memcpy(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int));
-				inBinary[1] = inBinary[0] + 0x10;
-				inBinary[0] = 0x0f;
-
-				trampolineAddress += 6;
-			}
-		}
-		else {
-			trampolineAddress += size;
-		}
-		originalAddress += size;
+		this->relocateInstruction(insn, trampolineAddress, originalAddress);
 	}
 
 	cs_free(insn, 1);
@@ -232,6 +189,68 @@ std::string X86Generator::intervenerString() {
 	out << "jmp _handler" << m_address;
 
 	return out.str();
+}
+
+void X86Generator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
+	auto const id = insn->id;
+	auto const detail = insn->detail;
+	auto const address = insn->address;
+	auto const size = insn->size;
+
+	auto relativeInstruction = false;
+	for (auto i = 0; i < detail->groups_count; ++i) {
+		std::cout << "group of inst: " << +detail->groups[i] << std::endl;
+		switch (detail->groups[i]) {
+			case X86_GRP_BRANCH_RELATIVE:
+			case X86_GRP_CALL:
+			case X86_GRP_JUMP: // long conditional jumps are not considered jump but i kinda dont care
+				relativeGroup = true;
+				break;
+			default: break;
+		}
+	}
+
+	std::memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
+
+	if (relativeGroup && detail->x86.encoding.imm_offset != 0) {
+		std::cout << "testing the disp value: " << detail->x86.operands[0].imm << std::endl;
+		intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) -
+			static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
+		uint8_t* inBinary = reinterpret_cast<uint8_t*>(trampolineAddress);
+
+		if (id == X86_INS_JMP) {
+			// res = dst - src - 5
+			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
+			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
+			inBinary[0] = 0xe9;
+
+			trampolineAddress += 5;
+		}
+		else if (id == X86_INS_CALL) {
+			// res = dst - src - 5
+			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
+			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
+			inBinary[0] = 0xe8;
+
+			trampolineAddress += 5;
+		}
+		else {
+			std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
+			// conditional jumps
+			// long conditional jmp size
+			// this is like probably not right idk what instruction this is supposed to be
+			int addrBytes = jmpTargetAddr - trampolineAddress - 6;
+			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int));
+			inBinary[1] = inBinary[0] + 0x10;
+			inBinary[0] = 0x0f;
+
+			trampolineAddress += 6;
+		}
+	}
+	else {
+		trampolineAddress += size;
+	}
+	originalAddress += size;
 }
 
 #endif
