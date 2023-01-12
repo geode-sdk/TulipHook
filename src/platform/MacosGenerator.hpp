@@ -8,9 +8,9 @@
 
 namespace tulip::hook {
 
-	class MacosGenerator : public Generator {
+	class MacosHandlerGenerator : public HandlerGenerator {
 	public:
-		using Generator::Generator;
+		using HandlerGenerator::HandlerGenerator;
 
 		Result<> generateHandler() override;
 		Result<std::vector<uint8_t>> generateIntervener() override;
@@ -24,8 +24,18 @@ namespace tulip::hook {
 		void relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) override;
 	};
 
-	using PlatformGenerator = MacosGenerator;
+	using PlatformHandlerGenerator = MacosHandlerGenerator;
 
+	class MacosWrapperGenerator : public WrapperGenerator {
+	public:
+		using WrapperGenerator::WrapperGenerator;
+
+		Result<void*> generateWrapper() override;
+
+		std::string wrapperString() override;
+	};
+
+	using PlatformWrapperGenerator = MacosWrapperGenerator;
 }
 
 #endif

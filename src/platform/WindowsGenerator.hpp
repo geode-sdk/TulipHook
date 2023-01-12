@@ -8,9 +8,9 @@
 
 namespace tulip::hook {
 
-	class WindowsGenerator : public Generator {
+	class WindowsHandlerGenerator : public HandlerGenerator {
 	public:
-		using Generator::Generator;
+		using HandlerGenerator::HandlerGenerator;
 
 		Result<> generateHandler() override;
 		Result<std::vector<uint8_t>> generateIntervener() override;
@@ -24,7 +24,18 @@ namespace tulip::hook {
 		void relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) override;
 	};
 
-	using PlatformGenerator = WindowsGenerator;
+	using PlatformHandlerGenerator = HandlerGenerator;
+
+	class WindowsWrapperGenerator : public WrapperGenerator {
+	public:
+		using WrapperGenerator::WrapperGenerator;
+
+		Result<void*> generateWrapper() override;
+
+		std::string wrapperString() override;
+	};
+
+	using PlatformWrapperGenerator = WindowsWrapperGenerator;
 
 }
 

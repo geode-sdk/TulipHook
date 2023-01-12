@@ -4,7 +4,6 @@
 #include "PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
-#include <iostream>
 #include <sstream>
 
 using namespace tulip::hook;
@@ -27,10 +26,11 @@ namespace {
 	}
 }
 
-std::string MacosGenerator::handlerString() {
+std::string MacosHandlerGenerator::handlerString() {
 	std::ostringstream out;
 	// keystone uses hex by default
 	out << std::hex;
+	out << m_metadata.m_convention->generateIntoDefault(m_metadata.m_abstract) << "\n ";
 
 	out << R"ASM(
 
@@ -116,8 +116,9 @@ _handlerCont:
 	add rsp, 0x38
 	
 	; done!
-	ret
 )ASM";
+
+	out << m_metadata.m_convention->generateDefaultCleanup(m_metadata.m_abstract);
 
 	out << R"ASM(
 _handlerPre: 
@@ -141,10 +142,18 @@ _originalReturn:
 	return out.str();
 }
 
-std::string MacosGenerator::trampolineString(size_t offset) {
+std::string MacosHandlerGenerator::trampolineString(size_t offset) {
 	std::ostringstream out;
 	out << "jmp _address" << m_address << "_" << offset;
 	return out.str();
+}
+
+std::string MacosWrapperGenerator::wrapperString() {
+	return "";
+}
+
+Result<void*> MacosWrapperGenerator::generateWrapper() {
+	return Ok(m_address); // only windows needs the wrapper
 }
 
 #endif

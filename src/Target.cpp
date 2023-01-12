@@ -1,7 +1,5 @@
 #include "Target.hpp"
 
-#include <iostream>
-
 using namespace tulip::hook;
 
 Result<void*> Target::allocateArea(size_t size) {

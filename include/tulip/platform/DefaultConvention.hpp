@@ -13,5 +13,7 @@ namespace tulip::hook {
 
 		std::string generateDefaultCleanup(AbstractFunction const& function) override;
 		std::string generateIntoDefault(AbstractFunction const& function) override;
+		std::string generateIntoOriginal(AbstractFunction const& function) override;
+		std::string generateOriginalCleanup(AbstractFunction const& function) override;
 	};
 }

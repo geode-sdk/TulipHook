@@ -1,11 +1,11 @@
 #include <AbstractFunction.hpp>
 #include <Platform.hpp>
 #include <algorithm>
+#include <iostream>
 #include <optional>
 #include <platform/WindowsConvention.hpp>
 #include <sstream>
 #include <variant>
-#include <iostream>
 
 using namespace tulip::hook;
 
@@ -38,9 +38,9 @@ static Location returnLocation(AbstractFunction const& function) {
 	// other
 	switch (function.m_return.m_kind) {
 		default:
-		case AbstractTypeKind::Primitive:     return Register::EAX;
+		case AbstractTypeKind::Primitive: return Register::EAX;
 		case AbstractTypeKind::FloatingPoint: return Register::XMM0;
-		case AbstractTypeKind::Other:         return Stack(0x4);
+		case AbstractTypeKind::Other: return Stack(0x4);
 	}
 }
 
@@ -282,14 +282,14 @@ public:
 		// allocate space on the stack for our parameters
 		out << "sub esp, 0x" << m_resultStackSize << "\n";
 
-		// cdecl parameters are passed in reverse order; however, since we are 
-		// just moving stuff to from known memory locations to other known 
-		// memory locations, it doesn't matter the order we iterate the params 
+		// cdecl parameters are passed in reverse order; however, since we are
+		// just moving stuff to from known memory locations to other known
+		// memory locations, it doesn't matter the order we iterate the params
 		// in (unlike previously when m_params was reversed for this point).
 		// what matters is that the correct params end up in the correct places
 
 		// keep track of which offset to place the next parameter at
-		// this is the offset from the top of the stack, so we are moving 
+		// this is the offset from the top of the stack, so we are moving
 		// the first parameter first, then the second, etc.
 		size_t placeAt = 0x0;
 
@@ -298,7 +298,7 @@ public:
 			// repush from stack
 			if (std::holds_alternative<Stack>(param.location)) {
 				auto offset = std::get<Stack>(param.location);
-				
+
 				// push every member of struct
 				for (size_t i = 0; i < paramSize(param.type); i += 4) {
 					// move value to eax first since we can't have mov [...], [...]
@@ -329,7 +329,7 @@ public:
 					} break;
 				}
 			}
-			
+
 			// since we pushed parameters to the stack, we need to take into
 			// account the stack pointer being offset by that amount when
 			// pushing the next parameters
@@ -352,8 +352,8 @@ public:
 		return out.str();
 	}
 
-	std::string generateIntoOriginal(size_t idkOffset) {
-		std::cout << "WARNING: using untested generateIntoOriginal with offset of " << idkOffset << std::endl;
+	std::string generateIntoOriginal() {
+		std::cout << "WARNING: using untested generateIntoOriginal " << std::endl;
 
 		std::stringstream out;
 
@@ -362,9 +362,9 @@ public:
 		size_t outStackIndex = 0;
 		for (auto& param : m_params) {
 			out << "; a param\n";
-			const auto resultOffset = m_originalStackSize + param.resultLocation;
+			auto const resultOffset = m_originalStackSize + param.resultLocation;
 			if (std::holds_alternative<Register>(param.location)) {
-				const auto reg = std::get<Register>(param.location);
+				auto const reg = std::get<Register>(param.location);
 				out << "; resultLocation is " << param.resultLocation << "\n";
 				switch (reg) {
 					case Register::ECX: {
@@ -374,15 +374,17 @@ public:
 						out << "mov edx, [esp + " << resultOffset << "]\n";
 					} break;
 					default: {
-						const auto xmmIndex = xmmRegisterName(reg);
+						auto const xmmIndex = xmmRegisterName(reg);
 						if (param.type.m_size == 4) {
 							out << "movss xmm" << xmmIndex << ", [esp + " << resultOffset << "]\n";
-						} else {
+						}
+						else {
 							out << "movsd xmm" << xmmIndex << ", [esp + " << resultOffset << "]\n";
 						}
 					}
 				}
-			} else {
+			}
+			else {
 				for (size_t i = 0; i < param.type.m_size; i += 4) {
 					out << "mov eax, [esp + " << (resultOffset + i) << "]\n";
 					out << "mov [esp + " << (outStackIndex) << "], eax\n";
@@ -390,6 +392,17 @@ public:
 				}
 			}
 		}
+
+		return out.str();
+	}
+
+	std::string generateOriginalCleanup() {
+		std::ostringstream out;
+		out << std::hex;
+
+		// this is basically the reverse of generateDefaultCleanup, i hope it works
+		out << "add esp, 0x" << m_originalStackSize << "\n";
+		out << "ret 0x" << m_resultStackSize << "\n";
 
 		return out.str();
 	}
@@ -463,6 +476,16 @@ std::string CdeclConvention::generateIntoDefault(AbstractFunction const& functio
 	return "";
 }
 
+std::string CdeclConvention::generateOriginalCleanup(AbstractFunction const& function) {
+	// it's the same conv as default
+	return "ret 0";
+}
+
+std::string CdeclConvention::generateIntoOriginal(AbstractFunction const& function) {
+	// it's the same conv as default
+	return "";
+}
+
 CdeclConvention::~CdeclConvention() {}
 
 std::string ThiscallConvention::generateDefaultCleanup(AbstractFunction const& function) {
@@ -482,6 +505,14 @@ std::string ThiscallConvention::generateIntoDefault(AbstractFunction const& func
 	// push ecx           this
 
 	return PushParameters::fromThiscall(function).generateIntoDefault();
+}
+
+std::string ThiscallConvention::generateOriginalCleanup(AbstractFunction const& function) {
+	return PushParameters::fromThiscall(function).generateOriginalCleanup();
+}
+
+std::string ThiscallConvention::generateIntoOriginal(AbstractFunction const& function) {
+	return PushParameters::fromThiscall(function).generateIntoOriginal();
 }
 
 ThiscallConvention::~ThiscallConvention() {}
@@ -512,6 +543,14 @@ std::string FastcallConvention::generateIntoDefault(AbstractFunction const& func
 	// push [esp + 0x1c]    <= Big.x        0x18     0x1c
 
 	return PushParameters::fromFastcall(function).generateIntoDefault();
+}
+
+std::string FastcallConvention::generateOriginalCleanup(AbstractFunction const& function) {
+	return PushParameters::fromFastcall(function).generateOriginalCleanup();
+}
+
+std::string FastcallConvention::generateIntoOriginal(AbstractFunction const& function) {
+	return PushParameters::fromFastcall(function).generateIntoOriginal();
 }
 
 FastcallConvention::~FastcallConvention() {}
@@ -554,6 +593,14 @@ std::string OptcallConvention::generateIntoDefault(AbstractFunction const& funct
 	return PushParameters::fromOptcall(function).generateIntoDefault();
 }
 
+std::string OptcallConvention::generateOriginalCleanup(AbstractFunction const& function) {
+	return PushParameters::fromOptcall(function).generateOriginalCleanup();
+}
+
+std::string OptcallConvention::generateIntoOriginal(AbstractFunction const& function) {
+	return PushParameters::fromOptcall(function).generateIntoOriginal();
+}
+
 OptcallConvention::~OptcallConvention() {}
 
 std::string MembercallConvention::generateDefaultCleanup(AbstractFunction const& function) {
@@ -562,6 +609,14 @@ std::string MembercallConvention::generateDefaultCleanup(AbstractFunction const&
 
 std::string MembercallConvention::generateIntoDefault(AbstractFunction const& function) {
 	return PushParameters::fromMembercall(function).generateIntoDefault();
+}
+
+std::string MembercallConvention::generateOriginalCleanup(AbstractFunction const& function) {
+	return PushParameters::fromMembercall(function).generateOriginalCleanup();
+}
+
+std::string MembercallConvention::generateIntoOriginal(AbstractFunction const& function) {
+	return PushParameters::fromMembercall(function).generateIntoOriginal();
 }
 
 MembercallConvention::~MembercallConvention() {}

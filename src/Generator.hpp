@@ -2,12 +2,13 @@
 
 #include <HandlerData.hpp>
 #include <TulipResult.hpp>
+#include <WrapperData.hpp>
 #include <capstone/capstone.h>
 #include <memory>
 
 namespace tulip::hook {
 
-	class Generator {
+	class HandlerGenerator {
 	public:
 		void* const m_address;
 		void* const m_trampoline;
@@ -15,7 +16,7 @@ namespace tulip::hook {
 		void* const m_content;
 		HandlerMetadata const m_metadata;
 
-		Generator(void* address, void* trampoline, void* handler, void* content, HandlerMetadata metadata);
+		HandlerGenerator(void* address, void* trampoline, void* handler, void* content, HandlerMetadata metadata);
 
 		virtual Result<> generateHandler() = 0;
 		virtual Result<std::vector<uint8_t>> generateIntervener() = 0;
@@ -27,5 +28,17 @@ namespace tulip::hook {
 		virtual std::string trampolineString(size_t offset) = 0;
 
 		virtual void relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) = 0;
+	};
+
+	class WrapperGenerator {
+	public:
+		void* const m_address;
+		WrapperMetadata const m_metadata;
+
+		WrapperGenerator(void* address, WrapperMetadata metadata);
+
+		virtual Result<void*> generateWrapper() = 0;
+
+		virtual std::string wrapperString() = 0;
 	};
 }

@@ -6,7 +6,6 @@
 #include "platform/PlatformTarget.hpp"
 
 #include <algorithm>
-#include <iostream>
 #include <sstream>
 #include <stack>
 
@@ -40,7 +39,7 @@ Handler::~Handler() {}
 Result<> Handler::init() {
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
 
-	auto generator = PlatformGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
+	auto generator = PlatformHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
 
 	TULIP_HOOK_UNWRAP(generator.generateHandler());
 

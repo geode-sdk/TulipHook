@@ -12,3 +12,11 @@ std::string DefaultConvention::generateDefaultCleanup(AbstractFunction const& fu
 std::string DefaultConvention::generateIntoDefault(AbstractFunction const& function) {
 	return "";
 }
+
+std::string DefaultConvention::generateIntoOriginal(AbstractFunction const& function) {
+	return "";
+}
+
+std::string DefaultConvention::generateOriginalCleanup(AbstractFunction const& function) {
+	return "ret";
+}

@@ -10,9 +10,11 @@
 using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_MACOS)
-using X86Generator = MacosGenerator;
+using X86HandlerGenerator = MacosHandlerGenerator;
+using X86WrapperGenerator = MacosWrapperGenerator;
 #elif defined(TULIP_HOOK_WINDOWS)
-using X86Generator = WindowsGenerator;
+using X86HandlerGenerator = WindowsHandlerGenerator;
+using X86WrapperGenerator = WindowsWrapperGenerator;
 #endif
 
 #if defined(TULIP_HOOK_MACOS) || defined(TULIP_HOOK_WINDOWS)
@@ -45,7 +47,7 @@ static void capstoneCloseFun() {
 
 using CSHolder = RAIIHolder<csh, &capstoneCloseFun>;
 
-Result<> X86Generator::generateHandler() {
+Result<> X86HandlerGenerator::generateHandler() {
 	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
@@ -84,7 +86,7 @@ Result<> X86Generator::generateHandler() {
 	return Ok();
 }
 
-Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
+Result<std::vector<uint8_t>> X86HandlerGenerator::generateIntervener() {
 	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
@@ -117,7 +119,7 @@ Result<std::vector<uint8_t>> X86Generator::generateIntervener() {
 	return Ok(ret);
 }
 
-Result<> X86Generator::generateTrampoline(size_t offset) {
+Result<> X86HandlerGenerator::generateTrampoline(size_t offset) {
 	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
@@ -146,7 +148,7 @@ Result<> X86Generator::generateTrampoline(size_t offset) {
 	return Ok();
 }
 
-Result<size_t> X86Generator::relocateOriginal(size_t target) {
+Result<size_t> X86HandlerGenerator::relocateOriginal(size_t target) {
 	// std::memcpy(m_trampoline, m_address, 32);
 	size_t offset = 0;
 
@@ -183,7 +185,7 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 	return Ok(trampolineAddress - reinterpret_cast<uint64_t>(m_trampoline));
 }
 
-std::string X86Generator::intervenerString() {
+std::string X86HandlerGenerator::intervenerString() {
 	std::ostringstream out;
 
 	out << "jmp _handler" << m_address;
@@ -191,7 +193,7 @@ std::string X86Generator::intervenerString() {
 	return out.str();
 }
 
-void X86Generator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
+void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;

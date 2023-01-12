@@ -39,6 +39,27 @@ using FunctionPtrType = int32_t (*)(
 	int, int, int, int, int, int, int, int, int, float, float, float, float, float, float, float, float, float, float
 );
 
+void makeWrapper() {
+	WrapperMetadata wrapperMetadata;
+	wrapperMetadata.m_convention = std::make_unique<PlatformConvention>();
+	wrapperMetadata.m_abstract = AbstractFunction::from<int32_t(
+		int, int, int, int, int, int, int, int, int, float, float, float, float, float, float, float, float, float, float
+	)>();
+
+	auto wrapped =
+		createWrapper(reinterpret_cast<void*>(static_cast<FunctionPtrType>(&function)), std::move(wrapperMetadata));
+
+	if (wrapped.isErr()) {
+		std::cout << "unable to create wrapper: " << wrapped.unwrapErr() << "\n";
+		exit(1);
+	}
+	std::cout << "wrapper created: " << wrapped.unwrap() << "\n";
+
+	auto func = reinterpret_cast<FunctionPtrType>(wrapped.unwrap());
+
+	assert(func(1, 2, 3, 4, 5, 6, 7, 8, 9, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f) == 1);
+}
+
 HandlerHandle makeHandler() {
 	// std::cout << "\nmakeHandler\n";
 	HandlerMetadata handlerMetadata;
@@ -176,6 +197,10 @@ int main() {
 	// std::cin >> a;
 
 	assert(callFunction() == 1);
+
+	// std::cin >> a;
+
+	makeWrapper();
 
 	// std::cin >> a;
 

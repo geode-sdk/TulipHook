@@ -1,5 +1,7 @@
 #include "Wrapper.hpp"
 
+#include "platform/PlatformGenerator.hpp"
+
 using namespace tulip::hook;
 
 Wrapper& Wrapper::get() {
@@ -13,7 +15,9 @@ Result<void*> Wrapper::createWrapper(void* address, WrapperMetadata const& metad
 
 	if (m_wrappers.count(address) == 0) {
 		// actually generate it here
-		m_wrappers[address] = address;
+		auto generator = PlatformWrapperGenerator(address, metadata);
+		TULIP_HOOK_UNWRAP_INTO(auto wrapped, generator.generateWrapper());
+		m_wrappers[address] = wrapped;
 	}
 
 	return Ok(m_wrappers[address]);

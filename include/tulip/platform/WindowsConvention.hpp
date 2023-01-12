@@ -13,6 +13,8 @@ namespace tulip::hook {
 
 		std::string generateDefaultCleanup(AbstractFunction const& function) override;
 		std::string generateIntoDefault(AbstractFunction const& function) override;
+		std::string generateIntoOriginal(AbstractFunction const& function) override;
+		std::string generateOriginalCleanup(AbstractFunction const& function) override;
 	};
 
 	class ThiscallConvention : public CallingConvention {
@@ -21,6 +23,8 @@ namespace tulip::hook {
 
 		std::string generateDefaultCleanup(AbstractFunction const& function) override;
 		std::string generateIntoDefault(AbstractFunction const& function) override;
+		std::string generateIntoOriginal(AbstractFunction const& function) override;
+		std::string generateOriginalCleanup(AbstractFunction const& function) override;
 	};
 
 	class FastcallConvention : public CallingConvention {
@@ -29,6 +33,8 @@ namespace tulip::hook {
 
 		std::string generateDefaultCleanup(AbstractFunction const& function) override;
 		std::string generateIntoDefault(AbstractFunction const& function) override;
+		std::string generateIntoOriginal(AbstractFunction const& function) override;
+		std::string generateOriginalCleanup(AbstractFunction const& function) override;
 	};
 
 	class OptcallConvention : public CallingConvention {
@@ -37,6 +43,8 @@ namespace tulip::hook {
 
 		std::string generateDefaultCleanup(AbstractFunction const& function) override;
 		std::string generateIntoDefault(AbstractFunction const& function) override;
+		std::string generateIntoOriginal(AbstractFunction const& function) override;
+		std::string generateOriginalCleanup(AbstractFunction const& function) override;
 	};
 
 	class MembercallConvention : public CallingConvention {
@@ -45,5 +53,7 @@ namespace tulip::hook {
 
 		std::string generateDefaultCleanup(AbstractFunction const& function) override;
 		std::string generateIntoDefault(AbstractFunction const& function) override;
+		std::string generateIntoOriginal(AbstractFunction const& function) override;
+		std::string generateOriginalCleanup(AbstractFunction const& function) override;
 	};
 }

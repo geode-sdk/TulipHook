@@ -4,7 +4,6 @@
 #include "PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
-#include <iostream>
 #include <sstream>
 
 using namespace tulip::hook;
@@ -24,7 +23,7 @@ namespace {
 	}
 }
 
-std::string WindowsGenerator::handlerString() {
+std::string WindowsHandlerGenerator::handlerString() {
 	std::ostringstream out;
 	out << std::hex;
 	// out << "int3\n";
@@ -120,66 +119,64 @@ _content:
 	return out.str();
 }
 
-std::string WindowsGenerator::trampolineString(size_t offset) {
+std::string WindowsHandlerGenerator::trampolineString(size_t offset) {
 	std::ostringstream out;
 	out << "jmp _address" << m_address << "_" << offset;
 	return out.str();
 }
 
-void WindowsGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
-	auto id = insn->id;
-	auto detail = insn->detail;
-	auto address = insn->address;
-	auto size = insn->size;
+std::string WindowsWrapperGenerator::wrapperString() {
+	std::ostringstream out;
+	out << std::hex;
+	out << m_metadata.m_convention->generateIntoOriginal(m_metadata.m_abstract) << "\n ";
 
-	auto jumpGroup = false;
-	for (auto i = 0; i < detail->groups_count; ++i) {
-		if (detail->groups[i] == X86_GRP_JUMP) {
-			jumpGroup = true;
-			break;
-		}
+	out << R"ASM(
+	push ebp
+	mov ebp, esp
+	mov eax, [_address]
+	call rax
+	pop ebp
+)ASM";
+
+	out << m_metadata.m_convention->generateOriginalCleanup(m_metadata.m_abstract);
+
+	out << R"ASM(
+_address: 
+	dd 0x)ASM"
+		<< reinterpret_cast<uint64_t>(m_address);
+
+	return out.str();
+}
+
+Result<void*> WindowsWrapperGenerator::generateWrapper() {
+	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
+
+	size_t count;
+	unsigned char* encode;
+	size_t size;
+
+	ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver));
+
+	auto code = this->wrapperString();
+
+	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
+	if (status != KS_ERR_OK) {
+		return Err("Assembling wrapper failed: " + std::string(ks_strerror(ks_errno(ks))));
 	}
 
-	std::memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
-
-	if (jumpGroup) {
-		intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) -
-			static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
-		uint8_t* inBinary = reinterpret_cast<uint8_t*>(trampolineAddress);
-
-		if (id == X86_INS_JMP) {
-			// res = dst - src - 5
-			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
-			inBinary[0] = 0xe9;
-
-			trampolineAddress += 5;
-		}
-		else if (id == X86_INS_CALL) {
-			// res = dst - src - 5
-			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
-			inBinary[0] = 0xe8;
-
-			trampolineAddress += 5;
-		}
-		else {
-			std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
-			// conditional jumps
-			// long conditional jmp size
-			// this is like probably not right idk what instruction this is supposed to be
-			int addrBytes = jmpTargetAddr - trampolineAddress - 6;
-			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int));
-			inBinary[1] = inBinary[0] + 0x10;
-			inBinary[0] = 0x0f;
-
-			trampolineAddress += 6;
-		}
+	if (!size && code.size()) {
+		return Err("Assembling wrapper failed: Unknown error (no bytes were written)");
 	}
-	else {
-		trampolineAddress += size;
-	}
-	originalAddress += size;
+
+	auto areaSize = (size + (0x20 - size) % 0x20);
+
+	TULIP_HOOK_UNWRAP_INTO(auto area, PlatformTarget::get().allocateArea(areaSize));
+
+	std::memcpy(area, encode, size);
+
+	ks_free(encode);
+
+	return Ok(area);
 }
 
 #endif
