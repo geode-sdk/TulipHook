@@ -5,6 +5,7 @@
 #include <platform/WindowsConvention.hpp>
 #include <sstream>
 #include <variant>
+#include <iostream>
 
 using namespace tulip::hook;
 
@@ -347,6 +348,48 @@ public:
 		// some of the original parameters may be passed through registers so the
 		// original's stack size may be smaller
 		out << "ret 0x" << m_originalStackSize << "\n";
+
+		return out.str();
+	}
+
+	std::string generateIntoOriginal(size_t idkOffset) {
+		std::cout << "WARNING: using untested generateIntoOriginal with offset of " << idkOffset << std::endl;
+
+		std::stringstream out;
+
+		out << "sub esp, " << m_originalStackSize << "\n";
+
+		size_t outStackIndex = 0;
+		for (auto& param : m_params) {
+			out << "; a param\n";
+			const auto resultOffset = m_originalStackSize + param.resultLocation;
+			if (std::holds_alternative<Register>(param.location)) {
+				const auto reg = std::get<Register>(param.location);
+				out << "; resultLocation is " << param.resultLocation << "\n";
+				switch (reg) {
+					case Register::ECX: {
+						out << "mov ecx, [esp + " << resultOffset << "]\n";
+					} break;
+					case Register::EDX: {
+						out << "mov edx, [esp + " << resultOffset << "]\n";
+					} break;
+					default: {
+						const auto xmmIndex = xmmRegisterName(reg);
+						if (param.type.m_size == 4) {
+							out << "movss xmm" << xmmIndex << ", [esp + " << resultOffset << "]\n";
+						} else {
+							out << "movsd xmm" << xmmIndex << ", [esp + " << resultOffset << "]\n";
+						}
+					}
+				}
+			} else {
+				for (size_t i = 0; i < param.type.m_size; i += 4) {
+					out << "mov eax, [esp + " << (resultOffset + i) << "]\n";
+					out << "mov [esp + " << (outStackIndex) << "], eax\n";
+					outStackIndex += 4;
+				}
+			}
+		}
 
 		return out.str();
 	}
