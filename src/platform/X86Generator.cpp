@@ -191,34 +191,24 @@ Result<size_t> X86Generator::relocateOriginal(size_t target) {
 		std::memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
 
 		if (jumpGroup) {
-			int displaced = static_cast<int>(detail->x86.disp) - static_cast<int>(difference) - static_cast<int>(size);
-			std::cout << displaced << "\n";
-			auto displacedOffset = detail->x86.encoding.disp_offset;
+			intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) - static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
 			uint8_t* inBinary = reinterpret_cast<uint8_t*>(trampolineAddress);
 
-			if (detail->x86.encoding.disp_offset > 0 && id == X86_INS_LJMP) {
-				// long jmp size
-				displaced += 5;
-				std::memcpy(reinterpret_cast<void*>(trampolineAddress + displacedOffset), &displaced, sizeof(int));
-
-				trampolineAddress += 5;
-			}
-			else if (detail->x86.encoding.disp_offset > 0 && id == X86_INS_JMP) {
-				// should i use keystone or nah
-				// eeh i dont think i should
-				// converting jmp to ljmp
-				// long jmp size
-				displaced += 5;
-				std::memcpy(reinterpret_cast<void*>(trampolineAddress + displacedOffset), &displaced, sizeof(int));
+			if (id == X86_INS_JMP) {
+				// res = dst - src - 5
+				int addrBytes = jmpTargetAddr - trampolineAddress - 5;
+				std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
 				inBinary[0] = 0xe9;
 
 				trampolineAddress += 5;
 			}
 			else {
+				std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
 				// conditional jumps
 				// long conditional jmp size
-				displaced += 6;
-				std::memcpy(reinterpret_cast<void*>(trampolineAddress + displacedOffset + 1), &displaced, sizeof(int));
+				// this is like probably not right idk what instruction this is supposed to be
+				int addrBytes = jmpTargetAddr - trampolineAddress - 6;
+				std::memcpy(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int));
 				inBinary[1] = inBinary[0] + 0x10;
 				inBinary[0] = 0x0f;
 

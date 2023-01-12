@@ -67,7 +67,7 @@ std::string WindowsGenerator::handlerString() {
 		// but the stack size would be 4; and if there were more parameters 
 		// then the stack size would be 4 larger than where we want to start 
 		// digging up
-		out << "push [esp + 0x" << (stackSize) << "]\n";
+		out << "push [esp + 0x" << stackSize << "]\n";
 	}
 
 	// call cdecl

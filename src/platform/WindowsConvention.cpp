@@ -303,7 +303,8 @@ public:
 					// move value to eax first since we can't have mov [...], [...]
 
 					// push the struct in the same order as it was originally on the stack
-					out << "mov eax, [esp + 0x" << (offset + m_resultStackSize + i) << "]\n";
+					// + 4 is for the return address
+					out << "mov eax, [esp + 0x" << (offset + m_resultStackSize + i + 4) << "]\n";
 
 					// push parameters in order
 					out << "mov [esp + 0x" << (placeAt + i) << "], eax\n";
