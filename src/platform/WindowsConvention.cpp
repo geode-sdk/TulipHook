@@ -264,11 +264,10 @@ public:
 
 	// Reorder based on original index of parameters
 	void reorder() {
-		// params are on the stack in reverse order
-		size_t stackLocation = m_resultStackSize;
+		size_t stackLocation = 0;
 		for (auto& param : m_params) {
-			stackLocation -= paramSize(param.type);
 			param.resultLocation = stackLocation;
+			stackLocation += paramSize(param.type);
 		}
 		std::sort(m_params.begin(), m_params.end(), [](auto a, auto b) -> bool {
 			return a.originalIndex < b.originalIndex;
@@ -353,41 +352,40 @@ public:
 	}
 
 	std::string generateIntoOriginal() {
-		std::cout << "WARNING: using untested generateIntoOriginal " << std::endl;
-
 		std::stringstream out;
+		out << std::hex;
 
-		out << "sub esp, " << m_originalStackSize << "\n";
+		out << "sub esp, 0x" << m_originalStackSize << "\n";
 
 		size_t outStackIndex = 0;
 		for (auto& param : m_params) {
 			out << "; a param\n";
-			auto const resultOffset = m_originalStackSize + param.resultLocation;
+			out << "; resultLocation is 0x" << param.resultLocation << "\n";
+			auto const resultOffset = m_originalStackSize + param.resultLocation + 4;
 			if (std::holds_alternative<Register>(param.location)) {
 				auto const reg = std::get<Register>(param.location);
-				out << "; resultLocation is " << param.resultLocation << "\n";
 				switch (reg) {
 					case Register::ECX: {
-						out << "mov ecx, [esp + " << resultOffset << "]\n";
+						out << "mov ecx, [esp + 0x" << resultOffset << "]\n";
 					} break;
 					case Register::EDX: {
-						out << "mov edx, [esp + " << resultOffset << "]\n";
+						out << "mov edx, [esp + 0x" << resultOffset << "]\n";
 					} break;
 					default: {
 						auto const xmmIndex = xmmRegisterName(reg);
 						if (param.type.m_size == 4) {
-							out << "movss xmm" << xmmIndex << ", [esp + " << resultOffset << "]\n";
+							out << "movss xmm" << xmmIndex << ", [esp + 0x" << resultOffset << "]\n";
 						}
 						else {
-							out << "movsd xmm" << xmmIndex << ", [esp + " << resultOffset << "]\n";
+							out << "movsd xmm" << xmmIndex << ", [esp + 0x" << resultOffset << "]\n";
 						}
 					}
 				}
 			}
 			else {
 				for (size_t i = 0; i < param.type.m_size; i += 4) {
-					out << "mov eax, [esp + " << (resultOffset + i) << "]\n";
-					out << "mov [esp + " << (outStackIndex) << "], eax\n";
+					out << "mov eax, [esp + 0x" << (resultOffset + i) << "]\n";
+					out << "mov [esp + 0x" << outStackIndex << "], eax\n";
 					outStackIndex += 4;
 				}
 			}
@@ -400,9 +398,10 @@ public:
 		std::ostringstream out;
 		out << std::hex;
 
-		// this is basically the reverse of generateDefaultCleanup, i hope it works
-		out << "add esp, 0x" << m_originalStackSize << "\n";
-		out << "ret 0x" << m_resultStackSize << "\n";
+		if (m_isCallerCleanup) {
+			out << "add esp, 0x" << m_originalStackSize << "\n";
+		}
+		out << "ret\n";
 
 		return out.str();
 	}
