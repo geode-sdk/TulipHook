@@ -31,6 +31,8 @@ namespace tulip::hook {
 		void* m_trampoline = nullptr;
 		size_t m_trampolineSize = 0;
 
+		void* m_wrapped = nullptr;
+
 		void* m_handler = nullptr;
 		size_t m_handlerSize = 0;
 

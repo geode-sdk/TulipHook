@@ -29,6 +29,7 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	// std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
 
 	TULIP_HOOK_UNWRAP_INTO(auto area3, PlatformTarget::get().allocateArea(0x40));
+	ret->m_trampoline = reinterpret_cast<void*>(area3);
 
 	auto wrapperMetadata = WrapperMetadata{
 		.m_convention = metadata.m_convention,
@@ -36,7 +37,7 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	};
 	TULIP_HOOK_UNWRAP_INTO(auto trampolineWrap, Wrapper::get().createWrapper(area3, wrapperMetadata));
 
-	ret->m_trampoline = trampolineWrap;
+	ret->m_wrapped = trampolineWrap;
 	// std::cout << std::hex << "m_trampoline: " << (void*)ret->m_trampoline << std::endl;
 
 	return Ok(std::move(ret));
@@ -47,7 +48,7 @@ Handler::~Handler() {}
 Result<> Handler::init() {
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
 
-	auto generator = PlatformHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
+	auto generator = PlatformHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_wrapped, m_metadata);
 
 	TULIP_HOOK_UNWRAP(generator.generateHandler());
 
@@ -63,7 +64,7 @@ Result<> Handler::init() {
 
 	auto metadata = HookMetadata();
 	metadata.m_priority = INT32_MAX;
-	static_cast<void>(this->createHook(m_trampoline, metadata));
+	static_cast<void>(this->createHook(m_wrapped, metadata));
 
 	return Ok();
 }
@@ -101,7 +102,7 @@ void Handler::clearHooks() {
 	auto metadata = HookMetadata{
 		.m_priority = INT32_MAX,
 	};
-	static_cast<void>(this->createHook(m_trampoline, metadata));
+	static_cast<void>(this->createHook(m_wrapped, metadata));
 }
 
 void Handler::updateHookMetadata(HookHandle const& hook, HookMetadata const& metadata) {

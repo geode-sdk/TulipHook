@@ -135,7 +135,7 @@ std::string WindowsWrapperGenerator::wrapperString() {
 	push ebp
 	mov ebp, esp
 	mov eax, [_address]
-	call rax
+	call eax
 	pop ebp
 )ASM";
 
