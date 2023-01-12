@@ -20,23 +20,20 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	auto ret = std::make_unique<Handler>(address, metadata);
 
 	TULIP_HOOK_UNWRAP_INTO(auto area1, PlatformTarget::get().allocateArea(0x200));
-	ret->m_content = reinterpret_cast<HandlerContent*>(area1);
+	ret->m_content = static_cast<HandlerContent*>(area1);
 	auto content = new (ret->m_content) HandlerContent();
 	// std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
 
-	TULIP_HOOK_UNWRAP_INTO(auto area2, PlatformTarget::get().allocateArea(0x180));
-	ret->m_handler = reinterpret_cast<void*>(area2);
+	TULIP_HOOK_UNWRAP_INTO(ret->m_handler, PlatformTarget::get().allocateArea(0x180));
 	// std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
 
-	TULIP_HOOK_UNWRAP_INTO(auto area3, PlatformTarget::get().allocateArea(0x40));
-	ret->m_trampoline = reinterpret_cast<void*>(area3);
+	TULIP_HOOK_UNWRAP_INTO(ret->m_trampoline, PlatformTarget::get().allocateArea(0x40));
 
 	auto wrapperMetadata = WrapperMetadata{
 		.m_convention = metadata.m_convention,
 		.m_abstract = metadata.m_abstract,
 	};
-	TULIP_HOOK_UNWRAP_INTO(auto trampolineWrap, Wrapper::get().createWrapper(area3, wrapperMetadata));
-
+	TULIP_HOOK_UNWRAP_INTO(auto trampolineWrap, Wrapper::get().createWrapper(ret->m_trampoline, wrapperMetadata));
 	ret->m_wrapped = trampolineWrap;
 	// std::cout << std::hex << "m_trampoline: " << (void*)ret->m_trampoline << std::endl;
 
@@ -125,6 +122,7 @@ Result<> Handler::restoreFunction() {
 	return PlatformTarget::get().writeMemory(m_address, static_cast<void*>(m_originalBytes.data()), m_originalBytes.size());
 }
 
+// TODO: fully remove the symbol resolver because i dont like it
 bool TULIP_HOOK_DEFAULT_CONV Handler::symbolResolver(char const* csymbol, uint64_t* value) {
 	std::string symbol = csymbol;
 
