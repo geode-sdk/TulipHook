@@ -1,6 +1,7 @@
 #include "WindowsGenerator.hpp"
 
 #include "../Handler.hpp"
+#include "../HolderUtil.hpp"
 #include "PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>

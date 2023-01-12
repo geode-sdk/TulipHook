@@ -24,7 +24,7 @@ namespace tulip::hook {
 		void relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) override;
 	};
 
-	using PlatformHandlerGenerator = HandlerGenerator;
+	using PlatformHandlerGenerator = WindowsHandlerGenerator;
 
 	class WindowsWrapperGenerator : public WrapperGenerator {
 	public:

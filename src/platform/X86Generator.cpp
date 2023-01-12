@@ -1,4 +1,5 @@
 #include "../Handler.hpp"
+#include "../HolderUtil.hpp"
 #include "PlatformGenerator.hpp"
 #include "PlatformTarget.hpp"
 
@@ -18,34 +19,6 @@ using X86WrapperGenerator = WindowsWrapperGenerator;
 #endif
 
 #if defined(TULIP_HOOK_MACOS) || defined(TULIP_HOOK_WINDOWS)
-
-template <class T, auto Fun>
-struct RAIIHolder {
-	T m_engine;
-
-	RAIIHolder(T engine) :
-		m_engine(engine) {}
-
-	~RAIIHolder() {
-		Fun();
-	}
-
-	operator T() {
-		return m_engine;
-	}
-};
-
-static void keystoneCloseFun() {
-	PlatformTarget::get().closeKeystone();
-};
-
-using KSHolder = RAIIHolder<ks_engine*, &keystoneCloseFun>;
-
-static void capstoneCloseFun() {
-	PlatformTarget::get().closeCapstone();
-};
-
-using CSHolder = RAIIHolder<csh, &capstoneCloseFun>;
 
 Result<> X86HandlerGenerator::generateHandler() {
 	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
