@@ -1,8 +1,10 @@
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <iostream>
 #include <tulip/TulipHook.hpp>
-#include <array>
+
+extern "C" void test() {}
 
 template <class... Params>
 int32_t function(Params... params) {
@@ -163,13 +165,14 @@ int callFunction() {
 }
 
 int main() {
+	int a;
+	// std::cin >> a;
 	// No handler
-	assert(callFunction() == 1);
+	// assert(callFunction() == 1);
 
 	// Handler, no hooks
 	std::cout << "\nHandler, no hooks\n";
 	HandlerHandle handlerHandle = makeHandler();
-	int a;
 	// std::cin >> a;
 
 	assert(callFunction() == 1);

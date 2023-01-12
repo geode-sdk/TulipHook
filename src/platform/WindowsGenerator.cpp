@@ -57,15 +57,15 @@ std::string WindowsGenerator::handlerString() {
 
 	// push the stack params
 	for (size_t i = 0; i < stackSize; i += 4) {
-		// esp points to the topmost member in the stack, so since we have 
-		// pushed two things on the stack since our original cconv pushes 
+		// esp points to the topmost member in the stack, so since we have
+		// pushed two things on the stack since our original cconv pushes
 		// we now must dig those back up from stackSize + 4
-		// the reason it's not stackSize + 8 is because stackSize is 4 
+		// the reason it's not stackSize + 8 is because stackSize is 4
 		// larger than where we need to start to dig up
 		// for example, if only ecx is used (thiscall with no extra params)
 		// then if nothing was pushed afterwards, ecx would be found at [esp]
-		// but the stack size would be 4; and if there were more parameters 
-		// then the stack size would be 4 larger than where we want to start 
+		// but the stack size would be 4; and if there were more parameters
+		// then the stack size would be 4 larger than where we want to start
 		// digging up
 		out << "push [esp + 0x" << stackSize << "]\n";
 	}
@@ -124,6 +124,62 @@ std::string WindowsGenerator::trampolineString(size_t offset) {
 	std::ostringstream out;
 	out << "jmp _address" << m_address << "_" << offset;
 	return out.str();
+}
+
+void WindowsGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
+	auto id = insn->id;
+	auto detail = insn->detail;
+	auto address = insn->address;
+	auto size = insn->size;
+
+	auto jumpGroup = false;
+	for (auto i = 0; i < detail->groups_count; ++i) {
+		if (detail->groups[i] == X86_GRP_JUMP) {
+			jumpGroup = true;
+			break;
+		}
+	}
+
+	std::memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
+
+	if (jumpGroup) {
+		intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) -
+			static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
+		uint8_t* inBinary = reinterpret_cast<uint8_t*>(trampolineAddress);
+
+		if (id == X86_INS_JMP) {
+			// res = dst - src - 5
+			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
+			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
+			inBinary[0] = 0xe9;
+
+			trampolineAddress += 5;
+		}
+		else if (id == X86_INS_CALL) {
+			// res = dst - src - 5
+			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
+			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
+			inBinary[0] = 0xe8;
+
+			trampolineAddress += 5;
+		}
+		else {
+			std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
+			// conditional jumps
+			// long conditional jmp size
+			// this is like probably not right idk what instruction this is supposed to be
+			int addrBytes = jmpTargetAddr - trampolineAddress - 6;
+			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int));
+			inBinary[1] = inBinary[0] + 0x10;
+			inBinary[0] = 0x0f;
+
+			trampolineAddress += 6;
+		}
+	}
+	else {
+		trampolineAddress += size;
+	}
+	originalAddress += size;
 }
 
 #endif

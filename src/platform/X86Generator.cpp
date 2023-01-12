@@ -197,13 +197,13 @@ void X86Generator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddres
 	auto const address = insn->address;
 	auto const size = insn->size;
 
-	auto relativeInstruction = false;
+	auto relativeGroup = false;
 	for (auto i = 0; i < detail->groups_count; ++i) {
 		std::cout << "group of inst: " << +detail->groups[i] << std::endl;
 		switch (detail->groups[i]) {
 			case X86_GRP_BRANCH_RELATIVE:
 			case X86_GRP_CALL:
-			case X86_GRP_JUMP: // long conditional jumps are not considered jump but i kinda dont care
+			case X86_GRP_JUMP: // long conditional jumps are not considered jump (bug i should report) but its not used in gd anyway
 				relativeGroup = true;
 				break;
 			default: break;

@@ -2,6 +2,7 @@
 
 #include <HandlerData.hpp>
 #include <TulipResult.hpp>
+#include <capstone/capstone.h>
 #include <memory>
 
 namespace tulip::hook {
@@ -24,5 +25,7 @@ namespace tulip::hook {
 		virtual std::string handlerString() = 0;
 		virtual std::string intervenerString() = 0;
 		virtual std::string trampolineString(size_t offset) = 0;
+
+		virtual void relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) = 0;
 	};
 }

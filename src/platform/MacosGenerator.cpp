@@ -4,6 +4,7 @@
 #include "PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
+#include <iostream>
 #include <sstream>
 
 using namespace tulip::hook;

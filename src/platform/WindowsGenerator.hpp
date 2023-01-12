@@ -20,6 +20,8 @@ namespace tulip::hook {
 		std::string handlerString() override;
 		std::string intervenerString() override;
 		std::string trampolineString(size_t offset) override;
+
+		void relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) override;
 	};
 
 	using PlatformGenerator = WindowsGenerator;
