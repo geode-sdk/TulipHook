@@ -2,6 +2,7 @@
 
 #include "Hook.hpp"
 #include "Pool.hpp"
+#include "Wrapper.hpp"
 #include "platform/PlatformGenerator.hpp"
 #include "platform/PlatformTarget.hpp"
 
@@ -23,12 +24,19 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	auto content = new (ret->m_content) HandlerContent();
 	// std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
 
-	TULIP_HOOK_UNWRAP_INTO(auto area2, PlatformTarget::get().allocateArea(0x1c0));
+	TULIP_HOOK_UNWRAP_INTO(auto area2, PlatformTarget::get().allocateArea(0x180));
 	ret->m_handler = reinterpret_cast<void*>(area2);
 	// std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
 
 	TULIP_HOOK_UNWRAP_INTO(auto area3, PlatformTarget::get().allocateArea(0x40));
-	ret->m_trampoline = area3;
+
+	auto wrapperMetadata = WrapperMetadata{
+		.m_convention = metadata.m_convention,
+		.m_abstract = metadata.m_abstract,
+	};
+	TULIP_HOOK_UNWRAP_INTO(auto trampolineWrap, Wrapper::get().createWrapper(area3, wrapperMetadata));
+
+	ret->m_trampoline = trampolineWrap;
 	// std::cout << std::hex << "m_trampoline: " << (void*)ret->m_trampoline << std::endl;
 
 	return Ok(std::move(ret));
