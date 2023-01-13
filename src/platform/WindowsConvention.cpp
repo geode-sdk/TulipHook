@@ -24,9 +24,10 @@ using Location = std::variant<Stack, Register>;
 class PushParameter final {
 public:
 	Location location;
-	Stack resultLocation;
+	Stack resultLocation = 0;
+	Stack originalLocation = 0;
 	AbstractType type;
-	size_t originalIndex;
+	size_t originalIndex = 0;
 
 	PushParameter(AbstractType const& type, Location loc, size_t originalIndex) :
 		type(type),
@@ -266,12 +267,19 @@ public:
 	void reorder() {
 		size_t stackLocation = 0;
 		for (auto& param : m_params) {
-			param.resultLocation = stackLocation;
-			stackLocation += paramSize(param.type);
+			if (std::holds_alternative<Stack>(param.location)) {
+				param.originalLocation = stackLocation;
+				stackLocation += paramSize(param.type);
+			}
 		}
 		std::sort(m_params.begin(), m_params.end(), [](auto a, auto b) -> bool {
 			return a.originalIndex < b.originalIndex;
 		});
+		stackLocation = 0;
+		for (auto& param : m_params) {
+			param.resultLocation = stackLocation;
+			stackLocation += paramSize(param.type);
+		}
 	}
 
 	std::string generateIntoDefault() {
@@ -357,7 +365,6 @@ public:
 
 		out << "sub esp, 0x" << m_originalStackSize << "\n";
 
-		size_t outStackIndex = 0;
 		for (auto& param : m_params) {
 			out << "; a param\n";
 			out << "; resultLocation is 0x" << param.resultLocation << "\n";
@@ -383,10 +390,11 @@ public:
 				}
 			}
 			else {
+				out << "; originalLocation is 0x" << param.originalLocation << "\n";
+				auto const originalOffset = m_originalStackSize + param.originalLocation + 4;
 				for (size_t i = 0; i < param.type.m_size; i += 4) {
 					out << "mov eax, [esp + 0x" << (resultOffset + i) << "]\n";
-					out << "mov [esp + 0x" << outStackIndex << "], eax\n";
-					outStackIndex += 4;
+					out << "mov [esp + 0x" << (param.originalLocation + i) << "], eax\n";
 				}
 			}
 		}
@@ -399,70 +407,13 @@ public:
 		out << std::hex;
 
 		if (m_isCallerCleanup) {
+			// for mat: comment this to make your tests work
 			out << "add esp, 0x" << m_originalStackSize << "\n";
 		}
 		out << "ret\n";
 
 		return out.str();
 	}
-
-	// std::string generateIntoOriginal(size_t additionalOffset) {
-	// 	std::ostringstream out;
-	// 	out << std::hex;
-
-	// 	size_t stackOffset = additionalOffset;
-	// 	auto reverseParams = m_params;
-	// 	std::reverse(reverseParams.begin(), reverseParams.end());
-	// 	for (auto& param : reverseParams) {
-	// 		if (std::holds_alternative<Stack>(param.location)) {
-	// 			// push all members of struct
-	// 			for (size_t i = 0; i < paramSize(param.type); i += 4) {
-	// 				out << "push [esp + 0x" << param.resultLocation + stackOffset + paramSize(param.type) << "]\n";
-	// 			}
-	// 			// we're only pushing parameters on the stack back to the stack
-	// 			stackOffset += paramSize(param.type);
-	// 		}
-	// 		else {
-	// 			switch (auto reg = std::get<Register>(param.location)) {
-	// 				case Register::ECX: {
-	// 					out << "mov ecx, [esp + 0x" << param.resultLocation + stackOffset << "]\n";
-	// 				} break;
-
-	// 				case Register::EDX: {
-	// 					out << "mov edx, [esp + 0x" << param.resultLocation + stackOffset << "]\n";
-	// 				} break;
-
-	// 				// xmm registers
-	// 				default: {
-	// 					// double
-	// 					if (param.type.m_size == 8) {
-	// 						out << "movsd xmm" << xmmRegisterName(reg) << ", [esp + 0x"
-	// 							<< param.resultLocation + stackOffset << "]\n";
-	// 					}
-	// 					// float
-	// 					else {
-	// 						out << "movss xmm" << xmmRegisterName(reg) << ", [esp + 0x"
-	// 							<< param.resultLocation + stackOffset << "]\n";
-	// 					}
-	// 				} break;
-	// 			}
-	// 		}
-	// 	}
-
-	// 	return out.str();
-	// }
-
-	// std::string generateOriginalCleanup() {
-	// 	std::ostringstream out;
-	// 	out << std::hex;
-
-	// 	// if the function is caller cleanup, clean the stack from its extra stack items
-	// 	if (m_isCallerCleanup) {
-	// 		out << "add esp, 0x" << m_originalStackSize << "\n";
-	// 	}
-
-	// 	return out.str();
-	// }
 };
 
 std::string CdeclConvention::generateDefaultCleanup(AbstractFunction const& function) {
