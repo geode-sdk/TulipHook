@@ -67,6 +67,9 @@ target_include_directories(TulipHook PRIVATE
 	${keystone_SOURCE_DIR}/include
 )
 
-target_include_directories(TulipHook INTERFACE
+add_library(TulipHookInclude INTERFACE)
+target_include_directories(TulipHookInclude INTERFACE
 	$<BUILD_INTERFACE:${TulipHookRoot_SOURCE_DIR}/include>
 )
+
+target_link_libraries(TulipHook PUBLIC TulipHookInclude)
