@@ -10,8 +10,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 	add_subdirectory(test)
 endif()
 
-target_include_directories(TulipHook INTERFACE 
+
+CPMAddPackage("gh:bitwizeshift/result#a97e66b")
+
+add_library(TulipHookInclude INTERFACE)
+target_include_directories(TulipHookInclude INTERFACE
 	${TulipHookRoot_SOURCE_DIR}/include
 )
 
-CPMAddPackage("gh:bitwizeshift/result#a97e66b")
+target_link_libraries(TulipHookInclude INTERFACE Result)

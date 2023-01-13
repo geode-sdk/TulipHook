@@ -62,14 +62,8 @@ target_link_libraries(TulipHook PUBLIC Result)
 target_compile_definitions(TulipHook PRIVATE -DTULIP_HOOK_EXPORTING=1)
 
 target_include_directories(TulipHook PRIVATE
+	${TulipHookRoot_SOURCE_DIR}/include
 	${TulipHookRoot_SOURCE_DIR}/include/tulip
 	${capstone_SOURCE_DIR}/include
 	${keystone_SOURCE_DIR}/include
 )
-
-add_library(TulipHookInclude INTERFACE)
-target_include_directories(TulipHookInclude INTERFACE
-	$<BUILD_INTERFACE:${TulipHookRoot_SOURCE_DIR}/include>
-)
-
-target_link_libraries(TulipHook PUBLIC TulipHookInclude)
