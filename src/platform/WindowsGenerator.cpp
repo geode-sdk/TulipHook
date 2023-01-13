@@ -131,20 +131,10 @@ std::string WindowsWrapperGenerator::wrapperString() {
 	out << std::hex;
 	out << m_metadata.m_convention->generateIntoOriginal(m_metadata.m_abstract) << "\n ";
 
-	out << R"ASM(
-	push ebp
-	mov ebp, esp
-	mov eax, [_address]
-	call eax
-	pop ebp
-)ASM";
+	out << "mov eax, 0x" << reinterpret_cast<uintptr_t>(m_address) << "\n";
+	out << "call eax\n";
 
 	out << m_metadata.m_convention->generateOriginalCleanup(m_metadata.m_abstract);
-
-	out << R"ASM(
-_address: 
-	dd 0x)ASM"
-		<< reinterpret_cast<uint64_t>(m_address);
 
 	return out.str();
 }
