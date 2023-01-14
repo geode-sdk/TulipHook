@@ -67,3 +67,7 @@ target_include_directories(TulipHook PRIVATE
 	${capstone_SOURCE_DIR}/include
 	${keystone_SOURCE_DIR}/include
 )
+
+target_include_directories(TulipHook INTERFACE
+	${TulipHookRoot_SOURCE_DIR}/include
+)

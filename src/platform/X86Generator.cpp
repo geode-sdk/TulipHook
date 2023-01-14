@@ -92,7 +92,7 @@ Result<std::vector<uint8_t>> X86HandlerGenerator::generateIntervener() {
 	return Ok(ret);
 }
 
-Result<> X86HandlerGenerator::generateTrampoline(size_t offset) {
+Result<> X86HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
 	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
 
 	size_t count;
@@ -101,8 +101,8 @@ Result<> X86HandlerGenerator::generateTrampoline(size_t offset) {
 
 	ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver));
 
-	auto code = this->trampolineString(offset);
-	auto address = reinterpret_cast<size_t>(m_trampoline) + offset;
+	auto code = this->trampolineString(offsets.m_originalOffset);
+	auto address = reinterpret_cast<size_t>(m_trampoline) + offsets.m_trampolineOffset;
 
 	// std::cout << "trampoline: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), address, &encode, &size, &count);
@@ -121,7 +121,7 @@ Result<> X86HandlerGenerator::generateTrampoline(size_t offset) {
 	return Ok();
 }
 
-Result<size_t> X86HandlerGenerator::relocateOriginal(size_t target) {
+Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOriginal(size_t target) {
 	// std::memcpy(m_trampoline, m_address, 32);
 	size_t offset = 0;
 
@@ -155,7 +155,10 @@ Result<size_t> X86HandlerGenerator::relocateOriginal(size_t target) {
 
 	cs_free(insn, 1);
 
-	return Ok(originalAddress - reinterpret_cast<uint64_t>(m_address));
+	return Ok(RelocateReturn{
+		.m_trampolineOffset = trampolineAddress - reinterpret_cast<uint64_t>(m_trampoline),
+		.m_originalOffset = originalAddress - reinterpret_cast<uint64_t>(m_address),
+	});
 }
 
 std::string X86HandlerGenerator::intervenerString() {

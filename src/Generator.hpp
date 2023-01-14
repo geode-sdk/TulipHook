@@ -23,8 +23,14 @@ namespace tulip::hook {
 
 		virtual Result<> generateHandler() = 0;
 		virtual Result<std::vector<uint8_t>> generateIntervener() = 0;
-		virtual Result<> generateTrampoline(size_t offset) = 0;
-		virtual Result<size_t> relocateOriginal(size_t target) = 0;
+
+		struct RelocateReturn {
+			size_t m_trampolineOffset;
+			size_t m_originalOffset;
+		};
+
+		virtual Result<> generateTrampoline(RelocateReturn offsets) = 0;
+		virtual Result<RelocateReturn> relocateOriginal(size_t target) = 0;
 
 		virtual std::string handlerString() = 0;
 		virtual std::string intervenerString() = 0;

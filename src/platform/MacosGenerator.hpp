@@ -14,8 +14,8 @@ namespace tulip::hook {
 
 		Result<> generateHandler() override;
 		Result<std::vector<uint8_t>> generateIntervener() override;
-		Result<> generateTrampoline(size_t offset) override;
-		Result<size_t> relocateOriginal(size_t target) override;
+		Result<> generateTrampoline(RelocateReturn offsets) override;
+		Result<RelocateReturn> relocateOriginal(size_t target) override;
 
 		std::string handlerString() override;
 		std::string intervenerString() override;
