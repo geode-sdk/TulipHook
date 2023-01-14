@@ -155,7 +155,7 @@ Result<size_t> X86HandlerGenerator::relocateOriginal(size_t target) {
 
 	cs_free(insn, 1);
 
-	return Ok(trampolineAddress - reinterpret_cast<uint64_t>(m_trampoline));
+	return Ok(originalAddress - reinterpret_cast<uint64_t>(m_address));
 }
 
 std::string X86HandlerGenerator::intervenerString() {
@@ -174,7 +174,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 
 	auto relativeGroup = false;
 	for (auto i = 0; i < detail->groups_count; ++i) {
-		std::cout << "group of inst: " << +detail->groups[i] << std::endl;
+		// std::cout << "group of inst: " << +detail->groups[i] << std::endl;
 		switch (detail->groups[i]) {
 			case X86_GRP_BRANCH_RELATIVE:
 			case X86_GRP_CALL:
@@ -188,7 +188,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 	std::memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
 
 	if (relativeGroup && detail->x86.encoding.imm_offset != 0) {
-		std::cout << "testing the disp value: " << detail->x86.operands[0].imm << std::endl;
+		// std::cout << "testing the disp value: " << detail->x86.operands[0].imm << std::endl;
 		intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) -
 			static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
 		uint8_t* inBinary = reinterpret_cast<uint8_t*>(trampolineAddress);
@@ -210,7 +210,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 			trampolineAddress += 5;
 		}
 		else {
-			std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
+			// std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
 			// conditional jumps
 			// long conditional jmp size
 			// this is like probably not right idk what instruction this is supposed to be
