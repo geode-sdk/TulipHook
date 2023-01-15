@@ -102,7 +102,7 @@ Result<> X86HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
 	ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver));
 
 	auto code = this->trampolineString(offsets.m_originalOffset);
-	auto address = reinterpret_cast<size_t>(m_trampoline) + offsets.m_trampolineOffset;
+	auto address = reinterpret_cast<uint64_t>(m_trampoline) + offsets.m_trampolineOffset;
 
 	// std::cout << "trampoline: " << code << std::endl;
 	auto status = ks_asm(ks, code.c_str(), address, &encode, &size, &count);
@@ -121,9 +121,8 @@ Result<> X86HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
 	return Ok();
 }
 
-Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOriginal(size_t target) {
+Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOriginal(uint64_t target) {
 	// std::memcpy(m_trampoline, m_address, 32);
-	size_t offset = 0;
 
 	TULIP_HOOK_UNWRAP_INTO(CSHolder cs, PlatformTarget::get().openCapstone());
 
