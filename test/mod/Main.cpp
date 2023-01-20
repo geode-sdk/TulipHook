@@ -33,7 +33,7 @@ void logCCO(const char* name, CCObject* obj) {
 	}
 }
 
-bool (__thiscall* MenuLayer_init_o)(CCObject*);
+bool (__cdecl* MenuLayer_init_o)(CCObject*);
 __declspec(noinline) bool __cdecl MenuLayer_init(CCObject* self) {
 	std::cout << "MenuLayer::init hook\n";
 	logCCO("self", self);
@@ -47,7 +47,7 @@ __declspec(noinline) bool __cdecl MenuLayer_init(CCObject* self) {
 	return ret;
 }
 
-void (__thiscall* MenuLayer_onMoreGames_o)(CCObject*, CCObject*);
+void (__cdecl* MenuLayer_onMoreGames_o)(CCObject*, CCObject*);
 __declspec(noinline) void __cdecl MenuLayer_onMoreGames(CCObject* self, CCObject* sender) {
 	std::cout << "MenuLayer::onMoreGames hook";
 	logCCO("self", self);
@@ -89,6 +89,7 @@ __declspec(noinline) CCObject* __cdecl TextArea_create(CoolString str, char cons
 	printf("disableColor: %08x\n", disableColor);
 
 	auto ret = TextArea_create_o(str, font, scale, width, anchor, height, disableColor);
+	printf("succesfully called orginal");
 
 	std::cout << "it returned " << ret << std::endl;
 	logCCO("return", ret);
@@ -96,34 +97,24 @@ __declspec(noinline) CCObject* __cdecl TextArea_create(CoolString str, char cons
 	return ret;
 }
 
+CCObject* (__cdecl* TextArea_create_o2)(CoolString str, char const* font, float scale, float width, CCPoint anchor, float height, bool disableColor);
+__declspec(noinline) CCObject* __cdecl TextArea_create2(CoolString str, char const* font, float scale, float width, CCPoint anchor, float height, bool disableColor) {
+	printf("TextArea::create hook #2.\n");
+	printf("str: [%08x %08x %08x %08x %08x %08x]\n", str[0], str[1], str[2], str[3], str[4], str[5]);
+	printf("font: %08x\n", (uintptr_t)font);
+	printf("scale: %08x\n", std::bit_cast<uint32_t>(scale));
+	printf("width: %08x\n", std::bit_cast<uint32_t>(width));
+	printf("anchor: %08x %08x\n", std::bit_cast<uint32_t>(anchor.x), std::bit_cast<uint32_t>(anchor.y));
+	printf("height: %08x\n", std::bit_cast<uint32_t>(height));
+	printf("disableColor: %08x\n", disableColor);
 
-template<class Conv = tulip::hook::ThiscallConvention, class T>
-void makeHook(void* addr, T func) {
-	auto metadata = tulip::hook::HandlerMetadata {
-		.m_convention = std::make_shared<Conv>(),
-		.m_abstract = tulip::hook::AbstractFunction::from(func)
-	};
+	auto ret = TextArea_create_o2(str, font, scale, width, anchor, height, disableColor);
+	printf("succesfully called orginal");
 
-	std::cout << "## __thiscall -> __cdecl ##\n";
-	std::cout << metadata.m_convention->generateIntoDefault(metadata.m_abstract) << "\n";
+	std::cout << "it returned " << ret << std::endl;
+	logCCO("return", ret);
 
-	std::cout << "## __cdecl stack fix ##\n";
-	std::cout << metadata.m_convention->generateDefaultCleanup(metadata.m_abstract) << "\n";
-
-	auto handle_result = tulip::hook::createHandler(addr, metadata);
-	if (!handle_result) {
-		std::cout << "Creating the handler failed L bozo" << std::endl;
-		return;
-	}
-	auto handle = *handle_result;
-
-	auto h_metadata = tulip::hook::HookMetadata {
-		.m_priority = 0
-	};
-
-	tulip::hook::createHook(handle, (void*)(func), h_metadata);
-
-	std::cout << "Hook created!" << std::endl;
+	return ret;
 }
 
 template <class Conv, class T, class U>
@@ -176,16 +167,19 @@ DWORD WINAPI MainThread(void* module) {
 	MenuLayer_onMoreGames_o = reinterpret_cast<decltype(MenuLayer_onMoreGames_o)>(onMoreGames_address);
 
 	std::cout << "Hooking MenuLayer::init\n";
-	makeHook(init_address, &MenuLayer_init);
+	makeHookAndWrapper<ThiscallConvention>(init_address, &MenuLayer_init, &MenuLayer_init_o);
 
 	std::cout << "Hooking MenuLayer::onMoreGames\n";
-	makeHook(onMoreGames_address, &MenuLayer_onMoreGames);
+	makeHookAndWrapper<ThiscallConvention>(onMoreGames_address, &MenuLayer_onMoreGames, &MenuLayer_onMoreGames_o);
 	
 	std::cout << "Hooking GJDropDownLayer::init\n";
 	makeHookAndWrapper<MembercallConvention>((void*)(getBase() + 0x113530), &GJDropDownLayer_init, &GJDropDownLayer_init_o);
 
 	std::cout << "Hooking TextArea::create\n";
 	makeHookAndWrapper<OptcallConvention>((void*)(getBase() + 0x33270), &TextArea_create, &TextArea_create_o);
+
+	std::cout << "Hooking TextArea::create again\n";
+	makeHookAndWrapper<OptcallConvention>((void*)(getBase() + 0x33270), &TextArea_create2, &TextArea_create_o2);
 	
 	std::cout << std::endl;
 	return 0;
