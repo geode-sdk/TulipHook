@@ -82,6 +82,25 @@ private:
 	}
 
 public:
+	static PushParameters fromCdecl(AbstractFunction const& function) {
+		auto res = PushParameters();
+
+		// structs are returned as pointer through first parameter
+		res.m_returnValueLocation = returnLocation(function);
+		if (std::holds_alternative<Stack>(res.m_returnValueLocation)) {
+			res.push(AbstractType::from<void*>());
+		}
+
+		for (auto& param : function.m_parameters) {
+			res.push(param);
+		}
+
+		res.reorder();
+		res.m_isCallerCleanup = true;
+
+		return res;
+	}
+
 	static PushParameters fromThiscall(AbstractFunction const& function) {
 		auto res = PushParameters();
 
@@ -287,7 +306,9 @@ public:
 		out << std::hex;
 
 		// allocate space on the stack for our parameters
-		out << "sub esp, 0x" << m_resultStackSize << "\n";
+		if (m_resultStackSize) {
+			out << "sub esp, 0x" << m_resultStackSize << "\n";
+		}
 
 		// cdecl parameters are passed in reverse order; however, since we are
 		// just moving stuff to from known memory locations to other known
@@ -372,7 +393,9 @@ public:
 		std::stringstream out;
 		out << std::hex;
 
-		out << "sub esp, 0x" << m_originalStackSize << "\n";
+		if (m_originalStackSize) {
+			out << "sub esp, 0x" << m_originalStackSize << "\n";
+		}
 
 		for (auto& param : m_params) {
 			out << "; a param\n";
@@ -426,23 +449,19 @@ public:
 };
 
 std::string CdeclConvention::generateDefaultCleanup(AbstractFunction const& function) {
-	// it's the same conv as default
-	return "ret 0";
+	return PushParameters::fromCdecl(function).generateDefaultCleanup();
 }
 
 std::string CdeclConvention::generateIntoDefault(AbstractFunction const& function) {
-	// it's the same conv as default
-	return "";
+	return PushParameters::fromCdecl(function).generateIntoDefault();
 }
 
 std::string CdeclConvention::generateOriginalCleanup(AbstractFunction const& function) {
-	// it's the same conv as default
-	return "ret 0";
+	return PushParameters::fromCdecl(function).generateOriginalCleanup();
 }
 
 std::string CdeclConvention::generateIntoOriginal(AbstractFunction const& function) {
-	// it's the same conv as default
-	return "";
+	return PushParameters::fromCdecl(function).generateIntoOriginal();
 }
 
 CdeclConvention::~CdeclConvention() {}

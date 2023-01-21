@@ -11,6 +11,10 @@ static uintptr_t getBase() {
 	return reinterpret_cast<uintptr_t>(GetModuleHandleA(0));
 }
 
+static uintptr_t getCocosBase() {
+	return reinterpret_cast<uintptr_t>(GetModuleHandleA("libcocos2d.dll"));
+}
+
 class CCObject {
 	virtual ~CCObject() = 0;
 };
@@ -125,6 +129,18 @@ __declspec(noinline) CCObject* __cdecl TextArea_create2(CoolString str, char con
 	return ret;
 }
 
+CCObject* (__cdecl* CCLabelBMFont_create_o)(char const* text, char const* font);
+__declspec(noinline) CCObject* __cdecl CCLabelBMFont_create(char const* text, char const* font) {
+	std::cout << "CCLabelBMFont::create\n";
+	std::cout << "text: " << text << std::endl;
+	std::cout << "font: " << font << std::endl;
+
+	auto ret = CCLabelBMFont_create_o("im mf mori calliope", font);
+	std::cout << "returned: " << ret << std::endl;
+
+	return ret;
+}
+
 template <class Conv, class T, class U>
 void makeHookAndWrapper(void* target, T* func, U** orig) {
 	using namespace tulip::hook;
@@ -188,6 +204,9 @@ DWORD WINAPI MainThread(void* module) {
 
 	std::cout << "Hooking TextArea::create again\n";
 	makeHookAndWrapper<OptcallConvention>((void*)(getBase() + 0x33270), &TextArea_create2, &TextArea_create_o2);
+	
+	std::cout << "Hooking CCLabelBMFont::create\n";
+	makeHookAndWrapper<CdeclConvention>((void*)(getCocosBase() + 0x9c570), &CCLabelBMFont_create, &CCLabelBMFont_create_o);
 	
 	std::cout << std::endl;
 	return 0;
