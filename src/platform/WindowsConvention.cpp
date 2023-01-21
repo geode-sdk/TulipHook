@@ -352,9 +352,18 @@ public:
 
 		// clean up stack from the ones we added
 		out << "add esp, 0x" << m_resultStackSize << "\n";
+		
+		// if the function is caller cleaned, then generateOriginalCleanup 
+		// or the original GD function cleans it up
+		if (m_isCallerCleanup) {
+			out << "ret\n";
+		}
+		// otherwise clean up stack using ret
 		// some of the original parameters may be passed through registers so the
 		// original's stack size may be smaller
-		out << "ret 0x" << m_originalStackSize << "\n";
+		else {
+			out << "ret 0x" << m_originalStackSize << "\n";
+		}
 
 		return out.str();
 	}

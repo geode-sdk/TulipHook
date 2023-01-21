@@ -108,6 +108,14 @@ __declspec(noinline) CCObject* __cdecl TextArea_create2(CoolString str, char con
 	printf("height: %08x\n", std::bit_cast<uint32_t>(height));
 	printf("disableColor: %08x\n", disableColor);
 
+	// lmao test
+	
+	// static const char* breh = "What's up guys Max0r here I would like to officially announce TulipHook works";
+
+	// str[0] = reinterpret_cast<int>(breh);
+	// str[4] = strlen(breh);
+	// str[5] = strlen(breh);
+
 	auto ret = TextArea_create_o2(str, font, scale, width, anchor, height, disableColor);
 	printf("succesfully called orginal");
 
