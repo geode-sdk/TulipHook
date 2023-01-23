@@ -38,6 +38,18 @@ Result<void*> tulip::hook::followJumps(void* address) noexcept {
 	return Misc::followJumps(address);
 }
 
-TULIP_HOOK_DLL Result<void*> tulip::hook::createWrapper(void* address, WrapperMetadata const& metadata) noexcept {
+Result<void*> tulip::hook::createWrapper(void* address, WrapperMetadata const& metadata) noexcept {
 	return Wrapper::get().createWrapper(address, metadata);
+}
+
+std::shared_ptr<CallingConvention> tulip::hook::createConvention(TulipConvention convention) noexcept {
+    switch (convention) {
+        case TulipConvention::Default: return tulip::hook::DefaultConvention::create();
+        case TulipConvention::Cdecl: return tulip::hook::CdeclConvention::create();
+        case TulipConvention::Thiscall: return tulip::hook::ThiscallConvention::create();
+        case TulipConvention::Fastcall: return tulip::hook::FastcallConvention::create();
+        case TulipConvention::Optcall: return tulip::hook::OptcallConvention::create();
+        case TulipConvention::Membercall: return tulip::hook::MembercallConvention::create();
+        default: return nullptr;
+    }
 }
