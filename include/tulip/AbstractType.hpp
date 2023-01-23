@@ -29,7 +29,7 @@ namespace tulip::hook {
 			}
 			else if constexpr (!std::is_class_v<Type>) {
 				type.m_kind = AbstractTypeKind::Primitive;
-				type.m_size = sizeof(Type);
+				type.m_size = std::is_reference_v<Type> ? sizeof(void*) : sizeof(Type);
 			}
 			else {
 				type.m_kind = AbstractTypeKind::Other;
