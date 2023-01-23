@@ -6,11 +6,12 @@ include(cmake/CPM.cmake)
 
 option(TULIP_LINK_SOURCE "Link to TulipHook source files, including external libs" OFF)
 
-if (TULIP_LINK_SOURCE)
+if(TULIP_LINK_SOURCE)
 	add_subdirectory(src)
 endif()
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+	add_subdirectory(src)
 	add_subdirectory(test)
 endif()
 
