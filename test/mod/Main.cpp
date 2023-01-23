@@ -78,7 +78,6 @@ __declspec(noinline) bool __cdecl GJDropDownLayer_init(CCObject* self, const cha
 	return ret;
 }
 
-static_assert(sizeof(std::string) == 24);
 using CoolString = std::array<int, 6>;
 
 CCObject* (__cdecl* TextArea_create_o)(CoolString str, char const* font, float scale, float width, CCPoint anchor, float height, bool disableColor);
