@@ -4,7 +4,11 @@ project(TulipHookRoot LANGUAGES CXX C)
 
 include(cmake/CPM.cmake)
 
-add_subdirectory(src)
+option(TULIP_LINK_SOURCE "Link to TulipHook source files, including external libs" OFF)
+
+if (TULIP_LINK_SOURCE)
+	add_subdirectory(src)
+endif()
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 	add_subdirectory(test)
