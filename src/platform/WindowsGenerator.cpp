@@ -81,7 +81,7 @@ std::string WindowsHandlerGenerator::handlerString() {
 	; preserve the return values
 
 	; save space on stack for them
-	sub esp, 0xc
+	sub esp, 0x14
 
 	mov [esp + 0x10], eax
 	movsd [esp], xmm0
@@ -95,7 +95,7 @@ std::string WindowsHandlerGenerator::handlerString() {
 	movsd xmm0, [esp]
 
 	; give back to the earth what it gave to you
-	add esp, 0xc
+	add esp, 0x14
 
 	pop esi
 )ASM";
