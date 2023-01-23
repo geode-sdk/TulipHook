@@ -178,7 +178,7 @@ public:
 		size_t structsAt = 0;
 		size_t origIndex = 0;
 		for (auto& param : function.m_parameters) {
-			if (param.m_kind == AbstractTypeKind::Other) {
+			if (param.m_kind == AbstractTypeKind::Other && param.m_size > 4) {
 				reordered.push_back({origIndex, param});
 			}
 			else {
