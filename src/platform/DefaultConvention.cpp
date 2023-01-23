@@ -20,3 +20,7 @@ std::string DefaultConvention::generateIntoOriginal(AbstractFunction const& func
 std::string DefaultConvention::generateOriginalCleanup(AbstractFunction const& function) {
 	return "ret";
 }
+
+std::shared_ptr<DefaultConvention> DefaultConvention::create() {
+	return std::make_shared<DefaultConvention>();
+}

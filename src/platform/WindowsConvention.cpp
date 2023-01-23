@@ -464,6 +464,10 @@ std::string CdeclConvention::generateIntoOriginal(AbstractFunction const& functi
 	return PushParameters::fromCdecl(function).generateIntoOriginal();
 }
 
+std::shared_ptr<CdeclConvention> CdeclConvention::create() {
+	return std::make_shared<CdeclConvention>();
+}
+
 CdeclConvention::~CdeclConvention() {}
 
 std::string ThiscallConvention::generateDefaultCleanup(AbstractFunction const& function) {
@@ -491,6 +495,10 @@ std::string ThiscallConvention::generateOriginalCleanup(AbstractFunction const& 
 
 std::string ThiscallConvention::generateIntoOriginal(AbstractFunction const& function) {
 	return PushParameters::fromThiscall(function).generateIntoOriginal();
+}
+
+std::shared_ptr<ThiscallConvention> ThiscallConvention::create() {
+	return std::make_shared<ThiscallConvention>();
 }
 
 ThiscallConvention::~ThiscallConvention() {}
@@ -529,6 +537,10 @@ std::string FastcallConvention::generateOriginalCleanup(AbstractFunction const& 
 
 std::string FastcallConvention::generateIntoOriginal(AbstractFunction const& function) {
 	return PushParameters::fromFastcall(function).generateIntoOriginal();
+}
+
+std::shared_ptr<FastcallConvention> FastcallConvention::create() {
+	return std::make_shared<FastcallConvention>();
 }
 
 FastcallConvention::~FastcallConvention() {}
@@ -579,6 +591,10 @@ std::string OptcallConvention::generateIntoOriginal(AbstractFunction const& func
 	return PushParameters::fromOptcall(function).generateIntoOriginal();
 }
 
+std::shared_ptr<OptcallConvention> OptcallConvention::create() {
+	return std::make_shared<OptcallConvention>();
+}
+
 OptcallConvention::~OptcallConvention() {}
 
 std::string MembercallConvention::generateDefaultCleanup(AbstractFunction const& function) {
@@ -595,6 +611,10 @@ std::string MembercallConvention::generateOriginalCleanup(AbstractFunction const
 
 std::string MembercallConvention::generateIntoOriginal(AbstractFunction const& function) {
 	return PushParameters::fromMembercall(function).generateIntoOriginal();
+}
+
+std::shared_ptr<MembercallConvention> MembercallConvention::create() {
+	return std::make_shared<MembercallConvention>();
 }
 
 MembercallConvention::~MembercallConvention() {}

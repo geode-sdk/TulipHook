@@ -1,13 +1,13 @@
 #pragma once
 
 #include "../CallingConvention.hpp"
-
+#include <memory>
 #include <string>
 
 namespace tulip::hook {
 	class AbstractFunction;
 
-	class CdeclConvention : public CallingConvention {
+	class TULIP_HOOK_DLL CdeclConvention : public CallingConvention {
 	public:
 		~CdeclConvention() override;
 
@@ -15,9 +15,11 @@ namespace tulip::hook {
 		std::string generateIntoDefault(AbstractFunction const& function) override;
 		std::string generateIntoOriginal(AbstractFunction const& function) override;
 		std::string generateOriginalCleanup(AbstractFunction const& function) override;
+
+		static std::shared_ptr<CdeclConvention> create();
 	};
 
-	class ThiscallConvention : public CallingConvention {
+	class TULIP_HOOK_DLL ThiscallConvention : public CallingConvention {
 	public:
 		~ThiscallConvention() override;
 
@@ -25,9 +27,11 @@ namespace tulip::hook {
 		std::string generateIntoDefault(AbstractFunction const& function) override;
 		std::string generateIntoOriginal(AbstractFunction const& function) override;
 		std::string generateOriginalCleanup(AbstractFunction const& function) override;
+
+		static std::shared_ptr<ThiscallConvention> create();
 	};
 
-	class FastcallConvention : public CallingConvention {
+	class TULIP_HOOK_DLL FastcallConvention : public CallingConvention {
 	public:
 		~FastcallConvention() override;
 
@@ -35,9 +39,11 @@ namespace tulip::hook {
 		std::string generateIntoDefault(AbstractFunction const& function) override;
 		std::string generateIntoOriginal(AbstractFunction const& function) override;
 		std::string generateOriginalCleanup(AbstractFunction const& function) override;
+
+		static std::shared_ptr<FastcallConvention> create();
 	};
 
-	class OptcallConvention : public CallingConvention {
+	class TULIP_HOOK_DLL OptcallConvention : public CallingConvention {
 	public:
 		~OptcallConvention() override;
 
@@ -45,9 +51,11 @@ namespace tulip::hook {
 		std::string generateIntoDefault(AbstractFunction const& function) override;
 		std::string generateIntoOriginal(AbstractFunction const& function) override;
 		std::string generateOriginalCleanup(AbstractFunction const& function) override;
+
+		static std::shared_ptr<OptcallConvention> create();
 	};
 
-	class MembercallConvention : public CallingConvention {
+	class TULIP_HOOK_DLL MembercallConvention : public CallingConvention {
 	public:
 		~MembercallConvention() override;
 
@@ -55,5 +63,7 @@ namespace tulip::hook {
 		std::string generateIntoDefault(AbstractFunction const& function) override;
 		std::string generateIntoOriginal(AbstractFunction const& function) override;
 		std::string generateOriginalCleanup(AbstractFunction const& function) override;
+
+		static std::shared_ptr<MembercallConvention> create();
 	};
 }
