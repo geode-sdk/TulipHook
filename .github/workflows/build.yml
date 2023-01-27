@@ -48,6 +48,9 @@ jobs:
         choco install ccache
         ccache --version
       if: matrix.config.os_identifier == 'win'
+      
+    - name: Install ninja-build tool
+      uses: seanmiddleditch/gha-setup-ninja@v3
 
     - name: Configure ccache
       uses: hendrikmuhs/ccache-action@v1.2.3
@@ -58,7 +61,7 @@ jobs:
       shell: bash
       working-directory: ${{ github.workspace }}
       run: >
-        ${{ matrix.config.prefixes }} cmake -B ./build ${{ matrix.config.extra_flags }}
+        ${{ matrix.config.prefixes }} cmake -G Ninja -B ./build ${{ matrix.config.extra_flags }}
 
     - name: Build
       shell: bash
