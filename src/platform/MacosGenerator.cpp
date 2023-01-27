@@ -156,4 +156,12 @@ Result<void*> MacosWrapperGenerator::generateWrapper() {
 	return Ok(m_address); // only windows needs the wrapper
 }
 
+std::string MacosWrapperGenerator::reverseWrapperString() {
+	return "";
+}
+
+Result<void*> MacosWrapperGenerator::generateReverseWrapper() {
+	return Ok(m_address); // only windows needs the wrapper
+}
+
 #endif

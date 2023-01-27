@@ -31,8 +31,10 @@ namespace tulip::hook {
 		using WrapperGenerator::WrapperGenerator;
 
 		Result<void*> generateWrapper() override;
+		Result<void*> generateReverseWrapper() override;
 
 		std::string wrapperString() override;
+		std::string reverseWrapperString() override;
 	};
 
 	using PlatformWrapperGenerator = MacosWrapperGenerator;
