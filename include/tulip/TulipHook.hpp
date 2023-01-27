@@ -29,15 +29,19 @@ namespace tulip::hook {
 
 	TULIP_HOOK_DLL Result<void*> followJumps(void* address) noexcept;
 
+	// wraps a cdecl function into given convention
 	TULIP_HOOK_DLL Result<void*> createWrapper(void* address, WrapperMetadata const& metadata) noexcept;
 
+	// wraps a function in given convention into cdecl
+	TULIP_HOOK_DLL Result<void*> createReverseWrapper(void* address, WrapperMetadata const& metadata) noexcept;
+
 	enum class TulipConvention {
-        Default,
-        Cdecl,
-        Thiscall,
-        Fastcall,
-        Optcall,
-        Membercall,
+		Default,
+		Cdecl,
+		Thiscall,
+		Fastcall,
+		Optcall,
+		Membercall,
 	};
 
 	TULIP_HOOK_DLL std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept;

@@ -170,4 +170,48 @@ Result<void*> WindowsWrapperGenerator::generateWrapper() {
 	return Ok(area);
 }
 
+std::string WindowsWrapperGenerator::reverseWrapperString() {
+	std::ostringstream out;
+	out << std::hex;
+	out << m_metadata.m_convention->generateIntoDefault(m_metadata.m_abstract) << "\n ";
+
+	out << "mov eax, 0x" << reinterpret_cast<uintptr_t>(m_address) << "\n";
+	out << "call eax\n";
+
+	out << m_metadata.m_convention->generateDefaultCleanup(m_metadata.m_abstract);
+
+	return out.str();
+}
+
+Result<void*> WindowsWrapperGenerator::generateReverseWrapper() {
+	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
+
+	size_t count;
+	unsigned char* encode;
+	size_t size;
+
+	ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver));
+
+	auto code = this->reverseWrapperString();
+
+	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
+	if (status != KS_ERR_OK) {
+		return Err("Assembling reverse wrapper failed: " + std::string(ks_strerror(ks_errno(ks))));
+	}
+
+	if (!size && code.size()) {
+		return Err("Assembling reverse wrapper failed: Unknown error (no bytes were written)");
+	}
+
+	auto areaSize = (size + (0x20 - size) % 0x20);
+
+	TULIP_HOOK_UNWRAP_INTO(auto area, PlatformTarget::get().allocateArea(areaSize));
+
+	std::memcpy(area, encode, size);
+
+	ks_free(encode);
+
+	return Ok(area);
+}
+
 #endif

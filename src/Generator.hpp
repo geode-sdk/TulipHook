@@ -47,7 +47,9 @@ namespace tulip::hook {
 		WrapperGenerator(void* address, WrapperMetadata const& metadata);
 
 		virtual Result<void*> generateWrapper() = 0;
+		virtual Result<void*> generateReverseWrapper() = 0;
 
 		virtual std::string wrapperString() = 0;
+		virtual std::string reverseWrapperString() = 0;
 	};
 }

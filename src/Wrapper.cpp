@@ -10,15 +10,21 @@ Wrapper& Wrapper::get() {
 }
 
 Result<void*> Wrapper::createWrapper(void* address, WrapperMetadata const& metadata) {
-	// TODO: make this use the wrapper functions from the conventions,
-	// this is currently only for non windows
-
 	if (m_wrappers.count(address) == 0) {
-		// actually generate it here
 		auto generator = PlatformWrapperGenerator(address, metadata);
 		TULIP_HOOK_UNWRAP_INTO(auto wrapped, generator.generateWrapper());
 		m_wrappers[address] = wrapped;
 	}
 
 	return Ok(m_wrappers[address]);
+}
+
+Result<void*> Wrapper::createReverseWrapper(void* address, WrapperMetadata const& metadata) {
+	if (m_reverseWrappers.count(address) == 0) {
+		auto generator = PlatformWrapperGenerator(address, metadata);
+		TULIP_HOOK_UNWRAP_INTO(auto wrapped, generator.generateReverseWrapper());
+		m_reverseWrappers[address] = wrapped;
+	}
+
+	return Ok(m_reverseWrappers[address]);
 }
