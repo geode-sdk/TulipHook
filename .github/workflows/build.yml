@@ -61,13 +61,18 @@ jobs:
       uses: seanmiddleditch/gha-setup-ninja@v3
       if: matrix.config.os_identifier == 'mac'
 
-    - name: Configure and build
+    - name: Configure CMake
       shell: bash
       working-directory: ${{ github.workspace }}
       run: >
         ${{ matrix.config.prefixes }} cmake -G Ninja -B ./build ${{ matrix.config.extra_flags }}
-        cd build
         cmake --build . --parallel
+        
+    - name: Build
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      run: |
+        cmake --build ./build --parallel
 
     - name: Move to output folder
       shell: bash
