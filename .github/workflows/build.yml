@@ -33,7 +33,7 @@ jobs:
     runs-on: ${{ matrix.config.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
 
@@ -41,14 +41,6 @@ jobs:
       with:
         arch: x86
       if: matrix.config.os_identifier == 'win'
-
-    - name: Configure ccache
-      uses: hendrikmuhs/ccache-action@v1.2.8
-      with:
-        key: v1-${{ matrix.config.os }}-${{ github.ref }}
-        
-    - name: Install ninja-build tool
-      uses: seanmiddleditch/gha-setup-ninja@v3
       
     - name: Update ccache and ninja
       shell: bash
@@ -59,6 +51,15 @@ jobs:
         echo "=============="
         ninja --version
       if: matrix.config.os_identifier == 'win'
+
+    - name: Configure ccache
+      uses: hendrikmuhs/ccache-action@v1.2.3
+      with:
+        key: v1-${{ matrix.config.os }}-${{ github.ref }}
+        
+    - name: Install ninja-build tool
+      uses: seanmiddleditch/gha-setup-ninja@v3
+      if: matrix.config.os_identifier == 'mac'
 
     - name: Configure CMake
       shell: bash
