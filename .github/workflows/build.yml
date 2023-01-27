@@ -67,7 +67,7 @@ jobs:
       run: >
         ${{ matrix.config.prefixes }} cmake -G Ninja -B ./build ${{ matrix.config.extra_flags }}
         cd build
-        ninja -j 0
+        ninja
 
     - name: Move to output folder
       shell: bash
