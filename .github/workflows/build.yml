@@ -18,7 +18,7 @@ jobs:
           os: windows-2022
           prefixes: ''
           extra_flags: '-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache'
-          out_paths: './build/src/TulipHook.lib ./build/src/TulipHook.pdb ./build/test/TulipHookTest.exe'
+          out_paths: './build/src/TulipHook.lib ./build/test/TulipHookTest.exe'
           cli_cmd: ''
 
         - name: "macOS"
@@ -75,6 +75,7 @@ jobs:
       working-directory: ${{ github.workspace }}
       run: |
         mkdir ./out
+        ls ./build/src
         mv ${{ matrix.config.out_paths }} ./out
     
     - name: Upload Artifacts
