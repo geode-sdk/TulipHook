@@ -46,6 +46,16 @@ jobs:
       uses: hendrikmuhs/ccache-action@v1.2.8
       with:
         key: v1-${{ matrix.config.os }}-${{ github.ref }}
+        
+    - name: Install ninja-build tool
+      uses: seanmiddleditch/gha-setup-ninja@v3
+      
+    - name: Print ccache and ninja version
+      shell: bash
+      run: |
+        ccache --version
+        echo "=============="
+        ninja --version
 
     - name: Configure CMake
       shell: bash
