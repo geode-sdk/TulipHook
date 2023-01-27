@@ -50,12 +50,15 @@ jobs:
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3
       
-    - name: Print ccache and ninja version
+    - name: Update ccache and ninja
       shell: bash
       run: |
+        choco install ccache
+        choco install ninja
         ccache --version
         echo "=============="
         ninja --version
+      if: matrix.config.os_identifier == 'win'
 
     - name: Configure CMake
       shell: bash
