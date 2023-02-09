@@ -20,13 +20,22 @@ namespace tulip::hook {
 			static AbstractFunction generate() {
 				AbstractFunction func;
 				func.m_return = AbstractType::from<Return>();
-				(func.m_parameters.push_back(AbstractType::from<Parameters>()), ...);
+				(func.addType(AbstractType::from<Parameters>()), ...);
 
 				return func;
 			}
 		};
 
 	public:
+		~AbstractFunction();
+		AbstractFunction();
+		AbstractFunction(AbstractFunction const&);
+		AbstractFunction(AbstractFunction&&);
+		AbstractFunction& operator=(AbstractFunction const&);
+		AbstractFunction& operator=(AbstractFunction&&);
+
+		void addType(AbstractType const& type);
+
 		AbstractType m_return;
 		std::vector<AbstractType> m_parameters;
 
@@ -39,7 +48,7 @@ namespace tulip::hook {
 		static AbstractFunction from(Return (*)(Parameters...)) {
 			AbstractFunction func;
 			func.m_return = AbstractType::from<Return>();
-			(func.m_parameters.push_back(AbstractType::from<Parameters>()), ...);
+			(func.addType(AbstractType::from<Parameters>()), ...);
 
 			return func;
 		}
