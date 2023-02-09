@@ -52,9 +52,7 @@ endif()
 if(NOT keystone)
 
 	set(LLVM_TARGETS_TO_BUILD "X86")
-	add_compile_definitions(HAVE_DIRENT_H HAVE_FCNTL_H)
-
-	CPMAddPackage("gh:altalk23/keystone#2a6dc3f")
+	CPMAddPackage("gh:altalk23/keystone#ee876d2")
 endif()
 
 target_link_libraries(TulipHook PRIVATE capstone-static keystone)
