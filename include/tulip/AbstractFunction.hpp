@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AbstractType.hpp"
+#include "Platform.hpp"
 
 #include <string>
 #include <type_traits>
