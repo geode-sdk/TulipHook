@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace tulip::hook {
-	class AbstractFunction {
+	class TULIP_HOOK_DLL AbstractFunction {
 		template <class FunctionType>
 		struct Generator {
 			static AbstractFunction generate() {
