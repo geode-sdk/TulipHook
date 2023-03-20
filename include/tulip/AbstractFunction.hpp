@@ -28,7 +28,7 @@ namespace tulip::hook {
 		};
 
 	public:
-		virtual void addType(AbstractType const& type);
+		void addType(AbstractType const& type);
 
 		AbstractType m_return;
 		std::vector<AbstractType> m_parameters;
