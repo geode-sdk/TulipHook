@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.21)
 project(TulipHook LANGUAGES CXX C)
 
 add_library(TulipHook STATIC
-	AbstractFunction.cpp
 	CallingConvention.cpp
 	Generator.cpp
 	Handler.cpp
