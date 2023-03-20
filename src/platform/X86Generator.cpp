@@ -131,9 +131,6 @@ Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOrigina
 	uint8_t const* code = reinterpret_cast<uint8_t const*>(m_address);
 	size_t size = 32;
 
-	// for debuggers to not cry
-	std::fill_n(reinterpret_cast<char*>(address - 10), 10, '\x90');
-
 	auto difference = reinterpret_cast<uint64_t>(m_trampoline) - reinterpret_cast<uint64_t>(m_address);
 
 	auto targetAddress = address + target;
