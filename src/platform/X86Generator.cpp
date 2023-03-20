@@ -31,9 +31,6 @@ Result<> X86HandlerGenerator::generateHandler() {
 		return Err("Unable to set assembler options for handler: " + std::string(ks_strerror(ks_errno(ks))));
 	}
 
-	// for debuggers to not cry
-	std::fill_n(reinterpret_cast<char*>(reinterpret_cast<size_t>(m_handler) - 10), 10, '\x90');
-
 	auto code = this->handlerString();
 
 	// std::cout << code << "\n";

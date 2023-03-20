@@ -28,14 +28,7 @@ namespace tulip::hook {
 		};
 
 	public:
-		~AbstractFunction();
-		AbstractFunction();
-		AbstractFunction(AbstractFunction const&);
-		AbstractFunction(AbstractFunction&&);
-		AbstractFunction& operator=(AbstractFunction const&);
-		AbstractFunction& operator=(AbstractFunction&&);
-
-		void addType(AbstractType const& type);
+		virtual void addType(AbstractType const& type);
 
 		AbstractType m_return;
 		std::vector<AbstractType> m_parameters;

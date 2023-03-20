@@ -30,6 +30,16 @@ std::string MacosHandlerGenerator::handlerString() {
 	std::ostringstream out;
 	// keystone uses hex by default
 	out << std::hex;
+	out << R"ASM(
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+)ASM";
 	out << m_metadata.m_convention->generateIntoDefault(m_metadata.m_abstract) << "\n ";
 
 	out << R"ASM(

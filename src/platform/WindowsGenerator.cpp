@@ -27,7 +27,16 @@ namespace {
 std::string WindowsHandlerGenerator::handlerString() {
 	std::ostringstream out;
 	out << std::hex;
-	// out << "int3\n";
+	out << R"ASM(
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+)ASM";
 	out << m_metadata.m_convention->generateIntoDefault(m_metadata.m_abstract) << "\n ";
 
 	// increment and get function
