@@ -18,6 +18,9 @@ add_library(TulipHook STATIC
 	platform/WindowsGenerator.cpp
 	platform/WindowsTarget.cpp
 	platform/X86Generator.cpp
+	assembler/BaseAssembler.cpp
+	assembler/x86Assembler.cpp
+	assembler/x64Assembler.cpp
 )
 
 target_compile_features(TulipHook PUBLIC cxx_std_20)
