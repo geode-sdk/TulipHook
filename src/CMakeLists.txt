@@ -22,40 +22,21 @@ add_library(TulipHook STATIC
 
 target_compile_features(TulipHook PUBLIC cxx_std_20)
 
-if(NOT capstone)
-	set(CAPSTONE_ARCHITECTURE_DEFAULT Off)
-	set(CAPSTONE_X86_SUPPORT On)
 
-	# did i say i hate cmake because that thing doesnt work
-	set(CAPSTONE_ARM_SUPPORT Off)
-	set(CAPSTONE_ARM64_SUPPORT Off)
-	set(CAPSTONE_M68K_SUPPORT Off)
-	set(CAPSTONE_MIPS_SUPPORT Off)
-	set(CAPSTONE_PPC_SUPPORT Off)
-	set(CAPSTONE_SPARC_SUPPORT Off)
-	set(CAPSTONE_SYSZ_SUPPORT Off)
-	set(CAPSTONE_XCORE_SUPPORT Off)
-	set(CAPSTONE_TMS320C64X_SUPPORT Off)
-	set(CAPSTONE_M680X_SUPPORT Off)
-	set(CAPSTONE_EVM_SUPPORT Off)
-	set(CAPSTONE_MOS65XX_SUPPORT Off)
-	set(CAPSTONE_WASM_SUPPORT Off)
-	set(CAPSTONE_BPF_SUPPORT Off)
-	set(CAPSTONE_RISCV_SUPPORT Off)
+set(CAPSTONE_X86_SUPPORT On)
+set(CAPSTONE_INSTALL Off)
+set(CAPSTONE_ARCHITECTURE_DEFAULT Off)
 
-	set(CAPSTONE_X86_REDUCE On)
-	set(CAPSTONE_X86_ATT_DISABLE On)
+set(CAPSTONE_X86_SUPPORT On)
+set(CAPSTONE_X86_REDUCE Off)
+set(CAPSTONE_X86_ATT_DISABLE On)
 
-	CPMAddPackage("gh:capstone-engine/capstone#fee83fc")
-endif()
+CPMAddPackage("gh:capstone-engine/capstone#a4df92e")
 
-if(NOT keystone)
+set(LLVM_TARGETS_TO_BUILD "X86")
+CPMAddPackage("gh:altalk23/keystone#ee876d2")
 
-	set(LLVM_TARGETS_TO_BUILD "X86")
-	CPMAddPackage("gh:altalk23/keystone#ee876d2")
-endif()
-
-target_link_libraries(TulipHook PRIVATE capstone-static keystone)
+target_link_libraries(TulipHook PRIVATE capstone keystone)
 target_link_libraries(TulipHook PUBLIC Result)
 target_compile_definitions(TulipHook PRIVATE -DTULIP_HOOK_EXPORTING=1)
 
