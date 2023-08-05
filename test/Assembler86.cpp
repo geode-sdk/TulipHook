@@ -8,27 +8,26 @@ using namespace tulip::hook;
 using enum X86Register;
 static RegMem32 m;
 
-TEST(X86AssemblerTest, NopMov) {
+TEST(X86AssemblerTest, Nop) {
 	X86Assembler a(0x123);
 	a.nop();
-	a.mov(EAX, 10);
-	EXPECT_EQ(a.buffer(), "\x90\xb8\x0a\x00\x00\x00"_bytes);
+	EXPECT_EQ(a.buffer(), "\x90"_bytes);
 }
 
-TEST(X86AssemblerTest, JmpCall) {
+TEST(X86AssemblerTest, Jmp) {
 	X86Assembler a(0x123);
 	a.jmp(0xb00b5);
 	a.jmp(ECX);
+	EXPECT_EQ(a.buffer(), "\xE9\x8D\xFF\x0A\x00\xFF\xE1"_bytes);
+}
+
+TEST(X86AssemblerTest, Call) {
+	X86Assembler a(0);
+	a.call(0x456);
 	a.call(EAX);
 	a.call(EBP);
 	a.call(ESP);
-	EXPECT_EQ(a.buffer(), "\xE9\x8D\xFF\x0A\x00\xFF\xE1\xFF\xD0\xFF\xD5\xFF\xD4"_bytes);
-}
-
-TEST(X86AssemblerTest, DirectCall) {
-	X86Assembler a(0);
-	a.call(0x456);
-	EXPECT_EQ(a.buffer(), "\xE8\x51\x04\x00\x00"_bytes);
+	EXPECT_EQ(a.buffer(), "\xE8\x51\x04\x00\x00\xFF\xD0\xFF\xD5\xFF\xD4"_bytes);
 }
 
 TEST(X86AssemblerTest, Push) {
@@ -41,13 +40,14 @@ TEST(X86AssemblerTest, Push) {
 
 TEST(X86AssemblerTest, Mov) {
 	X86Assembler a(0x123);
+	a.mov(EAX, 10);
 	a.mov(EAX, EAX);
 	a.mov(ECX, EAX);
 	a.mov(ECX, m[EDX + 4]);
 	a.mov(ECX, m[EBP + 4]);
 	a.mov(m[EBP + 4], ESP);
 	a.mov(m[EBP], EAX);
-	EXPECT_EQ(a.buffer(), "\x89\xC0\x89\xC1\x8B\x4A\x04\x8B\x4D\x04\x89\x65\x04\x89\x45\x00"_bytes);
+	EXPECT_EQ(a.buffer(), "\xb8\x0a\x00\x00\x00\x89\xC0\x89\xC1\x8B\x4A\x04\x8B\x4D\x04\x89\x65\x04\x89\x45\x00"_bytes);
 }
 
 TEST(X86AssemblerTest, Movsd) {

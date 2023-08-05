@@ -8,21 +8,25 @@ using namespace tulip::hook;
 using enum X64Register;
 static RegMem64 m;
 
-TEST(X64AssemblerTest, NopMov) {
+TEST(X64AssemblerTest, Nop) {
 	X64Assembler a(0x123);
 	a.nop();
-	a.mov(R8, 10);
-	EXPECT_EQ(a.buffer(), "\x90\x49\xc7\xc0\x0a\x00\x00\x00"_bytes);
+	EXPECT_EQ(a.buffer(), "\x90"_bytes);
 }
 
-TEST(X64AssemblerTest, JmpCall) {
+TEST(X64AssemblerTest, Jmp) {
 	X64Assembler a(0x123);
 	a.jmp(0xb00b5);
 	a.jmp(RCX);
 	a.jmp(R8);
+	EXPECT_EQ(a.buffer(), "\xE9\x8D\xFF\x0A\x00\xFF\xE1\x41\xFF\xE0"_bytes);
+}
+
+TEST(X64AssemblerTest, Call) {
+	X64Assembler a(0x123);
 	a.call(R13);
 	a.call(RSP);
-	EXPECT_EQ(a.buffer(), "\xE9\x8D\xFF\x0A\x00\xFF\xE1\x41\xFF\xE0\x41\xFF\xD5\xFF\xD4"_bytes);
+	EXPECT_EQ(a.buffer(), "\x41\xFF\xD5\xFF\xD4"_bytes);
 }
 
 TEST(X64AssemblerTest, Push) {
@@ -35,6 +39,7 @@ TEST(X64AssemblerTest, Push) {
 
 TEST(X64AssemblerTest, Mov) {
 	X64Assembler a(0x123);
+	a.mov(R8, 10);
 	a.mov(RAX, RAX);
 	a.mov(R9, R8);
 	a.mov(RCX, m[R10 + 4]);
@@ -42,7 +47,8 @@ TEST(X64AssemblerTest, Mov) {
 	a.mov(m[RBP + 4], RSP);
 	a.mov(m[R13], R8);
 	EXPECT_EQ(
-		a.buffer(), "\x48\x89\xC0\x4D\x89\xC1\x49\x8B\x4A\x04\x4C\x8B\x4D\x04\x48\x89\x65\x04\x4D\x89\x45\x00"_bytes
+		a.buffer(),
+		"\x49\xc7\xc0\x0a\x00\x00\x00\x48\x89\xC0\x4D\x89\xC1\x49\x8B\x4A\x04\x4C\x8B\x4D\x04\x48\x89\x65\x04\x4D\x89\x45\x00"_bytes
 	);
 }
 
