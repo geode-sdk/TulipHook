@@ -14,3 +14,4 @@ if(WIN32)
 endif()
 
 add_subdirectory(mod)
+add_subdirectory(assembler)
