@@ -21,99 +21,26 @@ using X86WrapperGenerator = WindowsWrapperGenerator;
 #if defined(TULIP_HOOK_MACOS) || defined(TULIP_HOOK_WINDOWS)
 
 Result<> X86HandlerGenerator::generateHandler() {
-	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
+	auto address = reinterpret_cast<uint64_t>(m_handler);
+	auto encode = this->handlerBytes(address);
 
-	size_t count;
-	unsigned char* encode;
-	size_t size;
-
-	if (ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver)) != KS_ERR_OK) {
-		return Err("Unable to set assembler options for handler: " + std::string(ks_strerror(ks_errno(ks))));
-	}
-
-	auto code = this->handlerString();
-
-	// std::cout << code << "\n";
-
-	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_handler), &encode, &size, &count);
-	if (status != KS_ERR_OK) {
-		return Err("Assembling handler failed: " + std::string(ks_strerror(ks_errno(ks))));
-	}
-
-	if (!size && code.size()) {
-		return Err("Assembling handler failed: Unknown error (no bytes were written)");
-	}
-	// std::cout << "size: " << size << "\n";
-	// for (auto i = 0; i < size; ++i) {
-	// 	std::cout << std::hex << +encode[i] << " ";
-	// }
-	// std::cout << "\n";
-
-	std::memcpy(m_handler, encode, size);
-
-	ks_free(encode);
+	std::memcpy(m_handler, encode.data(), encode.size());
 
 	return Ok();
 }
 
 Result<std::vector<uint8_t>> X86HandlerGenerator::generateIntervener() {
-	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
+	auto address = reinterpret_cast<uint64_t>(m_address);
+	auto encode = this->intervenerBytes(address);
 
-	size_t count;
-	unsigned char* encode;
-	size_t size;
-
-	ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver));
-
-	auto code = this->intervenerString();
-
-	// std::cout << "intervener: " << code << std::endl;
-	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
-	if (status != KS_ERR_OK) {
-		return Err("Assembling intervener failed: " + std::string(ks_strerror(ks_errno(ks))));
-	}
-
-	if (!size && code.size()) {
-		return Err("Assembling intervener failed: Unknown error (no bytes were written)");
-	}
-	// std::cout << "size: " << size << "\n";
-	// for (auto i = 0; i < size; ++i) {
-	// 	std::cout << std::hex << +encode[i] << " ";
-	// }
-	// std::cout << "\n";
-
-	std::vector<uint8_t> ret(encode, encode + size);
-
-	ks_free(encode);
-
-	return Ok(ret);
+	return Ok(std::move(encode));
 }
 
 Result<> X86HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
-	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
-
-	size_t count;
-	unsigned char* encode;
-	size_t size;
-
-	ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver));
-
-	auto code = this->trampolineString(offsets.m_originalOffset);
 	auto address = reinterpret_cast<uint64_t>(m_trampoline) + offsets.m_trampolineOffset;
+	auto encode = this->trampolineBytes(address, offsets.m_originalOffset);
 
-	// std::cout << "trampoline: " << code << std::endl;
-	auto status = ks_asm(ks, code.c_str(), address, &encode, &size, &count);
-	if (status != KS_ERR_OK) {
-		return Err("Assembling trampoline failed: " + std::string(ks_strerror(ks_errno(ks))));
-	}
-
-	if (!size && code.size()) {
-		return Err("Assembling trampoline failed: Unknown error (no bytes were written)");
-	}
-
-	std::memcpy(reinterpret_cast<void*>(address), encode, size);
-
-	ks_free(encode);
+	std::memcpy(reinterpret_cast<void*>(address), encode.data(), encode.size());
 
 	return Ok();
 }
