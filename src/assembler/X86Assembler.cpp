@@ -48,7 +48,7 @@ void X86Assembler::encodeModRM(X86Operand op, uint8_t digit) {
 		uint8_t mod;
 		// [ebp] is forced to be [ebp + 0]
 		if (op.m_value || op.m_reg == X86Register::EBP) {
-			mod = op.m_value <= 0x7f || op.m_value >= -0x80 ? 0b01 : 0b10;
+			mod = op.m_value <= 0x7f && op.m_value >= -0x80 ? 0b01 : 0b10;
 		}
 		else {
 			mod = 0b00;
