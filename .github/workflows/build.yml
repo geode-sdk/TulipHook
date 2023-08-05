@@ -35,7 +35,7 @@ jobs:
         submodules: recursive
 
     - name: Setup MSVC
-      uses: ilammy/msvc-dev-cmd@v1
+      uses: ilammy/msvc-dev-cmd@v1.12.1
       with:
         arch: x86
       if: matrix.config.id == 'win'
@@ -71,7 +71,7 @@ jobs:
         cp ${{ matrix.config.out_paths }} ./out
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: output-${{ matrix.config.os }}
         path: ${{ github.workspace }}/out

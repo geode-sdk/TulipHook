@@ -45,7 +45,7 @@ namespace tulip::hook {
 	}
 
 	// Use this to easily express a X64Pointer, like so:
-	// RegMem32 m;
+	// RegMem64 m;
 	// m[RSP], m[RSP + 4]
 	struct RegMem64 {
 		X64Pointer operator[](X64Pointer ptr) {
