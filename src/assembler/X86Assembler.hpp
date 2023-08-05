@@ -26,7 +26,10 @@ namespace tulip::hook {
 	struct X86Pointer {
 		X86Register reg;
 		int32_t offset = 0;
-		X86Pointer(X86Register reg, int32_t offset = 0) : reg(reg), offset(offset) {}
+
+		X86Pointer(X86Register reg, int32_t offset = 0) :
+			reg(reg),
+			offset(offset) {}
 	};
 
 	class X86Assembler : public BaseAssembler {
@@ -35,6 +38,9 @@ namespace tulip::hook {
 		X86Assembler(X86Assembler const&) = delete;
 		X86Assembler(X86Assembler&&) = delete;
 		~X86Assembler();
+
+		void label32(std::string const& name);
+		void updateLabels() override;
 
 		void nop();
 
@@ -56,9 +62,15 @@ namespace tulip::hook {
 		void movss(X86Register reg, X86Pointer ptr);
 		void movss(X86Pointer ptr, X86Register reg);
 
+		void movaps(X86Register reg, X86Pointer ptr);
+		void movaps(X86Pointer ptr, X86Register reg);
+
+		void lea(X86Register reg, std::string const& label);
+
 		void mov(X86Register reg, uint32_t value);
 		void mov(X86Register reg, X86Pointer ptr);
 		void mov(X86Pointer ptr, X86Register reg);
 		void mov(X86Register reg, X86Register reg2);
+		void mov(X86Register reg, std::string const& label);
 	};
 }
