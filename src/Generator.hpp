@@ -36,6 +36,10 @@ namespace tulip::hook {
 		virtual std::string intervenerString() = 0;
 		virtual std::string trampolineString(size_t offset) = 0;
 
+		virtual std::vector<uint8_t> handlerBytes(uint64_t address) = 0;
+		virtual std::vector<uint8_t> intervenerBytes(uint64_t address) = 0;
+		virtual std::vector<uint8_t> trampolineBytes(uint64_t address, size_t offset) = 0;
+
 		virtual void relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) = 0;
 	};
 
@@ -51,5 +55,8 @@ namespace tulip::hook {
 
 		virtual std::string wrapperString() = 0;
 		virtual std::string reverseWrapperString() = 0;
+
+		virtual std::vector<uint8_t> wrapperBytes(uint64_t address) = 0;
+		virtual std::vector<uint8_t> reverseWrapperBytes(uint64_t address) = 0;
 	};
 }
