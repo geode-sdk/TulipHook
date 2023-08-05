@@ -31,10 +31,11 @@ std::vector<uint8_t> WindowsHandlerGenerator::handlerBytes(uint64_t address) {
 	X86Assembler a(address);
 
 	// idk what this is for
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < 10; ++i) {
 		a.nop();
+	}
 
-	// generateIntoDefault()
+	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
 
 	a.push(ESI);
 
@@ -99,7 +100,7 @@ std::vector<uint8_t> WindowsHandlerGenerator::handlerBytes(uint64_t address) {
 
 	a.pop(ESI);
 
-	// generateDefaultCleanup()
+	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
 
 	return std::move(a.m_buffer);
 }
@@ -123,12 +124,12 @@ std::vector<uint8_t> WindowsHandlerGenerator::trampolineBytes(uint64_t address, 
 std::vector<uint8_t> WindowsWrapperGenerator::wrapperBytes(uint64_t address) {
 	X86Assembler a(address);
 
-	// out << m_metadata.m_convention->generateIntoOriginal(m_metadata.m_abstract) << "\n ";
+	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
 
 	a.mov(EAX, reinterpret_cast<uintptr_t>(m_address));
 	a.call(EAX);
 
-	// out << m_metadata.m_convention->generateOriginalCleanup(m_metadata.m_abstract);
+	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
 
 	return std::move(a.m_buffer);
 }
@@ -136,12 +137,12 @@ std::vector<uint8_t> WindowsWrapperGenerator::wrapperBytes(uint64_t address) {
 std::vector<uint8_t> WindowsWrapperGenerator::reverseWrapperBytes(uint64_t address) {
 	X86Assembler a(address);
 
-	// out << m_metadata.m_convention->generateIntoDefault(m_metadata.m_abstract) << "\n ";
+	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
 
 	a.mov(EAX, reinterpret_cast<uintptr_t>(m_address));
 	a.call(EAX);
 
-	// out << m_metadata.m_convention->generateDefaultCleanup(m_metadata.m_abstract);
+	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
 
 	return std::move(a.m_buffer);
 }
