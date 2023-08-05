@@ -81,14 +81,6 @@ Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOrigina
 	});
 }
 
-std::string X86HandlerGenerator::intervenerString() {
-	std::ostringstream out;
-
-	out << "jmp _handler" << m_address;
-
-	return out.str();
-}
-
 void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;

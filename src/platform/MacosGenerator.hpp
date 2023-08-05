@@ -17,10 +17,6 @@ namespace tulip::hook {
 		Result<> generateTrampoline(RelocateReturn offsets) override;
 		Result<RelocateReturn> relocateOriginal(uint64_t target) override;
 
-		std::string handlerString() override;
-		std::string intervenerString() override;
-		std::string trampolineString(size_t offset) override;
-
 		std::vector<uint8_t> handlerBytes(uint64_t address) override;
 		std::vector<uint8_t> intervenerBytes(uint64_t address) override;
 		std::vector<uint8_t> trampolineBytes(uint64_t address, size_t offset) override;
@@ -36,9 +32,6 @@ namespace tulip::hook {
 
 		Result<void*> generateWrapper() override;
 		Result<void*> generateReverseWrapper() override;
-
-		std::string wrapperString() override;
-		std::string reverseWrapperString() override;
 
 		std::vector<uint8_t> wrapperBytes(uint64_t address) override;
 		std::vector<uint8_t> reverseWrapperBytes(uint64_t address) override;

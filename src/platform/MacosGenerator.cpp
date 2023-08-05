@@ -134,12 +134,6 @@ std::vector<uint8_t> MacosHandlerGenerator::handlerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::string MacosHandlerGenerator::handlerString() {
-	std::ostringstream out;
-
-	return out.str();
-}
-
 std::vector<uint8_t> MacosHandlerGenerator::intervenerBytes(uint64_t address) {
 	X64Assembler a(address);
 	RegMem64 m;
@@ -160,21 +154,8 @@ std::vector<uint8_t> MacosHandlerGenerator::trampolineBytes(uint64_t address, si
 	return std::move(a.m_buffer);
 }
 
-std::string MacosHandlerGenerator::trampolineString(size_t offset) {
-	std::ostringstream out;
-	return out.str();
-}
-
-std::string MacosWrapperGenerator::wrapperString() {
-	return "";
-}
-
 Result<void*> MacosWrapperGenerator::generateWrapper() {
 	return Ok(m_address); // only windows needs the wrapper
-}
-
-std::string MacosWrapperGenerator::reverseWrapperString() {
-	return "";
 }
 
 Result<void*> MacosWrapperGenerator::generateReverseWrapper() {

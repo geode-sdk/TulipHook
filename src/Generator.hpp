@@ -32,10 +32,6 @@ namespace tulip::hook {
 		virtual Result<> generateTrampoline(RelocateReturn offsets) = 0;
 		virtual Result<RelocateReturn> relocateOriginal(uint64_t target) = 0;
 
-		virtual std::string handlerString() = 0;
-		virtual std::string intervenerString() = 0;
-		virtual std::string trampolineString(size_t offset) = 0;
-
 		virtual std::vector<uint8_t> handlerBytes(uint64_t address) = 0;
 		virtual std::vector<uint8_t> intervenerBytes(uint64_t address) = 0;
 		virtual std::vector<uint8_t> trampolineBytes(uint64_t address, size_t offset) = 0;
@@ -52,9 +48,6 @@ namespace tulip::hook {
 
 		virtual Result<void*> generateWrapper() = 0;
 		virtual Result<void*> generateReverseWrapper() = 0;
-
-		virtual std::string wrapperString() = 0;
-		virtual std::string reverseWrapperString() = 0;
 
 		virtual std::vector<uint8_t> wrapperBytes(uint64_t address) = 0;
 		virtual std::vector<uint8_t> reverseWrapperBytes(uint64_t address) = 0;
