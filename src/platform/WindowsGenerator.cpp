@@ -1,7 +1,7 @@
 #include "WindowsGenerator.hpp"
 
 #include "../Handler.hpp"
-#include "../HolderUtil.hpp"
+#include "../assembler/X86Assembler.hpp"
 #include "PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
@@ -24,36 +24,29 @@ namespace {
 	}
 }
 
-std::string WindowsHandlerGenerator::handlerString() {
-	std::ostringstream out;
-	out << std::hex;
-	out << R"ASM(
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-)ASM";
-	out << m_metadata.m_convention->generateIntoDefault(m_metadata.m_abstract) << "\n ";
+RegMem32 m;
+using enum X86Register;
 
-	// increment and get function
-	out << R"ASM(
-	push esi
+std::vector<uint8_t> WindowsHandlerGenerator::handlerBytes(uint64_t address) {
+	X86Assembler a(address);
 
-	; set the parameters
-	mov eax, [_content]
-	push eax
-	
-	; call the pre handler, incrementing
-	mov eax, [_handlerPre]
-	call eax
+	// idk what this is for
+	for (int i = 0; i < 10; ++i)
+		a.nop();
 
-	; cdecl is caller cleanup
-	add esp, 0x4
-)ASM";
+	// generateIntoDefault()
+
+	a.push(ESI);
+
+	// set the parameters
+	a.mov(EAX, reinterpret_cast<uintptr_t>(m_content));
+	a.push(EAX);
+
+	// call the pre handler, incrementing
+	a.mov(EAX, reinterpret_cast<uintptr_t>(preHandler));
+	a.call(EAX);
+
+	a.add(ESP, 4);
 
 	size_t stackSize = 0;
 	for (auto& param : m_metadata.m_abstract.m_parameters) {
@@ -76,149 +69,99 @@ std::string WindowsHandlerGenerator::handlerString() {
 		// but the stack size would be 4; and if there were more parameters
 		// then the stack size would be 4 larger than where we want to start
 		// digging up
-		out << "push [esp + 0x" << stackSize << "]\n";
+		a.push(m[ESP + stackSize]);
 	}
 
 	// call cdecl
-	out << "call eax\n";
+	a.call(EAX);
 
-	// fix stack
-	out << "add esp, 0x" << stackSize << "\n";
+	// stack cleanup
+	a.add(ESP, stackSize);
 
-	// decrement and return eax and edx
-	out << R"ASM(
-	; preserve the return values
+	// preserve the return values
 
-	; save space on stack for them
-	sub esp, 0x14
+	// save space on the stack for them
+	a.sub(ESP, 0x14);
 
-	mov [esp + 0x10], eax
-	movsd [esp], xmm0
+	a.mov(m[ESP + 0x10], EAX);
+	a.movsd(m[ESP], XMM0);
 
-	; call the post handler, decrementing
-	mov eax, [_handlerPost]
-	call eax
+	// call the post handler, decrementing
+	a.mov(EAX, reinterpret_cast<uintptr_t>(postHandler));
+	a.call(EAX);
 
-	; recover the return values
-	mov eax, [esp + 0x10]
-	movsd xmm0, [esp]
+	// recover the return values
+	a.mov(EAX, m[ESP + 0x10]);
+	a.movsd(XMM0, m[ESP]);
 
-	; give back to the earth what it gave to you
-	add esp, 0x14
+	// give back to the earth what it gave to you
+	a.add(ESP, 0x14);
 
-	pop esi
-)ASM";
+	a.pop(ESI);
 
-	out << m_metadata.m_convention->generateDefaultCleanup(m_metadata.m_abstract);
+	// generateDefaultCleanup()
 
-	out << R"ASM(
-_handlerPre: 
-	dd 0x)ASM"
-		<< reinterpret_cast<uintptr_t>(preHandler);
-
-	out << R"ASM(
-_handlerPost: 
-	dd 0x)ASM"
-		<< reinterpret_cast<uintptr_t>(postHandler);
-
-	out << R"ASM(
-_content: 
-	dd 0x)ASM"
-		<< reinterpret_cast<uintptr_t>(m_content);
-
-	return out.str();
+	return std::move(a.m_buffer);
 }
 
-std::string WindowsHandlerGenerator::trampolineString(size_t offset) {
-	std::ostringstream out;
-	out << "jmp _address" << m_address << "_" << offset;
-	return out.str();
+std::vector<uint8_t> WindowsHandlerGenerator::intervenerBytes(uint64_t address) {
+	X86Assembler a(address);
+
+	a.jmp(reinterpret_cast<uintptr_t>(m_handler));
+
+	return std::move(a.m_buffer);
 }
 
-std::string WindowsWrapperGenerator::wrapperString() {
-	std::ostringstream out;
-	out << std::hex;
-	out << m_metadata.m_convention->generateIntoOriginal(m_metadata.m_abstract) << "\n ";
+std::vector<uint8_t> WindowsHandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
+	X86Assembler a(address);
 
-	out << "mov eax, 0x" << reinterpret_cast<uintptr_t>(m_address) << "\n";
-	out << "call eax\n";
+	a.jmp(reinterpret_cast<uintptr_t>(m_address) + offset);
 
-	out << m_metadata.m_convention->generateOriginalCleanup(m_metadata.m_abstract);
+	return std::move(a.m_buffer);
+}
 
-	return out.str();
+std::vector<uint8_t> WindowsWrapperGenerator::wrapperBytes(uint64_t address) {
+	X86Assembler a(address);
+
+	// out << m_metadata.m_convention->generateIntoOriginal(m_metadata.m_abstract) << "\n ";
+
+	a.mov(EAX, reinterpret_cast<uintptr_t>(m_address));
+	a.call(EAX);
+
+	// out << m_metadata.m_convention->generateOriginalCleanup(m_metadata.m_abstract);
+
+	return std::move(a.m_buffer);
+}
+
+std::vector<uint8_t> WindowsWrapperGenerator::reverseWrapperBytes(uint64_t address) {
+	X86Assembler a(address);
+
+	// out << m_metadata.m_convention->generateIntoDefault(m_metadata.m_abstract) << "\n ";
+
+	a.mov(EAX, reinterpret_cast<uintptr_t>(m_address));
+	a.call(EAX);
+
+	// out << m_metadata.m_convention->generateDefaultCleanup(m_metadata.m_abstract);
+
+	return std::move(a.m_buffer);
 }
 
 Result<void*> WindowsWrapperGenerator::generateWrapper() {
-	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
-
-	size_t count;
-	unsigned char* encode;
-	size_t size;
-
-	ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver));
-
-	auto code = this->wrapperString();
-
-	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
-	if (status != KS_ERR_OK) {
-		return Err("Assembling wrapper failed: " + std::string(ks_strerror(ks_errno(ks))));
-	}
-
-	if (!size && code.size()) {
-		return Err("Assembling wrapper failed: Unknown error (no bytes were written)");
-	}
-
-	auto areaSize = (size + (0x20 - size) % 0x20);
-
+	auto code = this->wrapperBytes(reinterpret_cast<uintptr_t>(m_address));
+	auto areaSize = (code.size() + (0x20 - code.size()) % 0x20);
 	TULIP_HOOK_UNWRAP_INTO(auto area, PlatformTarget::get().allocateArea(areaSize));
 
-	std::memcpy(area, encode, size);
-
-	ks_free(encode);
+	std::memcpy(area, code.data(), code.size());
 
 	return Ok(area);
 }
 
-std::string WindowsWrapperGenerator::reverseWrapperString() {
-	std::ostringstream out;
-	out << std::hex;
-	out << m_metadata.m_convention->generateIntoDefault(m_metadata.m_abstract) << "\n ";
-
-	out << "mov eax, 0x" << reinterpret_cast<uintptr_t>(m_address) << "\n";
-	out << "call eax\n";
-
-	out << m_metadata.m_convention->generateDefaultCleanup(m_metadata.m_abstract);
-
-	return out.str();
-}
-
 Result<void*> WindowsWrapperGenerator::generateReverseWrapper() {
-	TULIP_HOOK_UNWRAP_INTO(KSHolder ks, PlatformTarget::get().openKeystone());
-
-	size_t count;
-	unsigned char* encode;
-	size_t size;
-
-	ks_option(ks, KS_OPT_SYM_RESOLVER, reinterpret_cast<size_t>(&Handler::symbolResolver));
-
-	auto code = this->reverseWrapperString();
-
-	auto status = ks_asm(ks, code.c_str(), reinterpret_cast<size_t>(m_address), &encode, &size, &count);
-	if (status != KS_ERR_OK) {
-		return Err("Assembling reverse wrapper failed: " + std::string(ks_strerror(ks_errno(ks))));
-	}
-
-	if (!size && code.size()) {
-		return Err("Assembling reverse wrapper failed: Unknown error (no bytes were written)");
-	}
-
-	auto areaSize = (size + (0x20 - size) % 0x20);
-
+	auto code = this->reverseWrapperBytes(reinterpret_cast<uintptr_t>(m_address));
+	auto areaSize = (code.size() + (0x20 - code.size()) % 0x20);
 	TULIP_HOOK_UNWRAP_INTO(auto area, PlatformTarget::get().allocateArea(areaSize));
 
-	std::memcpy(area, encode, size);
-
-	ks_free(encode);
+	std::memcpy(area, code.data(), code.size());
 
 	return Ok(area);
 }
