@@ -10,7 +10,7 @@ uint8_t regIdx(X86Register reg) {
 	return static_cast<uint8_t>(reg);
 }
 
-X86Assembler::X86Assembler(uint64_t baseAddress) :
+X86Assembler::X86Assembler(int64_t baseAddress) :
 	BaseAssembler(baseAddress) {}
 
 X86Assembler::~X86Assembler() {}
@@ -34,7 +34,7 @@ void X86Assembler::ret() {
 	this->write8(0xC3);
 }
 
-void X86Assembler::ret(uint16_t offset) {
+void X86Assembler::ret(int16_t offset) {
 	this->write8(0xC2);
 	this->write16(offset);
 }
@@ -48,7 +48,7 @@ void X86Assembler::encodeModRM(X86Operand op, uint8_t digit) {
 		uint8_t mod;
 		// [ebp] is forced to be [ebp + 0]
 		if (op.m_value || op.m_reg == X86Register::EBP) {
-			mod = op.m_value <= 0xff ? 0b01 : 0b10;
+			mod = op.m_value <= 0x7f || op.m_value >= -0x80 ? 0b01 : 0b10;
 		}
 		else {
 			mod = 0b00;
@@ -70,13 +70,13 @@ void X86Assembler::encodeModRM(X86Operand op, uint8_t digit) {
 	}
 }
 
-void X86Assembler::add(X86Register reg, uint32_t value) {
+void X86Assembler::add(X86Register reg, int32_t value) {
 	this->write8(0x81);
 	this->write8(0xC0 | regIdx(reg));
 	this->write32(value);
 }
 
-void X86Assembler::sub(X86Register reg, uint32_t value) {
+void X86Assembler::sub(X86Register reg, int32_t value) {
 	this->write8(0x81);
 	this->write8(0xE8 | regIdx(reg));
 	this->write32(value);
@@ -100,14 +100,14 @@ void X86Assembler::jmp(X86Register reg) {
 	this->encodeModRM(reg, 4);
 }
 
-void X86Assembler::jmp(uint64_t address) {
+void X86Assembler::jmp(int64_t address) {
 	this->write8(0xE9);
 	// typical formula is target - addr - 5,
 	// but add + 1 because we just wrote one byte
 	this->write32(address - this->currentAddress() - 5 + 1);
 }
 
-void X86Assembler::call(uint32_t address) {
+void X86Assembler::call(int64_t address) {
 	this->write8(0xE8);
 	// typical formula is target - addr - 5,
 	// but add + 1 because we just wrote one byte
@@ -165,7 +165,7 @@ void X86Assembler::lea(X86Register reg, std::string const& label) {
 	this->label32(label);
 }
 
-void X86Assembler::mov(X86Register reg, uint32_t value) {
+void X86Assembler::mov(X86Register reg, int32_t value) {
 	this->write8(0xB8 | regIdx(reg));
 	this->write32(value);
 }

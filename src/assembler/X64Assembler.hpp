@@ -55,7 +55,7 @@ namespace tulip::hook {
 
 	class X64Assembler : public X86Assembler {
 	public:
-		X64Assembler(uint64_t baseAddress);
+		X64Assembler(int64_t baseAddress);
 		X64Assembler(X64Assembler const&) = delete;
 		X64Assembler(X64Assembler&&) = delete;
 		~X64Assembler();
@@ -64,15 +64,15 @@ namespace tulip::hook {
 
 		void nop();
 
-		void add(X64Register reg, uint32_t value);
-		void sub(X64Register reg, uint32_t value);
+		void add(X64Register reg, int32_t value);
+		void sub(X64Register reg, int32_t value);
 
 		void push(X64Register reg);
 		void push(X64Pointer ptr);
 		void pop(X64Register reg);
 
 		void jmp(X64Register reg);
-		void jmp(uint64_t address);
+		void jmp(int64_t address);
 
 		void call(X64Register reg);
 
@@ -87,7 +87,7 @@ namespace tulip::hook {
 
 		void lea(X64Register reg, std::string const& label);
 
-		void mov(X64Register reg, uint32_t value);
+		void mov(X64Register reg, int32_t value);
 		void mov(X64Register reg, X64Pointer ptr);
 		void mov(X64Pointer ptr, X64Register reg);
 		void mov(X64Register reg, X64Register reg2);

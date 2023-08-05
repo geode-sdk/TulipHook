@@ -51,7 +51,7 @@ namespace tulip::hook {
 			ModRM,
 		} m_type;
 		X86Register m_reg;
-		uint32_t m_value = 0;
+		int32_t m_value = 0;
 
 		X86Operand(X86Register reg) :
 			m_reg(reg),
@@ -68,7 +68,7 @@ namespace tulip::hook {
 		void encodeModRM(X86Operand op, uint8_t digit);
 
 	public:
-		X86Assembler(uint64_t baseAddress);
+		X86Assembler(int64_t baseAddress);
 		X86Assembler(X86Assembler const&) = delete;
 		X86Assembler(X86Assembler&&) = delete;
 		~X86Assembler();
@@ -79,20 +79,20 @@ namespace tulip::hook {
 		void nop();
 
 		void ret();
-		void ret(uint16_t offset);
+		void ret(int16_t offset);
 
-		void add(X86Register reg, uint32_t value);
-		void sub(X86Register reg, uint32_t value);
+		void add(X86Register reg, int32_t value);
+		void sub(X86Register reg, int32_t value);
 
 		void push(X86Register reg);
 		void push(X86Pointer reg);
 		void pop(X86Register reg);
 
 		void jmp(X86Register reg);
-		void jmp(uint64_t address);
+		void jmp(int64_t address);
 
 		void call(X86Register reg);
-		void call(uint32_t value);
+		void call(int64_t value);
 
 		void movsd(X86Register reg, X86Pointer ptr);
 		void movsd(X86Pointer ptr, X86Register reg);
@@ -105,7 +105,7 @@ namespace tulip::hook {
 
 		void lea(X86Register reg, std::string const& label);
 
-		void mov(X86Register reg, uint32_t value);
+		void mov(X86Register reg, int32_t value);
 		void mov(X86Register reg, X86Pointer ptr);
 		void mov(X86Pointer ptr, X86Register reg);
 		void mov(X86Register reg, X86Register reg2);

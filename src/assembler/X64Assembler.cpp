@@ -44,7 +44,7 @@ X86Pointer x86ptr(X64Pointer ptr) {
 	return {x86reg(ptr.reg), ptr.offset};
 }
 
-X64Assembler::X64Assembler(uint64_t baseAddress) :
+X64Assembler::X64Assembler(int64_t baseAddress) :
 	X86Assembler(baseAddress) {}
 
 X64Assembler::~X64Assembler() {}
@@ -61,12 +61,12 @@ void X64Assembler::nop() {
 	X86Assembler::nop();
 }
 
-void X64Assembler::add(X64Register reg, uint32_t value) {
+void X64Assembler::add(X64Register reg, int32_t value) {
 	rex(this, reg, RAX, true);
 	X86Assembler::add(x86reg(reg), value);
 }
 
-void X64Assembler::sub(X64Register reg, uint32_t value) {
+void X64Assembler::sub(X64Register reg, int32_t value) {
 	rex(this, reg, RAX, true);
 	X86Assembler::sub(x86reg(reg), value);
 }
@@ -91,7 +91,7 @@ void X64Assembler::jmp(X64Register reg) {
 	X86Assembler::jmp(x86reg(reg));
 }
 
-void X64Assembler::jmp(uint64_t address) {
+void X64Assembler::jmp(int64_t address) {
 	X86Assembler::jmp(address);
 }
 
@@ -135,7 +135,7 @@ void X64Assembler::movaps(X64Pointer ptr, X64Register reg) {
 	X86Assembler::movaps(x86ptr(ptr), x86reg(reg));
 }
 
-void X64Assembler::mov(X64Register reg, uint32_t value) {
+void X64Assembler::mov(X64Register reg, int32_t value) {
 	rex(this, reg, RAX, true);
 	this->write8(0xc7);
 	this->write8(0xc0 | regIdx(reg));

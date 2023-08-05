@@ -8,36 +8,36 @@
 namespace tulip::hook {
 
 	struct AssemblerLabelUpdates {
-		uint64_t m_address;
+		int64_t m_address;
 		std::string m_name;
 		uint8_t m_size;
 	};
 
 	class BaseAssembler {
 	public:
-		uint64_t m_baseAddress;
+		int64_t m_baseAddress;
 		std::vector<uint8_t> m_buffer;
-		std::unordered_map<std::string, uint64_t> m_labels;
+		std::unordered_map<std::string, int64_t> m_labels;
 		std::vector<AssemblerLabelUpdates> m_labelUpdates;
 
-		BaseAssembler(uint64_t baseAddress);
+		BaseAssembler(int64_t baseAddress);
 		BaseAssembler(BaseAssembler const&) = delete;
 		BaseAssembler(BaseAssembler&&) = delete;
 		~BaseAssembler();
 
-		uint64_t currentAddress() const;
+		int64_t currentAddress() const;
 		// maybe use span?
 		std::vector<uint8_t> const& buffer() const;
 
-		void write8(uint8_t value);
-		void write16(uint16_t value);
-		void write32(uint32_t value);
-		void write64(uint64_t value);
+		void write8(int8_t value);
+		void write16(int16_t value);
+		void write32(int32_t value);
+		void write64(int64_t value);
 
-		void rewrite8(uint64_t address, uint8_t value);
-		void rewrite16(uint64_t address, uint16_t value);
-		void rewrite32(uint64_t address, uint32_t value);
-		void rewrite64(uint64_t address, uint64_t value);
+		void rewrite8(int64_t address, int8_t value);
+		void rewrite16(int64_t address, int16_t value);
+		void rewrite32(int64_t address, int32_t value);
+		void rewrite64(int64_t address, int64_t value);
 
 		void label(std::string const& name);
 
