@@ -14,17 +14,6 @@ X86Assembler::X86Assembler(uint64_t baseAddress) :
 
 X86Assembler::~X86Assembler() {}
 
-void X86Assembler::label32(std::string const& name) {
-	m_labelUpdates.push_back({this->currentAddress(), name, 4});
-	this->write32(0);
-}
-
-void X86Assembler::updateLabels() {
-	for (auto const& update : m_labelUpdates) {
-		this->rewrite32(update.m_address, m_labels[update.m_name] - update.m_address - 4);
-	}
-}
-
 void X86Assembler::nop() {
 	this->write8(0x90);
 }
@@ -155,10 +144,4 @@ void X86Assembler::mov(X86Pointer ptr, X86Register reg) {
 void X86Assembler::mov(X86Register dst, X86Register src) {
 	this->write8(0x89);
 	encodeModRM(this, dst, regIdx(src));
-}
-
-void X86Assembler::mov(X86Register reg, std::string const& label) {
-	this->write8(0x8b);
-	this->write8(0x05 | regIdx(reg) * 8);
-	this->label32(label);
 }

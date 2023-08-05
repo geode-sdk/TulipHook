@@ -35,9 +35,6 @@ namespace tulip::hook {
 		X86Assembler(X86Assembler&&) = delete;
 		~X86Assembler();
 
-		void label32(std::string const& name);
-		void updateLabels() override;
-
 		void nop();
 
 		void add(X86Register reg, uint32_t value);
@@ -62,6 +59,5 @@ namespace tulip::hook {
 		void mov(X86Register reg, X86Pointer ptr);
 		void mov(X86Pointer ptr, X86Register reg);
 		void mov(X86Register reg, X86Register reg2);
-		void mov(X86Register reg, std::string const& label);
 	};
 }
