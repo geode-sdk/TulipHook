@@ -17,15 +17,15 @@ jobs:
           id: win
           os: windows-latest
           extra_flags: '-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=Debug'
-          out_paths: './build/src/TulipHook.lib ./build/test/TulipHookTest.exe'
+          out_paths: './build/src/TulipHook.lib'
 
         - name: 'macOS'
           id: mac
           os: macos-latest
           extra_flags: "-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=Debug"
-          out_paths: './build/src/libTulipHook.a ./build/test/TulipHookTest'
+          out_paths: './build/src/libTulipHook.a'
 
-    name: Build ${{ matrix.config.name }}
+    name: Build and Test ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
 
     steps:
@@ -50,7 +50,7 @@ jobs:
         ninja --version
       if: matrix.config.id == 'win'
 
-    - name: Configure ccache
+    - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1
       with:
         key: v1-${{ matrix.config.os }}-${{ github.ref }}
@@ -59,7 +59,7 @@ jobs:
       uses: seanmiddleditch/gha-setup-ninja@v3
       if: matrix.config.id == 'mac'
 
-    - name: Configure CMake
+    - name: Configure
       shell: bash
       run: cmake -G Ninja -B ./build ${{ matrix.config.extra_flags }}
 
