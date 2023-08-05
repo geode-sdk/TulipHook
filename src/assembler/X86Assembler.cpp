@@ -26,7 +26,7 @@ struct X86Operand {
 	X86Register m_reg;
 	uint32_t m_value = 0;
 	X86Operand(X86Register reg) : m_reg(reg), m_type(Type::Register) {}
-	X86Operand(X86Pointer ptr) : m_reg(ptr.m_register), m_value(ptr.m_offset), m_type(Type::ModRM) {}
+	X86Operand(X86Pointer ptr) : m_reg(ptr.reg), m_value(ptr.offset), m_type(Type::ModRM) {}
 };
 
 static void encodeModRM(X86Assembler* ass, X86Operand op, uint8_t digit) {

@@ -24,8 +24,9 @@ namespace tulip::hook {
 	};
 
 	struct X86Pointer {
-		X86Register m_register;
-		int32_t m_offset = 0;
+		X86Register reg;
+		int32_t offset = 0;
+		X86Pointer(X86Register reg, int32_t offset = 0) : reg(reg), offset(offset) {}
 	};
 
 	class X86Assembler : public BaseAssembler {

@@ -9,18 +9,6 @@ std::vector<uint8_t> operator""_bytes(const char* data, size_t size) {
     return std::vector(reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data + size));
 }
 
-template <class T, class U>
-void assertEqImpl(T&& a, U&& b, const char* expr, const char* file, int line) {
-    if (a != b) {
-        std::cout << "Assertion `" << expr << "` failed at " << file << ':' << line << std::endl;
-        std::cout << "lhs is: " << a << std::endl;
-        std::cout << "rhs is: " << b << std::endl;
-        std::abort();
-    }
-}
-
-#define assertEq(a, b) assertEqImpl(a, b, #a " == " #b, __FILE__, __LINE__)
-
 std::ostream& operator<<(std::ostream& stream, const std::vector<uint8_t>& value) {
     stream << '{';
     bool first = true;
@@ -32,6 +20,18 @@ std::ostream& operator<<(std::ostream& stream, const std::vector<uint8_t>& value
     }
     return stream << '}';
 }
+
+template <class T, class U>
+void assertEqImpl(T&& a, U&& b, const char* expr, const char* file, int line) {
+    if (a != b) {
+        std::cout << "Assertion `" << expr << "` failed at " << file << ':' << line << std::endl;
+        std::cout << "lhs is: " << a << std::endl;
+        std::cout << "rhs is: " << b << std::endl;
+        std::abort();
+    }
+}
+
+#define assertEq(a, b) assertEqImpl(a, b, #a " == " #b, __FILE__, __LINE__)
 
 int main() {
     using enum X86Register;
