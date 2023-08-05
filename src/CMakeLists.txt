@@ -34,7 +34,7 @@ set(CAPSTONE_X86_SUPPORT On)
 set(CAPSTONE_X86_REDUCE Off)
 set(CAPSTONE_X86_ATT_DISABLE On)
 
-CPMAddPackage("gh:capstone-engine/capstone#a4df92e")
+CPMAddPackage("gh:capstone-engine/capstone#9b7935b")
 
 
 target_link_libraries(TulipHook PRIVATE capstone)
