@@ -1,12 +1,9 @@
+#include "../src/assembler/X86Assembler.hpp"
+#include "Assembler.hpp"
+
 #include <gtest/gtest.h>
 
-#include "../src/assembler/X86Assembler.hpp"
-
 using namespace tulip::hook;
-
-std::vector<uint8_t> operator""_bytes(const char* data, size_t size) {
-	return {reinterpret_cast<const uint8_t*>(data), reinterpret_cast<const uint8_t*>(data + size)};
-}
 
 TEST(X86AssemblerTest, NopMov) {
 	using enum X86Register;
@@ -66,4 +63,13 @@ TEST(X86AssemblerTest, Movss) {
 	a.movss(m[ESP], XMM0);
 	a.movss(XMM1, m[ESP + 4]);
 	EXPECT_EQ(a.buffer(), "\xF3\x0F\x11\x04\x24\xF3\x0F\x10\x4C\x24\x04"_bytes);
+}
+
+TEST(X86AssemblerTest, Movaps) {
+	using enum X86Register;
+	X86Assembler a(0x123);
+	RegMem32 m;
+	a.movaps(m[ESP], XMM0);
+	a.movaps(XMM1, m[ESP + 4]);
+	EXPECT_EQ(a.buffer(), "\x0F\x29\x04\x24\x0F\x28\x4C\x24\x04"_bytes);
 }

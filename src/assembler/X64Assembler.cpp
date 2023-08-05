@@ -11,11 +11,15 @@ uint8_t regv(X64Pointer ptr) {
 }
 
 uint8_t lowerv(X64Register reg, uint8_t offset) {
-	return (regv(reg) < 0x8) << offset;
+	return (regv(reg) >> 3) << offset;
 }
 
 uint8_t lowerv(X64Pointer ptr, uint8_t offset) {
-	return (regv(ptr) < 0x8) << offset;
+	return (regv(ptr) >> 3) << offset;
+}
+
+uint8_t regIdx(X64Register reg) {
+	return static_cast<uint8_t>(reg) & 0x7;
 }
 
 void rex(X64Assembler* ass, X64Register reg, X64Register reg2, bool wide) {
@@ -33,7 +37,7 @@ void rex(X64Assembler* ass, X64Pointer ptr, X64Register reg, bool wide) {
 }
 
 X86Register x86reg(X64Register reg) {
-	return static_cast<X86Register>(regv(reg) | 0xf7);
+	return static_cast<X86Register>(regv(reg) & 0xf7);
 }
 
 X86Pointer x86ptr(X64Pointer ptr) {
@@ -67,6 +71,21 @@ void X64Assembler::sub(X64Register reg, uint32_t value) {
 	X86Assembler::sub(x86reg(reg), value);
 }
 
+void X64Assembler::push(X64Register reg) {
+	rex(this, reg, RAX, false);
+	X86Assembler::push(x86reg(reg));
+}
+
+void X64Assembler::push(X64Pointer ptr) {
+	rex(this, ptr, RAX, false);
+	X86Assembler::push(x86ptr(ptr));
+}
+
+void X64Assembler::pop(X64Register reg) {
+	rex(this, reg, RAX, false);
+	X86Assembler::pop(x86reg(reg));
+}
+
 void X64Assembler::jmp(X64Register reg) {
 	rex(this, reg, RAX, false);
 	X86Assembler::jmp(x86reg(reg));
@@ -86,6 +105,26 @@ void X64Assembler::lea(X64Register reg, std::string const& label) {
 	X86Assembler::lea(x86reg(reg), label);
 }
 
+void X64Assembler::movsd(X64Register reg, X64Pointer ptr) {
+	rex(this, ptr, RAX, false);
+	X86Assembler::movsd(x86reg(reg), x86ptr(ptr));
+}
+
+void X64Assembler::movsd(X64Pointer ptr, X64Register reg) {
+	rex(this, ptr, RAX, false);
+	X86Assembler::movsd(x86ptr(ptr), x86reg(reg));
+}
+
+void X64Assembler::movss(X64Register reg, X64Pointer ptr) {
+	rex(this, ptr, RAX, false);
+	X86Assembler::movss(x86reg(reg), x86ptr(ptr));
+}
+
+void X64Assembler::movss(X64Pointer ptr, X64Register reg) {
+	rex(this, ptr, RAX, false);
+	X86Assembler::movss(x86ptr(ptr), x86reg(reg));
+}
+
 void X64Assembler::movaps(X64Register reg, X64Pointer ptr) {
 	rex(this, ptr, RAX, false);
 	X86Assembler::movaps(x86reg(reg), x86ptr(ptr));
@@ -98,7 +137,9 @@ void X64Assembler::movaps(X64Pointer ptr, X64Register reg) {
 
 void X64Assembler::mov(X64Register reg, uint32_t value) {
 	rex(this, reg, RAX, true);
-	X86Assembler::mov(x86reg(reg), value);
+	this->write8(0xc7);
+	this->write8(0xc0 | regIdx(reg));
+	this->write32(value);
 }
 
 void X64Assembler::mov(X64Register reg, X64Pointer ptr) {

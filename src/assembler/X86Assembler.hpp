@@ -45,7 +45,28 @@ namespace tulip::hook {
 		}
 	};
 
+	struct X86Operand {
+		enum class Type {
+			Register,
+			ModRM,
+		} m_type;
+		X86Register m_reg;
+		uint32_t m_value = 0;
+
+		X86Operand(X86Register reg) :
+			m_reg(reg),
+			m_type(Type::Register) {}
+
+		X86Operand(X86Pointer ptr) :
+			m_reg(ptr.reg),
+			m_value(ptr.offset),
+			m_type(Type::ModRM) {}
+	};
+
 	class X86Assembler : public BaseAssembler {
+	protected:
+		void encodeModRM(X86Operand op, uint8_t digit);
+
 	public:
 		X86Assembler(uint64_t baseAddress);
 		X86Assembler(X86Assembler const&) = delete;

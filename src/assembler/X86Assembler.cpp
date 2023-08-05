@@ -30,27 +30,9 @@ void X86Assembler::nop() {
 	this->write8(0x90);
 }
 
-struct X86Operand {
-	enum class Type {
-		Register,
-		ModRM,
-	} m_type;
-	X86Register m_reg;
-	uint32_t m_value = 0;
-
-	X86Operand(X86Register reg) :
-		m_reg(reg),
-		m_type(Type::Register) {}
-
-	X86Operand(X86Pointer ptr) :
-		m_reg(ptr.reg),
-		m_value(ptr.offset),
-		m_type(Type::ModRM) {}
-};
-
-static void encodeModRM(X86Assembler* ass, X86Operand op, uint8_t digit) {
+void X86Assembler::encodeModRM(X86Operand op, uint8_t digit) {
 	if (op.m_type == X86Operand::Type::Register) {
-		ass->write8((0b11 << 6) | (digit << 3) | regIdx(op.m_reg));
+		this->write8((0b11 << 6) | (digit << 3) | regIdx(op.m_reg));
 	}
 	else if (op.m_type == X86Operand::Type::ModRM) {
 		// the two mod bits
@@ -63,18 +45,18 @@ static void encodeModRM(X86Assembler* ass, X86Operand op, uint8_t digit) {
 			mod = 0b00;
 		}
 
-		ass->write8((mod << 6) | (digit << 3) | regIdx(op.m_reg));
+		this->write8((mod << 6) | (digit << 3) | regIdx(op.m_reg));
 		if (op.m_reg == X86Register::ESP) {
 			// this extra byte is used to represent scaled registers,
 			// however we dont use those, so we only need it for esp
-			ass->write8(0x24);
+			this->write8(0x24);
 		}
 
 		if (mod == 0b01) {
-			ass->write8(op.m_value);
+			this->write8(op.m_value);
 		}
 		else if (mod == 0b10) {
-			ass->write32(op.m_value);
+			this->write32(op.m_value);
 		}
 	}
 }
@@ -97,7 +79,7 @@ void X86Assembler::push(X86Register reg) {
 
 void X86Assembler::push(X86Pointer reg) {
 	this->write8(0xFF);
-	encodeModRM(this, reg, 6);
+	this->encodeModRM(reg, 6);
 }
 
 void X86Assembler::pop(X86Register reg) {
@@ -106,7 +88,7 @@ void X86Assembler::pop(X86Register reg) {
 
 void X86Assembler::jmp(X86Register reg) {
 	this->write8(0xFF);
-	encodeModRM(this, reg, 4);
+	this->encodeModRM(reg, 4);
 }
 
 void X86Assembler::jmp(uint64_t address) {
@@ -125,40 +107,40 @@ void X86Assembler::movsd(X86Register reg, X86Pointer ptr) {
 	this->write8(0xF2);
 	this->write8(0x0F);
 	this->write8(0x10);
-	encodeModRM(this, ptr, regIdx(reg));
+	this->encodeModRM(ptr, regIdx(reg));
 }
 
 void X86Assembler::movsd(X86Pointer ptr, X86Register reg) {
 	this->write8(0xF2);
 	this->write8(0x0F);
 	this->write8(0x11);
-	encodeModRM(this, ptr, regIdx(reg));
+	this->encodeModRM(ptr, regIdx(reg));
 }
 
 void X86Assembler::movss(X86Register reg, X86Pointer ptr) {
 	this->write8(0xF3);
 	this->write8(0x0F);
 	this->write8(0x10);
-	encodeModRM(this, ptr, regIdx(reg));
+	this->encodeModRM(ptr, regIdx(reg));
 }
 
 void X86Assembler::movss(X86Pointer ptr, X86Register reg) {
 	this->write8(0xF3);
 	this->write8(0x0F);
 	this->write8(0x11);
-	encodeModRM(this, ptr, regIdx(reg));
+	this->encodeModRM(ptr, regIdx(reg));
 }
 
 void X86Assembler::movaps(X86Register reg, X86Pointer ptr) {
 	this->write8(0x0F);
 	this->write8(0x28);
-	encodeModRM(this, ptr, regIdx(reg));
+	this->encodeModRM(ptr, regIdx(reg));
 }
 
 void X86Assembler::movaps(X86Pointer ptr, X86Register reg) {
 	this->write8(0x0F);
 	this->write8(0x29);
-	encodeModRM(this, ptr, regIdx(reg));
+	this->encodeModRM(ptr, regIdx(reg));
 }
 
 void X86Assembler::lea(X86Register reg, std::string const& label) {
@@ -174,17 +156,17 @@ void X86Assembler::mov(X86Register reg, uint32_t value) {
 
 void X86Assembler::mov(X86Register reg, X86Pointer ptr) {
 	this->write8(0x8B);
-	encodeModRM(this, ptr, regIdx(reg));
+	this->encodeModRM(ptr, regIdx(reg));
 }
 
 void X86Assembler::mov(X86Pointer ptr, X86Register reg) {
 	this->write8(0x89);
-	encodeModRM(this, ptr, regIdx(reg));
+	this->encodeModRM(ptr, regIdx(reg));
 }
 
 void X86Assembler::mov(X86Register dst, X86Register src) {
 	this->write8(0x89);
-	encodeModRM(this, dst, regIdx(src));
+	this->encodeModRM(dst, regIdx(src));
 }
 
 void X86Assembler::mov(X86Register reg, std::string const& label) {
