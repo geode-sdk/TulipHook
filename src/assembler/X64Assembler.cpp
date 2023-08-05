@@ -33,7 +33,7 @@ void rex(X64Assembler* ass, X64Pointer ptr, X64Register reg, bool wide) {
 }
 
 X86Register x86reg(X64Register reg) {
-	return static_cast<X86Register>(regv(reg));
+	return static_cast<X86Register>(regv(reg) | 0xf7);
 }
 
 X86Pointer x86ptr(X64Pointer ptr) {
