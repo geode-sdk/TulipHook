@@ -2,13 +2,15 @@
 
 #include <tulip/TulipHook.hpp>
 
-template <int N, class... Params>
-int32_t function(Params... params) {
+#define FUNCTION_PARAM_TYPES int, int, int, int, int, int, int, int, int, float, float, float, float, float, float, float, float, float, float
+
+template <int N>
+int32_t function(FUNCTION_PARAM_TYPES) {
 	return 1;
 }
 
-template <int N, class... Params>
-int32_t hook(Params... params) {
+template <int N>
+int32_t hook(FUNCTION_PARAM_TYPES) {
 	return 3;
 }
 
@@ -21,16 +23,14 @@ int32_t priorityHook(Params... params) {
 using namespace tulip::hook;
 
 using FunctionPtrType = int32_t (*)(
-	int, int, int, int, int, int, int, int, int, float, float, float, float, float, float, float, float, float, float
+	FUNCTION_PARAM_TYPES
 );
 
 template <int N>
 void makeWrapper(FunctionPtrType& out) {
 	WrapperMetadata wrapperMetadata;
 	wrapperMetadata.m_convention = std::make_unique<PlatformConvention>();
-	wrapperMetadata.m_abstract = AbstractFunction::from<int32_t(
-		int, int, int, int, int, int, int, int, int, float, float, float, float, float, float, float, float, float, float
-	)>();
+	wrapperMetadata.m_abstract = AbstractFunction::from<std::remove_pointer_t<FunctionPtrType>>();
 
 	auto wrapped =
 		createWrapper(reinterpret_cast<void*>(static_cast<FunctionPtrType>(&function<N>)), wrapperMetadata);
@@ -72,7 +72,7 @@ template <int N>
 HookHandle makePriorityHook(HandlerHandle const& handle) {
 	HookMetadata metadata;
 	metadata.m_priority = -100;
-	return createHook(handle, reinterpret_cast<void*>(static_cast<FunctionPtrType>(&priorityHook<N>)), metadata);
+	return createHook(handle, reinterpret_cast<void*>(static_cast<FunctionPtrType>(&priorityHook<N, FUNCTION_PARAM_TYPES>)), metadata);
 }
 
 #pragma clang diagnostic push
