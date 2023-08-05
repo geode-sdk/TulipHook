@@ -5,8 +5,10 @@
 
 using namespace tulip::hook;
 
+using enum X86Register;
+static RegMem32 m;
+
 TEST(X86AssemblerTest, NopMov) {
-	using enum X86Register;
 	X86Assembler a(0x123);
 	a.nop();
 	a.mov(EAX, 10);
@@ -14,7 +16,6 @@ TEST(X86AssemblerTest, NopMov) {
 }
 
 TEST(X86AssemblerTest, JmpCall) {
-	using enum X86Register;
 	X86Assembler a(0x123);
 	a.jmp(0xb00b5);
 	a.jmp(ECX);
@@ -25,9 +26,7 @@ TEST(X86AssemblerTest, JmpCall) {
 }
 
 TEST(X86AssemblerTest, Push) {
-	using enum X86Register;
 	X86Assembler a(0x123);
-	RegMem32 m;
 	a.push(EAX);
 	a.push(ESP);
 	a.push(m[ESP + 0x10]);
@@ -35,9 +34,7 @@ TEST(X86AssemblerTest, Push) {
 }
 
 TEST(X86AssemblerTest, Mov) {
-	using enum X86Register;
 	X86Assembler a(0x123);
-	RegMem32 m;
 	a.mov(EAX, EAX);
 	a.mov(ECX, EAX);
 	a.mov(ECX, m[EDX + 4]);
@@ -48,28 +45,32 @@ TEST(X86AssemblerTest, Mov) {
 }
 
 TEST(X86AssemblerTest, Movsd) {
-	using enum X86Register;
 	X86Assembler a(0x123);
-	RegMem32 m;
 	a.movsd(m[ESP], XMM0);
 	a.movsd(XMM1, m[ESP + 4]);
 	EXPECT_EQ(a.buffer(), "\xF2\x0F\x11\x04\x24\xF2\x0F\x10\x4C\x24\x04"_bytes);
 }
 
 TEST(X86AssemblerTest, Movss) {
-	using enum X86Register;
 	X86Assembler a(0x123);
-	RegMem32 m;
 	a.movss(m[ESP], XMM0);
 	a.movss(XMM1, m[ESP + 4]);
 	EXPECT_EQ(a.buffer(), "\xF3\x0F\x11\x04\x24\xF3\x0F\x10\x4C\x24\x04"_bytes);
 }
 
 TEST(X86AssemblerTest, Movaps) {
-	using enum X86Register;
 	X86Assembler a(0x123);
-	RegMem32 m;
 	a.movaps(m[ESP], XMM0);
 	a.movaps(XMM1, m[ESP + 4]);
 	EXPECT_EQ(a.buffer(), "\x0F\x29\x04\x24\x0F\x28\x4C\x24\x04"_bytes);
+}
+
+TEST(X86AssemblerTest, Label) {
+	X86Assembler a(0x123);
+	a.mov(EAX, "label");
+	a.lea(ECX, "label");
+	a.label("label");
+	a.write32(0x80085);
+	a.updateLabels();
+	EXPECT_EQ(a.buffer(), "\x8B\x05\x2f\x01\x00\x00\x8D\x0D\x2f\x01\x00\x00\x85\x00\x08\x00"_bytes);
 }
