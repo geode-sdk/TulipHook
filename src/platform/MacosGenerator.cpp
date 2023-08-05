@@ -117,6 +117,9 @@ std::vector<uint8_t> MacosHandlerGenerator::handlerBytes(uint64_t address) {
 
 	a.add(RSP, 0x38);
 
+	// done!
+	a.ret();
+
 	a.label("handlerPre");
 	a.write64(reinterpret_cast<uint64_t>(preHandler));
 
