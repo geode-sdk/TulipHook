@@ -78,6 +78,9 @@ namespace tulip::hook {
 
 		void nop();
 
+		void ret();
+		void ret(uint16_t offset);
+
 		void add(X86Register reg, uint32_t value);
 		void sub(X86Register reg, uint32_t value);
 

@@ -1,4 +1,4 @@
-#include "../assembler/x86Assembler.hpp"
+#include "../assembler/X86Assembler.hpp"
 
 #include <AbstractFunction.hpp>
 #include <Platform.hpp>
@@ -6,7 +6,6 @@
 #include <iostream>
 #include <optional>
 #include <platform/WindowsConvention.hpp>
-#include <sstream>
 #include <variant>
 
 using namespace tulip::hook;
@@ -59,6 +58,9 @@ private:
 	bool m_isCallerCleanup = false;
 
 	X86Assembler& a;
+	RegMem32 m;
+
+	using enum X86Register;
 
 	PushParameters(X86Assembler& a) :
 		a(a) {}
@@ -68,13 +70,13 @@ private:
 		return (type.m_size + 3) / 4 * 4;
 	}
 
-	static size_t xmmRegisterName(Register reg) {
+	static X86Register xmmRegisterName(Register reg) {
 		switch (reg) {
 			default:
-			case Register::XMM0: return 0;
-			case Register::XMM1: return 1;
-			case Register::XMM2: return 2;
-			case Register::XMM3: return 3;
+			case Register::XMM0: return XMM0;
+			case Register::XMM1: return XMM1;
+			case Register::XMM2: return XMM2;
+			case Register::XMM3: return XMM3;
 		}
 	}
 
@@ -308,13 +310,10 @@ public:
 		}
 	}
 
-	std::string generateIntoDefault() {
-		std::ostringstream out;
-		out << std::hex;
-
+	void generateIntoDefault() {
 		// allocate space on the stack for our parameters
 		if (m_resultStackSize) {
-			out << "sub esp, 0x" << m_resultStackSize << "\n";
+			a.sub(ESP, m_resultStackSize);
 		}
 
 		// cdecl parameters are passed in reverse order; however, since we are
@@ -329,7 +328,6 @@ public:
 		size_t placeAt = 0x0;
 
 		for (auto& param : m_params) {
-			out << "; " << param.originalIndex << "\n";
 			// repush from stack
 			if (std::holds_alternative<Stack>(param.location)) {
 				auto offset = std::get<Stack>(param.location);
@@ -340,26 +338,30 @@ public:
 
 					// push the struct in the same order as it was originally on the stack
 					// + 4 is for the return address
-					out << "mov eax, [esp + 0x" << (offset + m_resultStackSize + i + 4) << "]\n";
+					a.mov(EAX, m[ESP + (offset + m_resultStackSize + i + 4)]);
 
 					// push parameters in order
-					out << "mov [esp + 0x" << (placeAt + i) << "], eax\n";
+					a.mov(m[ESP + (placeAt + i)], EAX);
 				}
 			}
 			// repush from register
 			else {
 				switch (auto reg = std::get<Register>(param.location)) {
-					case Register::ECX: out << "mov [esp + 0x" << placeAt << "], ecx\n"; break;
-					case Register::EDX: out << "mov [esp + 0x" << placeAt << "], edx\n"; break;
+					case Register::ECX: {
+						a.mov(m[ESP + placeAt], ECX);
+					} break;
+					case Register::EDX: {
+						a.mov(m[ESP + placeAt], EDX);
+					} break;
 					// xmm registers
 					default: {
 						// double
 						if (param.type.m_size == 8) {
-							out << "movsd [esp + 0x" << placeAt << "], xmm" << xmmRegisterName(reg) << "\n";
+							a.movsd(m[ESP + placeAt], xmmRegisterName(reg));
 						}
 						// float
 						else {
-							out << "movss [esp + 0x" << placeAt << "], xmm" << xmmRegisterName(reg) << "\n";
+							a.movss(m[ESP + placeAt], xmmRegisterName(reg));
 						}
 					} break;
 				}
@@ -370,88 +372,67 @@ public:
 			// pushing the next parameters
 			placeAt += paramSize(param.type);
 		}
-
-		return out.str();
 	}
 
-	std::string generateDefaultCleanup() {
-		std::ostringstream out;
-		out << std::hex;
-
+	void generateDefaultCleanup() {
 		// clean up stack from the ones we added
-		out << "add esp, 0x" << m_resultStackSize << "\n";
+		a.add(ESP, m_resultStackSize);
 
 		// if the function is caller cleaned, then generateOriginalCleanup
 		// or the original GD function cleans it up
 		if (m_isCallerCleanup) {
-			out << "ret\n";
+			a.ret();
 		}
 		// otherwise clean up stack using ret
 		// some of the original parameters may be passed through registers so the
 		// original's stack size may be smaller
 		else {
-			out << "ret 0x" << m_originalStackSize << "\n";
+			a.ret(m_originalStackSize);
 		}
-
-		return out.str();
 	}
 
-	std::string generateIntoOriginal() {
-		std::stringstream out;
-		out << std::hex;
-
+	void generateIntoOriginal() {
 		if (m_originalStackSize) {
-			out << "sub esp, 0x" << m_originalStackSize << "\n";
+			a.sub(ESP, m_originalStackSize);
 		}
 
 		for (auto& param : m_params) {
-			out << "; a param\n";
-			out << "; resultLocation is 0x" << param.resultLocation << "\n";
 			auto const resultOffset = m_originalStackSize + param.resultLocation + 4;
 			if (std::holds_alternative<Register>(param.location)) {
 				auto const reg = std::get<Register>(param.location);
 				switch (reg) {
 					case Register::ECX: {
-						out << "mov ecx, [esp + 0x" << resultOffset << "]\n";
+						a.mov(ECX, m[ESP + resultOffset]);
 					} break;
 					case Register::EDX: {
-						out << "mov edx, [esp + 0x" << resultOffset << "]\n";
+						a.mov(EDX, m[ESP + resultOffset]);
 					} break;
 					default: {
-						auto const xmmIndex = xmmRegisterName(reg);
 						if (param.type.m_size == 4) {
-							out << "movss xmm" << xmmIndex << ", [esp + 0x" << resultOffset << "]\n";
+							a.movss(xmmRegisterName(reg), m[ESP + resultOffset]);
 						}
 						else {
-							out << "movsd xmm" << xmmIndex << ", [esp + 0x" << resultOffset << "]\n";
+							a.movsd(xmmRegisterName(reg), m[ESP + resultOffset]);
 						}
 					}
 				}
 			}
 			else {
-				out << "; originalLocation is 0x" << param.originalLocation << "\n";
 				auto const originalOffset = m_originalStackSize + param.originalLocation + 4;
 				for (size_t i = 0; i < param.type.m_size; i += 4) {
-					out << "mov eax, [esp + 0x" << (resultOffset + i) << "]\n";
-					out << "mov [esp + 0x" << (param.originalLocation + i) << "], eax\n";
+					a.mov(EAX, m[ESP + (resultOffset + i)]);
+					a.mov(m[ESP + (originalOffset + i)], EAX);
 				}
 			}
 		}
-
-		return out.str();
 	}
 
-	std::string generateOriginalCleanup() {
-		std::ostringstream out;
-		out << std::hex;
-
+	void generateOriginalCleanup() {
 		if (m_isCallerCleanup) {
 			// for mat: comment this to make your tests work
-			out << "add esp, 0x" << m_originalStackSize << "\n";
+			a.add(ESP, m_originalStackSize);
 		}
-		out << "ret\n";
-
-		return out.str();
+		a.ret();
 	}
 };
 

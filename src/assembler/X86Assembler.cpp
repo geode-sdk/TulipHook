@@ -30,6 +30,15 @@ void X86Assembler::nop() {
 	this->write8(0x90);
 }
 
+void X86Assembler::ret() {
+	this->write8(0xC3);
+}
+
+void X86Assembler::ret(uint16_t offset) {
+	this->write8(0xC2);
+	this->write16(offset);
+}
+
 void X86Assembler::encodeModRM(X86Operand op, uint8_t digit) {
 	if (op.m_type == X86Operand::Type::Register) {
 		this->write8((0b11 << 6) | (digit << 3) | regIdx(op.m_reg));
