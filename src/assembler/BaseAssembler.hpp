@@ -26,6 +26,8 @@ namespace tulip::hook {
 		~BaseAssembler();
 
 		uint64_t currentAddress() const;
+		// maybe use span?
+		std::vector<uint8_t> const& buffer() const;
 
 		void write8(uint8_t value);
 		void write16(uint16_t value);

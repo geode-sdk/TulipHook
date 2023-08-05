@@ -40,7 +40,7 @@ int main() {
         X86Assembler a(0x123);
         a.nop();
         a.mov(EAX, 10);
-        assertEq(a.m_buffer, "\x90\xb8\x0a\x00\x00\x00"_bytes);
+        assertEq(a.buffer(), "\x90\xb8\x0a\x00\x00\x00"_bytes);
     }
 
     {
@@ -50,7 +50,7 @@ int main() {
         a.call(EAX);
         a.call(EBP);
         a.call(ESP);
-        assertEq(a.m_buffer, "\xE9\x8D\xFF\x0A\x00\xFF\xE1\xFF\xD0\xFF\xD5\xFF\xD4"_bytes);
+        assertEq(a.buffer(), "\xE9\x8D\xFF\x0A\x00\xFF\xE1\xFF\xD0\xFF\xD5\xFF\xD4"_bytes);
     }
 
     {
@@ -58,7 +58,7 @@ int main() {
         a.push(EAX);
         a.push(ESP);
         a.push(X86Pointer(ESP, 0x10));
-        assertEq(a.m_buffer, "\x50\x54\xFF\x74\x24\x10"_bytes);
+        assertEq(a.buffer(), "\x50\x54\xFF\x74\x24\x10"_bytes);
     }
 
     {
@@ -69,20 +69,20 @@ int main() {
         a.mov(ECX, X86Pointer(EBP, 4));
         a.mov(X86Pointer(EBP, 4), ESP);
         a.mov(X86Pointer(EBP), EAX);
-        assertEq(a.m_buffer, "\x89\xC0\x89\xC1\x8B\x4A\x04\x8B\x4D\x04\x89\x65\x04\x89\x45\x00"_bytes);
+        assertEq(a.buffer(), "\x89\xC0\x89\xC1\x8B\x4A\x04\x8B\x4D\x04\x89\x65\x04\x89\x45\x00"_bytes);
     }
 
     {
         X86Assembler a(0x123);
         a.movsd(X86Pointer(ESP), XMM0);
         a.movsd(XMM1, X86Pointer(ESP, 4));
-        assertEq(a.m_buffer, "\xF2\x0F\x11\x04\x24\xF2\x0F\x10\x4C\x24\x04"_bytes);
+        assertEq(a.buffer(), "\xF2\x0F\x11\x04\x24\xF2\x0F\x10\x4C\x24\x04"_bytes);
     }
 
     {
         X86Assembler a(0x123);
         a.movss(X86Pointer(ESP), XMM0);
         a.movss(XMM1, X86Pointer(ESP, 4));
-        assertEq(a.m_buffer, "\xF3\x0F\x11\x04\x24\xF3\x0F\x10\x4C\x24\x04"_bytes);
+        assertEq(a.buffer(), "\xF3\x0F\x11\x04\x24\xF3\x0F\x10\x4C\x24\x04"_bytes);
     }
 }

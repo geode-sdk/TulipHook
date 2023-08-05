@@ -30,6 +30,10 @@ uint64_t BaseAssembler::currentAddress() const {
 	return m_baseAddress + m_buffer.size();
 }
 
+std::vector<uint8_t> const& BaseAssembler::buffer() const {
+	return m_buffer;
+}
+
 void BaseAssembler::rewrite8(uint64_t address, uint8_t value) {
 	m_buffer[address - m_baseAddress] = value;
 }
