@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BaseAssembler.hpp"
+#include "X86Assembler.hpp"
 
 namespace tulip::hook {
 
@@ -21,7 +21,6 @@ namespace tulip::hook {
 		R13,
 		R14,
 		R15,
-		RIP = 0x40,
 		XMM0 = 0x80,
 		XMM1,
 		XMM2,
@@ -33,18 +32,21 @@ namespace tulip::hook {
 	};
 
 	struct X64Pointer {
-		X64Register m_register;
-		int32_t m_offset = 0;
+		X64Register reg;
+		int32_t offset = 0;
+
+		X64Pointer(X64Register reg, int32_t offset = 0) :
+			reg(reg),
+			offset(offset) {}
 	};
 
-	class X64Assembler : public BaseAssembler {
+	class X64Assembler : public X86Assembler {
 	public:
 		X64Assembler(uint64_t baseAddress);
 		X64Assembler(X64Assembler const&) = delete;
 		X64Assembler(X64Assembler&&) = delete;
 		~X64Assembler();
 
-		void label32(std::string const& name);
 		void updateLabels() override;
 
 		void nop();

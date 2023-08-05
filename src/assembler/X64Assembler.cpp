@@ -7,50 +7,43 @@ uint8_t regv(X64Register reg) {
 }
 
 uint8_t regv(X64Pointer ptr) {
-	return regv(ptr.m_register);
-}
-
-uint8_t regl(X64Register reg) {
-	return regv(reg) & 0x7;
-}
-
-uint8_t regl(X64Pointer ptr) {
-	return regv(ptr) & 0x7;
-}
-
-uint8_t regx(X64Register reg) {
-	return regv(reg) - 0x80;
-}
-
-bool espcheck(X64Pointer ptr) {
-	return regl(ptr) == 0x4;
-}
-
-bool lowerreg(X64Register reg) {
-	return regv(reg) < 0x8;
-}
-
-bool lowerreg(X64Pointer ptr) {
-	return regv(ptr) < 0x8;
+	return regv(ptr.reg);
 }
 
 uint8_t lowerv(X64Register reg, uint8_t offset) {
-	return lowerreg(reg) << offset;
+	return (regv(reg) < 0x8) << offset;
 }
 
 uint8_t lowerv(X64Pointer ptr, uint8_t offset) {
-	return lowerreg(ptr) << offset;
+	return (regv(ptr) < 0x8) << offset;
+}
+
+void rex(X64Assembler* ass, X64Register reg, X64Register reg2, bool wide) {
+	auto rexv = 0x40 | lowerv(reg, 0) | lowerv(reg2, 2) | (wide << 3);
+	if (rexv != 0x40) {
+		ass->write8(rexv);
+	}
+}
+
+void rex(X64Assembler* ass, X64Pointer ptr, X64Register reg, bool wide) {
+	auto rexv = 0x40 | lowerv(ptr, 0) | lowerv(reg, 2) | (wide << 3);
+	if (rexv != 0x40) {
+		ass->write8(rexv);
+	}
+}
+
+X86Register x86reg(X64Register reg) {
+	return static_cast<X86Register>(regv(reg) | 0xf7);
+}
+
+X86Pointer x86ptr(X64Pointer ptr) {
+	return {x86reg(ptr.reg), ptr.offset};
 }
 
 X64Assembler::X64Assembler(uint64_t baseAddress) :
-	BaseAssembler(baseAddress) {}
+	X86Assembler(baseAddress) {}
 
 X64Assembler::~X64Assembler() {}
-
-void X64Assembler::label32(std::string const& name) {
-	m_labelUpdates.push_back({this->currentAddress(), name, 4});
-	this->write32(0);
-}
 
 void X64Assembler::updateLabels() {
 	for (auto const& update : m_labelUpdates) {
@@ -58,106 +51,72 @@ void X64Assembler::updateLabels() {
 	}
 }
 
+using enum X64Register;
+
 void X64Assembler::nop() {
-	this->write8(0x90);
+	X86Assembler::nop();
 }
 
 void X64Assembler::add(X64Register reg, uint32_t value) {
-	this->write8(0x48 | lowerv(reg, 0));
-	this->write8(0x81);
-	this->write8(0xC0 | regl(reg));
-	this->write32(value);
+	rex(this, reg, RAX, true);
+	X86Assembler::add(x86reg(reg), value);
 }
 
 void X64Assembler::sub(X64Register reg, uint32_t value) {
-	this->write8(0x48 | lowerv(reg, 0));
-	this->write8(0x81);
-	this->write8(0xE8 | regl(reg));
-	this->write32(value);
+	rex(this, reg, RAX, true);
+	X86Assembler::sub(x86reg(reg), value);
 }
 
 void X64Assembler::jmp(X64Register reg) {
-	this->write8(0x40 | lowerv(reg, 0));
-	this->write8(0xFF);
-	this->write8(0xE0 | regl(reg));
+	rex(this, reg, RAX, false);
+	X86Assembler::jmp(x86reg(reg));
 }
 
 void X64Assembler::jmp(uint64_t address) {
-	this->write8(0xE9);
-	this->write32(address - this->currentAddress() - 4);
+	X86Assembler::jmp(address);
 }
 
 void X64Assembler::call(X64Register reg) {
-	this->write8(0x40 | lowerv(reg, 0));
-	this->write8(0xFF);
-	this->write8(0xD0 | regl(reg));
+	rex(this, reg, RAX, false);
+	X86Assembler::call(x86reg(reg));
 }
 
 void X64Assembler::lea(X64Register reg, std::string const& label) {
-	this->write8(0x48 | lowerv(reg, 2));
-	this->write8(0x8D);
-	this->write8(0x05 | regl(reg) * 8);
-	this->label32(label);
+	rex(this, RAX, reg, true);
+	X86Assembler::lea(x86reg(reg), label);
 }
 
 void X64Assembler::movaps(X64Register reg, X64Pointer ptr) {
-	this->write8(0x40 | lowerv(ptr, 0));
-	this->write8(0x0F);
-	this->write8(0x28);
-	this->write8(0x80 | regl(ptr) | regx(reg) * 8);
-	if (espcheck(ptr)) {
-		this->write8(0x24);
-	}
-	this->write32(ptr.m_offset);
+	rex(this, ptr, RAX, false);
+	X86Assembler::movaps(x86reg(reg), x86ptr(ptr));
 }
 
 void X64Assembler::movaps(X64Pointer ptr, X64Register reg) {
-	this->write8(0x40 | lowerv(ptr, 0));
-	this->write8(0x0F);
-	this->write8(0x29);
-	this->write8(0x80 | regl(ptr) | regx(reg) * 8);
-	if (espcheck(ptr)) {
-		this->write8(0x24);
-	}
-	this->write32(ptr.m_offset);
+	rex(this, ptr, RAX, false);
+	X86Assembler::movaps(x86ptr(ptr), x86reg(reg));
 }
 
 void X64Assembler::mov(X64Register reg, uint32_t value) {
-	this->write8(0x48 | lowerv(reg, 0));
-	this->write8(0xC7);
-	this->write8(0xC0 | regl(reg));
-	this->write32(value);
+	rex(this, reg, RAX, true);
+	X86Assembler::mov(x86reg(reg), value);
 }
 
 void X64Assembler::mov(X64Register reg, X64Pointer ptr) {
-	this->write8(0x48 | lowerv(ptr, 0) | lowerv(reg, 2));
-	this->write8(0x8B);
-	this->write8(0x80 | regl(ptr) | regl(reg) * 8);
-	if (espcheck(ptr)) {
-		this->write8(0x24);
-	}
-	this->write32(ptr.m_offset);
+	rex(this, ptr, reg, true);
+	X86Assembler::mov(x86reg(reg), x86ptr(ptr));
 }
 
 void X64Assembler::mov(X64Pointer ptr, X64Register reg) {
-	this->write8(0x48 | lowerv(ptr, 0) | lowerv(reg, 2));
-	this->write8(0x89);
-	this->write8(0x80 | regl(ptr) | regl(reg) * 8);
-	if (espcheck(ptr)) {
-		this->write8(0x24);
-	}
-	this->write32(ptr.m_offset);
+	rex(this, ptr, reg, true);
+	X86Assembler::mov(x86ptr(ptr), x86reg(reg));
 }
 
 void X64Assembler::mov(X64Register reg, X64Register reg2) {
-	this->write8(0x48 | lowerv(reg, 0) | lowerv(reg2, 2));
-	this->write8(0x89);
-	this->write8(0xC0 | regl(reg) | regl(reg2) * 8);
+	rex(this, reg, reg2, true);
+	X86Assembler::mov(x86reg(reg), x86reg(reg2));
 }
 
 void X64Assembler::mov(X64Register reg, std::string const& label) {
-	this->write8(0x48 | lowerv(reg, 2));
-	this->write8(0x8B);
-	this->write8(0x05 | regl(reg) * 8);
-	this->label32(label);
+	rex(this, RAX, reg, true);
+	X86Assembler::mov(x86reg(reg), label);
 }
