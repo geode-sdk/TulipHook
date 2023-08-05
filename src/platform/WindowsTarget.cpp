@@ -59,17 +59,6 @@ WindowsTarget& WindowsTarget::get() {
 	return ret;
 }
 
-Result<ks_engine*> WindowsTarget::openKeystone() {
-	if (ks_open(KS_ARCH_X86, KS_MODE_32, &m_keystone) != KS_ERR_OK) {
-		return Err("Couldn't open keystone");
-	}
-	if (ks_option(m_keystone, KS_OPT_SYNTAX, KS_OPT_SYNTAX_NASM) != KS_ERR_OK) {
-		return Err("Couldn't set keystone syntax to nasm");
-	}
-
-	return Ok(m_keystone);
-}
-
 Result<csh> WindowsTarget::openCapstone() {
 	cs_err status;
 

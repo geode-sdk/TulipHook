@@ -36,10 +36,8 @@ set(CAPSTONE_X86_ATT_DISABLE On)
 
 CPMAddPackage("gh:capstone-engine/capstone#a4df92e")
 
-set(LLVM_TARGETS_TO_BUILD "X86")
-CPMAddPackage("gh:altalk23/keystone#ee876d2")
 
-target_link_libraries(TulipHook PRIVATE capstone keystone)
+target_link_libraries(TulipHook PRIVATE capstone)
 target_link_libraries(TulipHook PUBLIC Result)
 target_compile_definitions(TulipHook PRIVATE -DTULIP_HOOK_EXPORTING=1)
 
@@ -47,7 +45,6 @@ target_include_directories(TulipHook PRIVATE
 	${TulipHookRoot_SOURCE_DIR}/include
 	${TulipHookRoot_SOURCE_DIR}/include/tulip
 	${capstone_SOURCE_DIR}/include
-	${keystone_SOURCE_DIR}/include
 )
 
 target_include_directories(TulipHook INTERFACE

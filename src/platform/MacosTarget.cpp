@@ -91,18 +91,6 @@ MacosTarget& MacosTarget::get() {
 	return ret;
 }
 
-Result<ks_engine*> MacosTarget::openKeystone() {
-	ks_err status;
-
-	status = ks_open(KS_ARCH_X86, KS_MODE_64, &m_keystone);
-	ks_option(m_keystone, KS_OPT_SYNTAX, KS_OPT_SYNTAX_NASM);
-	if (status != KS_ERR_OK) {
-		return Err("Couldn't open keystone");
-	}
-
-	return Ok(m_keystone);
-}
-
 Result<csh> MacosTarget::openCapstone() {
 	cs_err status;
 

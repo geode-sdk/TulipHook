@@ -14,7 +14,6 @@ namespace tulip::hook {
 
 		static WindowsTarget& get();
 
-		Result<ks_engine*> openKeystone() override;
 		Result<csh> openCapstone() override;
 
 		Result<> allocatePage() override;

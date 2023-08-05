@@ -17,12 +17,6 @@ namespace tulip::hook {
 		}
 	};
 
-	static void keystoneCloseFun() {
-		PlatformTarget::get().closeKeystone();
-	};
-
-	using KSHolder = RAIIHolder<ks_engine*, &keystoneCloseFun>;
-
 	static void capstoneCloseFun() {
 		PlatformTarget::get().closeCapstone();
 	};

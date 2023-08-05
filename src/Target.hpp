@@ -2,13 +2,11 @@
 
 #include <TulipResult.hpp>
 #include <capstone/capstone.h>
-#include <keystone/keystone.h>
 #include <memory>
 
 namespace tulip::hook {
 	class Target {
 	protected:
-		ks_engine* m_keystone = nullptr;
 		csh m_capstone = 0;
 
 		void* m_allocatedPage = nullptr;
@@ -19,10 +17,6 @@ namespace tulip::hook {
 		Result<void*> allocateArea(size_t size);
 
 		Result<> writeMemory(void* destination, void const* source, size_t size);
-
-		virtual Result<ks_engine*> openKeystone() = 0;
-		void closeKeystone();
-		ks_engine* getKeystone();
 
 		virtual Result<csh> openCapstone() = 0;
 		void closeCapstone();

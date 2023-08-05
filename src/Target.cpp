@@ -25,15 +25,6 @@ Result<> Target::writeMemory(void* destination, void const* source, size_t size)
 	return Ok();
 }
 
-void Target::closeKeystone() {
-	ks_close(m_keystone);
-	m_keystone = nullptr;
-}
-
-ks_engine* Target::getKeystone() {
-	return m_keystone;
-}
-
 void Target::closeCapstone() {
 	cs_close(&m_capstone);
 	m_capstone = 0;
