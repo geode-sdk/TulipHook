@@ -14,11 +14,11 @@ target_link_libraries(${PROJECT_NAME} PUBLIC GTest::gtest_main TulipHook)
 if(WIN32)
 	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
 
-	add_executable(WinTest winTest.cpp)
+	add_executable(WinTest misc/WinTest.cpp)
 	target_link_libraries(WinTest PUBLIC TulipHook)
 	set_target_properties(WinTest PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
 
-	add_library(TestMod SHARED mod.cpp)
+	add_library(TestMod SHARED misc/Mod.cpp)
 	target_link_libraries(TestMod PUBLIC TulipHook)
 endif()
 
