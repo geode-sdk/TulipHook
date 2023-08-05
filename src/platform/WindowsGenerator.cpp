@@ -144,21 +144,27 @@ std::vector<uint8_t> WindowsWrapperGenerator::reverseWrapperBytes(uint64_t addre
 }
 
 Result<void*> WindowsWrapperGenerator::generateWrapper() {
-	auto code = this->wrapperBytes(reinterpret_cast<uintptr_t>(m_address));
-	auto areaSize = (code.size() + (0x20 - code.size()) % 0x20);
-	TULIP_HOOK_UNWRAP_INTO(auto area, PlatformTarget::get().allocateArea(areaSize));
+	// this is silly, butt
+	auto codeSize = this->wrapperBytes(0).size();
+	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
-	std::memcpy(area, code.data(), code.size());
+	TULIP_HOOK_UNWRAP_INTO(auto area, PlatformTarget::get().allocateArea(areaSize));
+	auto code = this->wrapperBytes(reinterpret_cast<uintptr_t>(area));
+
+	std::memcpy(area, code.data(), codeSize);
 
 	return Ok(area);
 }
 
 Result<void*> WindowsWrapperGenerator::generateReverseWrapper() {
-	auto code = this->reverseWrapperBytes(reinterpret_cast<uintptr_t>(m_address));
-	auto areaSize = (code.size() + (0x20 - code.size()) % 0x20);
-	TULIP_HOOK_UNWRAP_INTO(auto area, PlatformTarget::get().allocateArea(areaSize));
+	// this is silly, butt
+	auto codeSize = this->reverseWrapperBytes(0).size();
+	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
-	std::memcpy(area, code.data(), code.size());
+	TULIP_HOOK_UNWRAP_INTO(auto area, PlatformTarget::get().allocateArea(areaSize));
+	auto code = this->reverseWrapperBytes(reinterpret_cast<uintptr_t>(area));
+
+	std::memcpy(area, code.data(), codeSize);
 
 	return Ok(area);
 }
