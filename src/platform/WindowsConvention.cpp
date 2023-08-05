@@ -110,6 +110,14 @@ public:
 		return res;
 	}
 
+	static PushParameters fromStdcall(X86Assembler& a, AbstractFunction const& function) {
+		auto res = fromCdecl(a, function);
+
+		res.m_isCallerCleanup = false;
+
+		return res;
+	}
+
 	static PushParameters fromThiscall(X86Assembler& a, AbstractFunction const& function) {
 		auto res = PushParameters(a);
 
@@ -605,3 +613,26 @@ std::shared_ptr<MembercallConvention> MembercallConvention::create() {
 }
 
 MembercallConvention::~MembercallConvention() {}
+
+
+void StdcallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromStdcall(static_cast<X86Assembler&>(a), function).generateDefaultCleanup();
+}
+
+void StdcallConvention::generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromStdcall(static_cast<X86Assembler&>(a), function).generateIntoDefault();
+}
+
+void StdcallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromStdcall(static_cast<X86Assembler&>(a), function).generateOriginalCleanup();
+}
+
+void StdcallConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromStdcall(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
+}
+
+std::shared_ptr<StdcallConvention> StdcallConvention::create() {
+	return std::make_shared<StdcallConvention>();
+}
+
+StdcallConvention::~StdcallConvention() {}

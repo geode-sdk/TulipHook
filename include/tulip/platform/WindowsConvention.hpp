@@ -67,4 +67,16 @@ namespace tulip::hook {
 
 		static std::shared_ptr<MembercallConvention> create();
 	};
+
+	class TULIP_HOOK_DLL StdcallConvention : public CallingConvention {
+	public:
+		~StdcallConvention() override;
+
+		void generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) override;
+
+		static std::shared_ptr<StdcallConvention> create();
+	};
 }
