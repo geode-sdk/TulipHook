@@ -92,6 +92,7 @@ namespace tulip::hook {
 		void jmp(uint64_t address);
 
 		void call(X86Register reg);
+		void call(uint32_t value);
 
 		void movsd(X86Register reg, X86Pointer ptr);
 		void movsd(X86Pointer ptr, X86Register reg);

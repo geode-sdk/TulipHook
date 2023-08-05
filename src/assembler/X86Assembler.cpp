@@ -107,9 +107,16 @@ void X86Assembler::jmp(uint64_t address) {
 	this->write32(address - this->currentAddress() - 5 + 1);
 }
 
+void X86Assembler::call(uint32_t address) {
+	this->write8(0xE8);
+	// typical formula is target - addr - 5,
+	// but add + 1 because we just wrote one byte
+	this->write32(address - this->currentAddress() - 5 + 1);
+}
+
 void X86Assembler::call(X86Register reg) {
 	this->write8(0xFF);
-	this->write8(0xD0 | regIdx(reg));
+	this->encodeModRM(reg, 2);
 }
 
 void X86Assembler::movsd(X86Register reg, X86Pointer ptr) {

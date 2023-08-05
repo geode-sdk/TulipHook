@@ -44,8 +44,7 @@ std::vector<uint8_t> WindowsHandlerGenerator::handlerBytes(uint64_t address) {
 	a.push(EAX);
 
 	// call the pre handler, incrementing
-	a.mov(EAX, reinterpret_cast<uintptr_t>(preHandler));
-	a.call(EAX);
+	a.call(reinterpret_cast<uintptr_t>(preHandler));
 
 	a.add(ESP, 4);
 
@@ -88,8 +87,7 @@ std::vector<uint8_t> WindowsHandlerGenerator::handlerBytes(uint64_t address) {
 	a.movsd(m[ESP], XMM0);
 
 	// call the post handler, decrementing
-	a.mov(EAX, reinterpret_cast<uintptr_t>(postHandler));
-	a.call(EAX);
+	a.call(reinterpret_cast<uintptr_t>(postHandler));
 
 	// recover the return values
 	a.mov(EAX, m[ESP + 0x10]);
@@ -126,8 +124,7 @@ std::vector<uint8_t> WindowsWrapperGenerator::wrapperBytes(uint64_t address) {
 
 	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
 
-	a.mov(EAX, reinterpret_cast<uintptr_t>(m_address));
-	a.call(EAX);
+	a.call(reinterpret_cast<uintptr_t>(m_address));
 
 	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
 
@@ -139,8 +136,7 @@ std::vector<uint8_t> WindowsWrapperGenerator::reverseWrapperBytes(uint64_t addre
 
 	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
 
-	a.mov(EAX, reinterpret_cast<uintptr_t>(m_address));
-	a.call(EAX);
+	a.call(reinterpret_cast<uintptr_t>(m_address));
 
 	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
 

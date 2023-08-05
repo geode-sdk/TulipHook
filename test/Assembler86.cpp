@@ -22,7 +22,8 @@ TEST(X86AssemblerTest, JmpCall) {
 	a.call(EAX);
 	a.call(EBP);
 	a.call(ESP);
-	EXPECT_EQ(a.buffer(), "\xE9\x8D\xFF\x0A\x00\xFF\xE1\xFF\xD0\xFF\xD5\xFF\xD4"_bytes);
+	a.call(0x456);
+	EXPECT_EQ(a.buffer(), "\xE9\x8D\xFF\x0A\x00\xFF\xE1\xFF\xD0\xFF\xD5\xFF\xD4\xE8\x2F\x03\x00\x00"_bytes);
 }
 
 TEST(X86AssemblerTest, Push) {
