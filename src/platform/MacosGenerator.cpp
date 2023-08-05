@@ -126,6 +126,8 @@ std::vector<uint8_t> MacosHandlerGenerator::handlerBytes(uint64_t address) {
 	a.label("content");
 	a.write64(reinterpret_cast<uint64_t>(m_content));
 
+	a.updateLabels();
+
 	return std::move(a.m_buffer);
 }
 
