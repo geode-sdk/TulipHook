@@ -32,6 +32,19 @@ namespace tulip::hook {
 			offset(offset) {}
 	};
 
+	inline X86Pointer operator+(X86Register reg, int32_t offset) {
+		return X86Pointer(reg, offset);
+	}
+
+	// Use this to easily express a X86Pointer, like so:
+	// RegMem32 m;
+	// m[ESP], m[ESP + 4]
+	struct RegMem32 {
+		X86Pointer operator[](X86Pointer ptr) {
+			return ptr;
+		}
+	};
+
 	class X86Assembler : public BaseAssembler {
 	public:
 		X86Assembler(uint64_t baseAddress);

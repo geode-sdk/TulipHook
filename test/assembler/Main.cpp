@@ -35,6 +35,7 @@ void assertEqImpl(T&& a, U&& b, const char* expr, const char* file, int line) {
 
 int main() {
     using enum X86Register;
+    RegMem32 m;
 
     {
         X86Assembler a(0x123);
@@ -65,24 +66,24 @@ int main() {
         X86Assembler a(0x123);
         a.mov(EAX, EAX);
         a.mov(ECX, EAX);
-        a.mov(ECX, X86Pointer(EDX, 4));
-        a.mov(ECX, X86Pointer(EBP, 4));
-        a.mov(X86Pointer(EBP, 4), ESP);
-        a.mov(X86Pointer(EBP), EAX);
+        a.mov(ECX, m[EDX + 4]);
+        a.mov(ECX, m[EBP + 4]);
+        a.mov(m[EBP + 4], ESP);
+        a.mov(m[EBP], EAX);
         assertEq(a.buffer(), "\x89\xC0\x89\xC1\x8B\x4A\x04\x8B\x4D\x04\x89\x65\x04\x89\x45\x00"_bytes);
     }
 
     {
         X86Assembler a(0x123);
-        a.movsd(X86Pointer(ESP), XMM0);
-        a.movsd(XMM1, X86Pointer(ESP, 4));
+        a.movsd(m[ESP], XMM0);
+        a.movsd(XMM1, m[ESP + 4]);
         assertEq(a.buffer(), "\xF2\x0F\x11\x04\x24\xF2\x0F\x10\x4C\x24\x04"_bytes);
     }
 
     {
         X86Assembler a(0x123);
-        a.movss(X86Pointer(ESP), XMM0);
-        a.movss(XMM1, X86Pointer(ESP, 4));
+        a.movss(m[ESP], XMM0);
+        a.movss(XMM1, m[ESP + 4]);
         assertEq(a.buffer(), "\xF3\x0F\x11\x04\x24\xF3\x0F\x10\x4C\x24\x04"_bytes);
     }
 }
