@@ -13,7 +13,6 @@ namespace tulip::hook {
 		EBP,
 		ESI,
 		EDI,
-		EIP = 0x40,
 		XMM0 = 0x80,
 		XMM1,
 		XMM2,
@@ -55,6 +54,9 @@ namespace tulip::hook {
 
 		void movsd(X86Register reg, X86Pointer ptr);
 		void movsd(X86Pointer ptr, X86Register reg);
+
+		void movss(X86Register reg, X86Pointer ptr);
+		void movss(X86Pointer ptr, X86Register reg);
 
 		void mov(X86Register reg, uint32_t value);
 		void mov(X86Register reg, X86Pointer ptr);
