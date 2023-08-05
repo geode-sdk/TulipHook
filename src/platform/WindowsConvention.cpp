@@ -418,10 +418,9 @@ public:
 				}
 			}
 			else {
-				auto const originalOffset = m_originalStackSize + param.originalLocation + 4;
 				for (size_t i = 0; i < param.type.m_size; i += 4) {
 					a.mov(EAX, m[ESP + (resultOffset + i)]);
-					a.mov(m[ESP + (originalOffset + i)], EAX);
+					a.mov(m[ESP + (param.originalLocation + i)], EAX);
 				}
 			}
 		}
