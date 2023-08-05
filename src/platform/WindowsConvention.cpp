@@ -1,3 +1,5 @@
+#include "../assembler/x86Assembler.hpp"
+
 #include <AbstractFunction.hpp>
 #include <Platform.hpp>
 #include <algorithm>
@@ -56,6 +58,11 @@ private:
 	// whether to clean up stack when doing orig -> detour
 	bool m_isCallerCleanup = false;
 
+	X86Assembler& a;
+
+	PushParameters(X86Assembler& a) :
+		a(a) {}
+
 	static size_t paramSize(AbstractType const& type) {
 		// this rounds a number up to the nearest multiple of 4
 		return (type.m_size + 3) / 4 * 4;
@@ -82,8 +89,8 @@ private:
 	}
 
 public:
-	static PushParameters fromCdecl(AbstractFunction const& function) {
-		auto res = PushParameters();
+	static PushParameters fromCdecl(X86Assembler& a, AbstractFunction const& function) {
+		auto res = PushParameters(a);
 
 		// structs are returned as pointer through first parameter
 		res.m_returnValueLocation = returnLocation(function);
@@ -101,8 +108,8 @@ public:
 		return res;
 	}
 
-	static PushParameters fromThiscall(AbstractFunction const& function) {
-		auto res = PushParameters();
+	static PushParameters fromThiscall(X86Assembler& a, AbstractFunction const& function) {
+		auto res = PushParameters(a);
 
 		// structs are returned as pointer through first parameter
 		res.m_returnValueLocation = returnLocation(function);
@@ -131,8 +138,8 @@ public:
 		return res;
 	}
 
-	static PushParameters fromFastcall(AbstractFunction const& function) {
-		auto res = PushParameters();
+	static PushParameters fromFastcall(X86Assembler& a, AbstractFunction const& function) {
+		auto res = PushParameters(a);
 		size_t registersUsed = 0;
 
 		// structs are returned as pointer through first parameter
@@ -162,8 +169,8 @@ public:
 		return res;
 	}
 
-	static PushParameters fromOptcall(AbstractFunction const& function) {
-		auto res = PushParameters();
+	static PushParameters fromOptcall(X86Assembler& a, AbstractFunction const& function) {
+		auto res = PushParameters(a);
 		size_t registersUsed = 0;
 
 		// structs are returned as pointer through first parameter
@@ -220,8 +227,8 @@ public:
 		return res;
 	}
 
-	static PushParameters fromMembercall(AbstractFunction const& function) {
-		auto res = PushParameters();
+	static PushParameters fromMembercall(X86Assembler& a, AbstractFunction const& function) {
+		auto res = PushParameters(a);
 		size_t registersUsed = 0;
 
 		// structs are returned as pointer through first parameter
@@ -373,8 +380,8 @@ public:
 
 		// clean up stack from the ones we added
 		out << "add esp, 0x" << m_resultStackSize << "\n";
-		
-		// if the function is caller cleaned, then generateOriginalCleanup 
+
+		// if the function is caller cleaned, then generateOriginalCleanup
 		// or the original GD function cleans it up
 		if (m_isCallerCleanup) {
 			out << "ret\n";
@@ -448,20 +455,20 @@ public:
 	}
 };
 
-std::string CdeclConvention::generateDefaultCleanup(AbstractFunction const& function) {
-	return PushParameters::fromCdecl(function).generateDefaultCleanup();
+void CdeclConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromCdecl(static_cast<X86Assembler&>(a), function).generateDefaultCleanup();
 }
 
-std::string CdeclConvention::generateIntoDefault(AbstractFunction const& function) {
-	return PushParameters::fromCdecl(function).generateIntoDefault();
+void CdeclConvention::generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromCdecl(static_cast<X86Assembler&>(a), function).generateIntoDefault();
 }
 
-std::string CdeclConvention::generateOriginalCleanup(AbstractFunction const& function) {
-	return PushParameters::fromCdecl(function).generateOriginalCleanup();
+void CdeclConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromCdecl(static_cast<X86Assembler&>(a), function).generateOriginalCleanup();
 }
 
-std::string CdeclConvention::generateIntoOriginal(AbstractFunction const& function) {
-	return PushParameters::fromCdecl(function).generateIntoOriginal();
+void CdeclConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromCdecl(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
 }
 
 std::shared_ptr<CdeclConvention> CdeclConvention::create() {
@@ -470,11 +477,11 @@ std::shared_ptr<CdeclConvention> CdeclConvention::create() {
 
 CdeclConvention::~CdeclConvention() {}
 
-std::string ThiscallConvention::generateDefaultCleanup(AbstractFunction const& function) {
-	return PushParameters::fromThiscall(function).generateDefaultCleanup();
+void ThiscallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromThiscall(static_cast<X86Assembler&>(a), function).generateDefaultCleanup();
 }
 
-std::string ThiscallConvention::generateIntoDefault(AbstractFunction const& function) {
+void ThiscallConvention::generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) {
 	// Class::memberFun(this, int, int, int)
 	// ecx    <= this
 	// 0x4    <= first
@@ -486,15 +493,15 @@ std::string ThiscallConvention::generateIntoDefault(AbstractFunction const& func
 	// push [esp + 0xc]   first
 	// push ecx           this
 
-	return PushParameters::fromThiscall(function).generateIntoDefault();
+	return PushParameters::fromThiscall(static_cast<X86Assembler&>(a), function).generateIntoDefault();
 }
 
-std::string ThiscallConvention::generateOriginalCleanup(AbstractFunction const& function) {
-	return PushParameters::fromThiscall(function).generateOriginalCleanup();
+void ThiscallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromThiscall(static_cast<X86Assembler&>(a), function).generateOriginalCleanup();
 }
 
-std::string ThiscallConvention::generateIntoOriginal(AbstractFunction const& function) {
-	return PushParameters::fromThiscall(function).generateIntoOriginal();
+void ThiscallConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromThiscall(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
 }
 
 std::shared_ptr<ThiscallConvention> ThiscallConvention::create() {
@@ -503,11 +510,11 @@ std::shared_ptr<ThiscallConvention> ThiscallConvention::create() {
 
 ThiscallConvention::~ThiscallConvention() {}
 
-std::string FastcallConvention::generateDefaultCleanup(AbstractFunction const& function) {
-	return PushParameters::fromFastcall(function).generateDefaultCleanup();
+void FastcallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromFastcall(static_cast<X86Assembler&>(a), function).generateDefaultCleanup();
 }
 
-std::string FastcallConvention::generateIntoDefault(AbstractFunction const& function) {
+void FastcallConvention::generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) {
 	// struct Big { int x; int y; int z; }
 	// test3(Big, int, float, int, float)
 	// 0x4                  <= Big.x
@@ -528,15 +535,15 @@ std::string FastcallConvention::generateIntoDefault(AbstractFunction const& func
 	// push [esp + 0x1c]    <= Big.y        0x14     0x18
 	// push [esp + 0x1c]    <= Big.x        0x18     0x1c
 
-	return PushParameters::fromFastcall(function).generateIntoDefault();
+	return PushParameters::fromFastcall(static_cast<X86Assembler&>(a), function).generateIntoDefault();
 }
 
-std::string FastcallConvention::generateOriginalCleanup(AbstractFunction const& function) {
-	return PushParameters::fromFastcall(function).generateOriginalCleanup();
+void FastcallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromFastcall(static_cast<X86Assembler&>(a), function).generateOriginalCleanup();
 }
 
-std::string FastcallConvention::generateIntoOriginal(AbstractFunction const& function) {
-	return PushParameters::fromFastcall(function).generateIntoOriginal();
+void FastcallConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromFastcall(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
 }
 
 std::shared_ptr<FastcallConvention> FastcallConvention::create() {
@@ -545,11 +552,11 @@ std::shared_ptr<FastcallConvention> FastcallConvention::create() {
 
 FastcallConvention::~FastcallConvention() {}
 
-std::string OptcallConvention::generateDefaultCleanup(AbstractFunction const& function) {
-	return PushParameters::fromOptcall(function).generateDefaultCleanup();
+void OptcallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromOptcall(static_cast<X86Assembler&>(a), function).generateDefaultCleanup();
 }
 
-std::string OptcallConvention::generateIntoDefault(AbstractFunction const& function) {
+void OptcallConvention::generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) {
 	// __optcall is like __fastcall, except parameters 0..3 are
 	// passed through xmm0..xmm3 if they are floating-point and
 	// structs are all passed last
@@ -580,15 +587,15 @@ std::string OptcallConvention::generateIntoDefault(AbstractFunction const& funct
 	// push [esp + 0x28]     <= Big.y        0x1c
 	// push [esp + 0x28]     <= Big.x        0x20
 
-	return PushParameters::fromOptcall(function).generateIntoDefault();
+	return PushParameters::fromOptcall(static_cast<X86Assembler&>(a), function).generateIntoDefault();
 }
 
-std::string OptcallConvention::generateOriginalCleanup(AbstractFunction const& function) {
-	return PushParameters::fromOptcall(function).generateOriginalCleanup();
+void OptcallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromOptcall(static_cast<X86Assembler&>(a), function).generateOriginalCleanup();
 }
 
-std::string OptcallConvention::generateIntoOriginal(AbstractFunction const& function) {
-	return PushParameters::fromOptcall(function).generateIntoOriginal();
+void OptcallConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromOptcall(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
 }
 
 std::shared_ptr<OptcallConvention> OptcallConvention::create() {
@@ -597,20 +604,20 @@ std::shared_ptr<OptcallConvention> OptcallConvention::create() {
 
 OptcallConvention::~OptcallConvention() {}
 
-std::string MembercallConvention::generateDefaultCleanup(AbstractFunction const& function) {
-	return PushParameters::fromMembercall(function).generateDefaultCleanup();
+void MembercallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromMembercall(static_cast<X86Assembler&>(a), function).generateDefaultCleanup();
 }
 
-std::string MembercallConvention::generateIntoDefault(AbstractFunction const& function) {
-	return PushParameters::fromMembercall(function).generateIntoDefault();
+void MembercallConvention::generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromMembercall(static_cast<X86Assembler&>(a), function).generateIntoDefault();
 }
 
-std::string MembercallConvention::generateOriginalCleanup(AbstractFunction const& function) {
-	return PushParameters::fromMembercall(function).generateOriginalCleanup();
+void MembercallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromMembercall(static_cast<X86Assembler&>(a), function).generateOriginalCleanup();
 }
 
-std::string MembercallConvention::generateIntoOriginal(AbstractFunction const& function) {
-	return PushParameters::fromMembercall(function).generateIntoOriginal();
+void MembercallConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) {
+	return PushParameters::fromMembercall(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
 }
 
 std::shared_ptr<MembercallConvention> MembercallConvention::create() {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../CallingConvention.hpp"
+
 #include <memory>
 #include <string>
 
@@ -11,10 +12,10 @@ namespace tulip::hook {
 	public:
 		~DefaultConvention() override;
 
-		std::string generateDefaultCleanup(AbstractFunction const& function) override;
-		std::string generateIntoDefault(AbstractFunction const& function) override;
-		std::string generateIntoOriginal(AbstractFunction const& function) override;
-		std::string generateOriginalCleanup(AbstractFunction const& function) override;
+		void generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) override;
 
 		static std::shared_ptr<DefaultConvention> create();
 	};

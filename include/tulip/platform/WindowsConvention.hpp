@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../CallingConvention.hpp"
+
 #include <memory>
 #include <string>
 
@@ -11,10 +12,10 @@ namespace tulip::hook {
 	public:
 		~CdeclConvention() override;
 
-		std::string generateDefaultCleanup(AbstractFunction const& function) override;
-		std::string generateIntoDefault(AbstractFunction const& function) override;
-		std::string generateIntoOriginal(AbstractFunction const& function) override;
-		std::string generateOriginalCleanup(AbstractFunction const& function) override;
+		void generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) override;
 
 		static std::shared_ptr<CdeclConvention> create();
 	};
@@ -23,10 +24,10 @@ namespace tulip::hook {
 	public:
 		~ThiscallConvention() override;
 
-		std::string generateDefaultCleanup(AbstractFunction const& function) override;
-		std::string generateIntoDefault(AbstractFunction const& function) override;
-		std::string generateIntoOriginal(AbstractFunction const& function) override;
-		std::string generateOriginalCleanup(AbstractFunction const& function) override;
+		void generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) override;
 
 		static std::shared_ptr<ThiscallConvention> create();
 	};
@@ -35,10 +36,10 @@ namespace tulip::hook {
 	public:
 		~FastcallConvention() override;
 
-		std::string generateDefaultCleanup(AbstractFunction const& function) override;
-		std::string generateIntoDefault(AbstractFunction const& function) override;
-		std::string generateIntoOriginal(AbstractFunction const& function) override;
-		std::string generateOriginalCleanup(AbstractFunction const& function) override;
+		void generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) override;
 
 		static std::shared_ptr<FastcallConvention> create();
 	};
@@ -47,10 +48,10 @@ namespace tulip::hook {
 	public:
 		~OptcallConvention() override;
 
-		std::string generateDefaultCleanup(AbstractFunction const& function) override;
-		std::string generateIntoDefault(AbstractFunction const& function) override;
-		std::string generateIntoOriginal(AbstractFunction const& function) override;
-		std::string generateOriginalCleanup(AbstractFunction const& function) override;
+		void generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) override;
 
 		static std::shared_ptr<OptcallConvention> create();
 	};
@@ -59,10 +60,10 @@ namespace tulip::hook {
 	public:
 		~MembercallConvention() override;
 
-		std::string generateDefaultCleanup(AbstractFunction const& function) override;
-		std::string generateIntoDefault(AbstractFunction const& function) override;
-		std::string generateIntoOriginal(AbstractFunction const& function) override;
-		std::string generateOriginalCleanup(AbstractFunction const& function) override;
+		void generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) override;
+		void generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) override;
 
 		static std::shared_ptr<MembercallConvention> create();
 	};
