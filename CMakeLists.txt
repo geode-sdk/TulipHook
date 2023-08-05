@@ -6,15 +6,13 @@ include(cmake/CPM.cmake)
 
 option(TULIP_LINK_SOURCE "Link to TulipHook source files, including external libs" OFF)
 
-if(TULIP_LINK_SOURCE)
+if(TULIP_LINK_SOURCE OR PROJECT_IS_TOP_LEVEL)
 	add_subdirectory(src)
 endif()
 
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-	add_subdirectory(src)
+if(PROJECT_IS_TOP_LEVEL)
 	add_subdirectory(test)
 endif()
-
 
 CPMAddPackage("gh:bitwizeshift/result#a97e66b")
 

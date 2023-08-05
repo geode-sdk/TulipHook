@@ -2,16 +2,25 @@ cmake_minimum_required(VERSION 3.21)
 
 project(TulipHookTest LANGUAGES CXX C)
 
-add_executable(TulipHookTest Main.cpp)
-target_link_libraries(TulipHookTest PUBLIC TulipHook)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+CPMAddPackage("gh:google/googletest#f8d7d77")
+
+enable_testing()
+
+add_executable(${PROJECT_NAME} assembler.cpp hook.cpp cconvs.cpp)
+target_link_libraries(${PROJECT_NAME} PUBLIC GTest::gtest_main TulipHook)
 
 if(WIN32)
-	set_target_properties(TulipHookTest PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
 
-	add_executable(TulipHookWinTest WinTest.cpp)
-	target_link_libraries(TulipHookWinTest PUBLIC TulipHook)
-	set_target_properties(TulipHookWinTest PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
+	add_executable(WinTest winTest.cpp)
+	target_link_libraries(WinTest PUBLIC TulipHook)
+	set_target_properties(WinTest PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
+
+	add_library(TestMod SHARED mod.cpp)
+	target_link_libraries(TestMod PUBLIC TulipHook)
 endif()
 
-add_subdirectory(mod)
-add_subdirectory(assembler)
+include(GoogleTest)
+gtest_discover_tests(${PROJECT_NAME})

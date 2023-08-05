@@ -13,39 +13,34 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        - name: "Windows"
-          os_identifier: "win"
-          os: windows-2022
+        - name: 'Windows'
+          id: win
+          os: windows-latest
           extra_flags: '-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=Debug'
           out_paths: './build/src/TulipHook.lib ./build/test/TulipHookTest.exe'
-          cli_cmd: ''
 
-        - name: "macOS"
-          os_identifier: "mac"
+        - name: 'macOS'
+          id: mac
           os: macos-latest
           extra_flags: "-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=Debug"
           out_paths: './build/src/libTulipHook.a ./build/test/TulipHookTest'
-          cli_cmd: 'chmod +x $GITHUB_WORKSPACE/cli/geode'
-          
-    name: ${{ matrix.config.name }}
+
+    name: Build ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
       with:
         submodules: recursive
 
-    - uses: ilammy/msvc-dev-cmd@v1
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x86
-      if: matrix.config.os_identifier == 'win'
-      
-    - name: Configure ccache
-      uses: hendrikmuhs/ccache-action@v1.2.8
-      with:
-        key: v1-${{ matrix.config.os }}-${{ github.ref }}
-      
-    - name: Update ccache and ninja
+      if: matrix.config.id == 'win'
+
+    - name: Update ccache and Ninja
       shell: bash
       run: |
         choco install ccache
@@ -53,35 +48,33 @@ jobs:
         ccache --version
         echo "=============="
         ninja --version
-      if: matrix.config.os_identifier == 'win'
-        
+      if: matrix.config.id == 'win'
+
+    - name: Configure ccache
+      uses: hendrikmuhs/ccache-action@v1
+      with:
+        key: v1-${{ matrix.config.os }}-${{ github.ref }}
+
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3
-      if: matrix.config.os_identifier == 'mac'
+      if: matrix.config.id == 'mac'
 
     - name: Configure CMake
       shell: bash
-      working-directory: ${{ github.workspace }}
-      run: |
-        cmake -G Ninja -B ./build ${{ matrix.config.extra_flags }}
-        
+      run: cmake -G Ninja -B ./build ${{ matrix.config.extra_flags }}
+
     - name: Build
       shell: bash
-      working-directory: ${{ github.workspace }}
       run: |
         cmake --build ./build --parallel
-
-    - name: Move to output folder
-      shell: bash
-      working-directory: ${{ github.workspace }}
-      run: |
         mkdir ./out
-        ls ./build/src
-        mv ${{ matrix.config.out_paths }} ./out
-    
+        cp ${{ matrix.config.out_paths }} ./out
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
         name: output-${{ matrix.config.os }}
         path: ${{ github.workspace }}/out
 
+    - name: Test
+      run: ctest --test-dir ./build/test --output-on-failure
