@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 
 project(TulipHook LANGUAGES CXX C)
 
-add_library(TulipHook STATIC
+add_library(${PROJECT_NAME} STATIC
 	CallingConvention.cpp
 	Generator.cpp
 	Handler.cpp
@@ -23,8 +23,11 @@ add_library(TulipHook STATIC
 	assembler/x64Assembler.cpp
 )
 
-target_compile_features(TulipHook PUBLIC cxx_std_20)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
+if (MSVC)
+	target_compile_options(${PROJECT_NAME} PUBLIC /EHsc)
+endif ()
 
 set(CAPSTONE_X86_SUPPORT On)
 set(CAPSTONE_INSTALL Off)
@@ -36,17 +39,16 @@ set(CAPSTONE_X86_ATT_DISABLE On)
 
 CPMAddPackage("gh:capstone-engine/capstone#9b7935b")
 
+target_link_libraries(${PROJECT_NAME} PRIVATE capstone)
+target_link_libraries(${PROJECT_NAME} PUBLIC Result)
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DTULIP_HOOK_EXPORTING=1)
 
-target_link_libraries(TulipHook PRIVATE capstone)
-target_link_libraries(TulipHook PUBLIC Result)
-target_compile_definitions(TulipHook PRIVATE -DTULIP_HOOK_EXPORTING=1)
-
-target_include_directories(TulipHook PRIVATE
+target_include_directories(${PROJECT_NAME} PRIVATE
 	${TulipHookRoot_SOURCE_DIR}/include
 	${TulipHookRoot_SOURCE_DIR}/include/tulip
 	${capstone_SOURCE_DIR}/include
 )
 
-target_include_directories(TulipHook INTERFACE
+target_include_directories(${PROJECT_NAME} INTERFACE
 	${TulipHookRoot_SOURCE_DIR}/include
 )
