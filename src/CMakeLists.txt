@@ -37,7 +37,7 @@ set(CAPSTONE_X86_SUPPORT On)
 set(CAPSTONE_X86_REDUCE Off)
 set(CAPSTONE_X86_ATT_DISABLE On)
 
-CPMAddPackage("gh:capstone-engine/capstone#9b7935b")
+CPMAddPackage("gh:geode-sdk/capstone#d2a14e5")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE capstone)
 target_link_libraries(${PROJECT_NAME} PUBLIC Result)
