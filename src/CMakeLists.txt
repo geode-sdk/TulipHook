@@ -19,8 +19,8 @@ add_library(${PROJECT_NAME} STATIC
 	platform/WindowsTarget.cpp
 	platform/X86Generator.cpp
 	assembler/BaseAssembler.cpp
-	assembler/x86Assembler.cpp
-	assembler/x64Assembler.cpp
+	assembler/X86Assembler.cpp
+	assembler/X64Assembler.cpp
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
