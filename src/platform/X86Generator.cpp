@@ -102,44 +102,70 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 
 	std::memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
 
-	if (relativeGroup && detail->x86.encoding.imm_offset != 0) {
-		// std::cout << "testing the disp value: " << detail->x86.operands[0].imm << std::endl;
-		intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) -
-			static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
-		uint8_t* inBinary = reinterpret_cast<uint8_t*>(trampolineAddress);
+	if (detail->x86.encoding.imm_offset != 0) {
+		// branches, jumps, calls
+		if (relativeGroup) {
+			// std::cout << "testing the disp value: " << detail->x86.operands[0].imm << std::endl;
+			intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) -
+				static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
+			uint8_t* inBinary = reinterpret_cast<uint8_t*>(trampolineAddress);
 
-		if (id == X86_INS_JMP) {
-			// res = dst - src - 5
-			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
-			inBinary[0] = 0xe9;
+			if (id == X86_INS_JMP) {
+				// res = dst - src - 5
+				int addrBytes = jmpTargetAddr - trampolineAddress - 5;
+				std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
+				inBinary[0] = 0xe9;
 
-			trampolineAddress += 5;
-		}
-		else if (id == X86_INS_CALL) {
-			// res = dst - src - 5
-			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
-			inBinary[0] = 0xe8;
+				trampolineAddress += 5;
+			}
+			else if (id == X86_INS_CALL) {
+				// res = dst - src - 5
+				int addrBytes = jmpTargetAddr - trampolineAddress - 5;
+				std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
+				inBinary[0] = 0xe8;
 
-			trampolineAddress += 5;
-		}
-		else {
-			// std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
-			// conditional jumps
-			// long conditional jmp size
-			// this is like probably not right idk what instruction this is supposed to be
-			int addrBytes = jmpTargetAddr - trampolineAddress - 6;
-			std::memcpy(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int));
-			inBinary[1] = inBinary[0] + 0x10;
-			inBinary[0] = 0x0f;
+				trampolineAddress += 5;
+			}
+			else {
+				// std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
+				// conditional jumps
+				// long conditional jmp size
+				// this is like probably not right idk what instruction this is supposed to be
+				int addrBytes = jmpTargetAddr - trampolineAddress - 6;
+				std::memcpy(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int));
+				inBinary[1] = inBinary[0] + 0x10;
+				inBinary[0] = 0x0f;
 
-			trampolineAddress += 6;
+				trampolineAddress += 6;
+			}
+
+			originalAddress += size;
+			return;
 		}
 	}
-	else {
-		trampolineAddress += size;
+
+	if (detail->x86.encoding.disp_offset != 0) {
+		// [rip + 0xval]s
+		for (int i = 0; i < detail->x86.op_count; ++i) {
+			auto& operand = detail->x86.operands[i];
+
+			if (operand.type == X86_OP_MEM && operand.mem.base == X86_REG_RIP) {
+				auto disp = operand.mem.disp;
+				auto difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
+
+				int addrBytes = disp - difference;
+				auto offset = detail->x86.encoding.disp_offset;
+
+				std::memcpy(reinterpret_cast<void*>(trampolineAddress + offset), &addrBytes, sizeof(int));
+
+				trampolineAddress += size;
+				originalAddress += size;
+				return;
+			}
+		}
 	}
+
+	trampolineAddress += size;
 	originalAddress += size;
 }
 
