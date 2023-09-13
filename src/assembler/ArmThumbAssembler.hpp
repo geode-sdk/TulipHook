@@ -56,6 +56,7 @@ namespace tulip::hook {
 		void vpop(ArmRegisterArray const& array);
 
 		void ldr(ArmRegister dst, std::string const& label);
+		void ldrw(ArmRegister dst, std::string const& label);
 
 		void mov(ArmRegister dst, ArmRegister src);
 
