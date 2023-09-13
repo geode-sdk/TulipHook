@@ -80,6 +80,14 @@ void ArmThumbAssembler::ldr(ArmRegister dst, std::string const& label) {
 	this->rwl(8, 3, (int32_t)dst);
 }
 
+void ArmThumbAssembler::ldrw(ArmRegister dst, std::string const& label) {
+	// it supports 12 bit label but im lazy
+	this->label8(label);
+	this->write8(0x00);
+	this->rwl(12, 4, (int32_t)dst);
+	this->write16(0xf8df);
+}
+
 void ArmThumbAssembler::mov(ArmRegister dst, ArmRegister src) {
 	this->write16(0x4600);
 	this->rwl(0, 3, (int32_t)dst);

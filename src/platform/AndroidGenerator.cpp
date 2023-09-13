@@ -101,11 +101,29 @@ std::vector<uint8_t> AndroidHandlerGenerator::handlerBytes(uint64_t address) {
 }
 
 std::vector<uint8_t> AndroidHandlerGenerator::intervenerBytes(uint64_t address) {
-	return {};
+	ArmThumbAssembler a(address);
+	using enum ArmRegister;
+
+	a.ldrw(PC, "handler");
+	a.label("handler");
+	a.write32(reinterpret_cast<uint64_t>(m_handler));
+
+	a.updateLabels();
+
+	return std::move(a.m_buffer);
 }
 
 std::vector<uint8_t> AndroidHandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
-	return {};
+	ArmThumbAssembler a(address);
+	using enum ArmRegister;
+
+	a.ldrw(PC, "original");
+	a.label("original");
+	a.write32(reinterpret_cast<uint64_t>(m_address) + offset);
+
+	a.updateLabels();
+
+	return std::move(a.m_buffer);
 }
 
 Result<void*> AndroidWrapperGenerator::generateWrapper() {
