@@ -14,6 +14,8 @@ add_library(${PROJECT_NAME} STATIC
 	platform/DefaultConvention.cpp
 	platform/MacosGenerator.cpp
 	platform/MacosTarget.cpp
+	platform/AndroidGenerator.cpp
+	platform/AndroidTarget.cpp
 	platform/WindowsConvention.cpp
 	platform/WindowsGenerator.cpp
 	platform/WindowsTarget.cpp
@@ -29,13 +31,17 @@ if (MSVC)
 	target_compile_options(${PROJECT_NAME} PUBLIC /EHsc)
 endif ()
 
-set(CAPSTONE_X86_SUPPORT On)
 set(CAPSTONE_INSTALL Off)
 set(CAPSTONE_ARCHITECTURE_DEFAULT Off)
 
-set(CAPSTONE_X86_SUPPORT On)
-set(CAPSTONE_X86_REDUCE Off)
-set(CAPSTONE_X86_ATT_DISABLE On)
+if (MSVC OR APPLE)
+	set(CAPSTONE_X86_SUPPORT On)
+	set(CAPSTONE_X86_REDUCE Off)
+	set(CAPSTONE_X86_ATT_DISABLE On)
+elseif (ANDROID)
+	set(CAPSTONE_ARM_SUPPORT On)
+endif()
+
 
 CPMAddPackage("gh:geode-sdk/capstone#d2a14e5")
 

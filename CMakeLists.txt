@@ -14,6 +14,8 @@ if(PROJECT_IS_TOP_LEVEL)
 	add_subdirectory(test)
 endif()
 
+add_subdirectory(libraries/dobby)
+
 CPMAddPackage("gh:bitwizeshift/result#a97e66b")
 
 add_library(TulipHookInclude INTERFACE)
