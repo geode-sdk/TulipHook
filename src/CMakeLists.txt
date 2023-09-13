@@ -23,6 +23,7 @@ add_library(${PROJECT_NAME} STATIC
 	assembler/BaseAssembler.cpp
 	assembler/X86Assembler.cpp
 	assembler/X64Assembler.cpp
+	assembler/ArmThumbAssembler.cpp
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
