@@ -1,7 +1,5 @@
 #include "platform_detect_macro.h"
 
-#if defined(TARGET_ARCH_ARM)
-
 #include "dobby/dobby_internal.h"
 
 #include "InstructionRelocation/InstructionRelocationARM.h"
@@ -99,7 +97,7 @@ uint32_t arm_shift_c(uint32_t val, uint32_t shift_type, uint32_t shift_count, ui
   case arm_shift_lsl:
     r_val = val;
     r_val = r_val << shift_count;
-    carry = (r_val >> 32) & 0x1;
+    carry = (r_val >> 31) & 0x1;
     val = r_val;
     break;
   case arm_shift_lsr:
@@ -772,7 +770,7 @@ void gen_thumb_relocate_code(relo_ctx_t *ctx) {
   }
 }
 
-void GenRelocateCode(void *buffer, CodeMemBlock *origin, CodeMemBlock *relocated, bool branch) {
+void GenRelocateCode(void *buffer, void* relocated_mem, CodeMemBlock *origin, CodeMemBlock *relocated, bool branch) {
   relo_ctx_t ctx;
 
   if ((addr_t)buffer % 2) {
@@ -861,7 +859,6 @@ relocate_remain:
   // generate executable code
   {
     // assembler without specific memory address
-    auto relocated_mem = MemoryAllocator::SharedAllocator()->allocateExecMemory(relocated_buffer->GetBufferSize());
     if (relocated_mem == nullptr)
       return;
 
@@ -888,8 +885,7 @@ relocate_remain:
   }
 }
 
-void GenRelocateCodeAndBranch(void *buffer, CodeMemBlock *origin, CodeMemBlock *relocated) {
-  GenRelocateCode(buffer, origin, relocated, true);
+void GenRelocateCodeAndBranch(void *buffer, void* relocated_mem, CodeMemBlock *origin, CodeMemBlock *relocated) {
+  GenRelocateCode(buffer, relocated_mem, origin, relocated, true);
 }
 
-#endif

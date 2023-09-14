@@ -10,6 +10,7 @@ namespace tulip::hook {
 	public:
 		using HandlerGenerator::HandlerGenerator;
 
+		Result<> generateTrampoline(RelocateReturn offsets) override;
 		Result<RelocateReturn> relocateOriginal(uint64_t target) override;
 
 		std::vector<uint8_t> handlerBytes(uint64_t address) override;

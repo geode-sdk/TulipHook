@@ -299,9 +299,5 @@ private:
   tinystl::vector<ThumbRelocLabelEntry *> data_labels_;
 };
 
-#if 0
-void GenRelocateCodeAndBranch(void *buffer, CodeMemBlock *origin, CodeMemBlock *relocated);
-#endif
-
 } // namespace arm
 } // namespace zz
