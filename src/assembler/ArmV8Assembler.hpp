@@ -4,7 +4,7 @@
 
 namespace tulip::hook {
 
-	class Arm8Assembler : public BaseAssembler {
+	class ArmV8Assembler : public BaseAssembler {
 	public:
 		using BaseAssembler::BaseAssembler;
 	};

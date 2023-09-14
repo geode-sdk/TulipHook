@@ -6,10 +6,12 @@
 
 namespace tulip::hook {
 
-	class Arm7HandlerGenerator : public HandlerGenerator {
+	class ArmV8HandlerGenerator : public HandlerGenerator {
 	public:
 		using HandlerGenerator::HandlerGenerator;
 
+		Result<> generateHandler() override;
+		Result<std::vector<uint8_t>> generateIntervener() override;
 		Result<> generateTrampoline(RelocateReturn offsets) override;
 		Result<RelocateReturn> relocateOriginal(uint64_t target) override;
 
@@ -20,8 +22,14 @@ namespace tulip::hook {
 		void relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) override;
 	};
 
-	class Arm7WrapperGenerator : public WrapperGenerator {
+	class ArmV8WrapperGenerator : public WrapperGenerator {
 	public:
 		using WrapperGenerator::WrapperGenerator;
+
+		Result<void*> generateWrapper() override;
+		Result<void*> generateReverseWrapper() override;
+
+		std::vector<uint8_t> wrapperBytes(uint64_t address) override;
+		std::vector<uint8_t> reverseWrapperBytes(uint64_t address) override;
 	};
 }

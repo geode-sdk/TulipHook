@@ -1,18 +1,18 @@
 #pragma once
 
+#include "../generator/ArmV7Generator.hpp"
 #include "AndroidTarget.hpp"
-#include "Target.hpp"
 
 #include <Platform.hpp>
 
-#if defined(TULIP_HOOK_ANDROID) && defined(TULIP_HOOK_ARM_7)
+#if defined(TULIP_HOOK_ANDROID) && defined(TULIP_HOOK_ARMV7)
 
 namespace tulip::hook {
-	class AndroidArm8Target : public AndroidTarget {
+	class AndroidArmV7Target : public AndroidTarget {
 	public:
-		using Target::Target;
+		using AndroidTarget::AndroidTarget;
 
-		static AndroidArm8Target& get();
+		static AndroidArmV7Target& get();
 
 		Result<csh> openCapstone() override;
 
@@ -22,7 +22,7 @@ namespace tulip::hook {
 		std::unique_ptr<WrapperGenerator> getWrapperGenerator(void* address, WrapperMetadata const& metadata) override;
 	};
 
-	using PlatformTarget = AndroidArm8Target;
+	using PlatformTarget = AndroidArmV7Target;
 }
 
 #endif

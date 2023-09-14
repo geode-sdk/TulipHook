@@ -54,9 +54,9 @@
 	#define TULIP_HOOK_DEFAULT_CONV 
 
 	#if defined(__arm__)
-		#define TULIP_HOOK_ARM_7 1
+		#define TULIP_HOOK_ARMV7 1
 	#elif defined(__aarch64__)
-		#define TULIP_HOOK_ARM_8 1
+		#define TULIP_HOOK_ARMV8 1
 	#endif
 
 	#ifdef TULIP_HOOK_EXPORTING
