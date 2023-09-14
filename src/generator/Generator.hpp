@@ -21,15 +21,17 @@ namespace tulip::hook {
 			void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata
 		);
 
-		virtual Result<> generateHandler() = 0;
-		virtual Result<std::vector<uint8_t>> generateIntervener() = 0;
+		virtual ~HandlerGenerator() = default;
+
+		virtual Result<> generateHandler();
+		virtual Result<std::vector<uint8_t>> generateIntervener();
 
 		struct RelocateReturn {
 			uint64_t m_trampolineOffset;
 			uint64_t m_originalOffset;
 		};
 
-		virtual Result<> generateTrampoline(RelocateReturn offsets) = 0;
+		virtual Result<> generateTrampoline(RelocateReturn offsets);
 		virtual Result<RelocateReturn> relocateOriginal(uint64_t target) = 0;
 
 		virtual std::vector<uint8_t> handlerBytes(uint64_t address) = 0;
@@ -44,12 +46,14 @@ namespace tulip::hook {
 		void* const m_address;
 		WrapperMetadata const m_metadata;
 
+		virtual ~WrapperGenerator() = default;
+
 		WrapperGenerator(void* address, WrapperMetadata const& metadata);
 
-		virtual Result<void*> generateWrapper() = 0;
-		virtual Result<void*> generateReverseWrapper() = 0;
+		virtual Result<void*> generateWrapper();
+		virtual Result<void*> generateReverseWrapper();
 
-		virtual std::vector<uint8_t> wrapperBytes(uint64_t address) = 0;
-		virtual std::vector<uint8_t> reverseWrapperBytes(uint64_t address) = 0;
+		virtual std::vector<uint8_t> wrapperBytes(uint64_t address);
+		virtual std::vector<uint8_t> reverseWrapperBytes(uint64_t address);
 	};
 }

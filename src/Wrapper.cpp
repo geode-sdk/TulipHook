@@ -1,6 +1,6 @@
 #include "Wrapper.hpp"
 
-#include "platform/PlatformGenerator.hpp"
+#include "target/PlatformTarget.hpp"
 
 using namespace tulip::hook;
 
@@ -11,8 +11,8 @@ Wrapper& Wrapper::get() {
 
 Result<void*> Wrapper::createWrapper(void* address, WrapperMetadata const& metadata) {
 	if (m_wrappers.count(address) == 0) {
-		auto generator = PlatformWrapperGenerator(address, metadata);
-		TULIP_HOOK_UNWRAP_INTO(auto wrapped, generator.generateWrapper());
+		auto generator = Target::get().getWrapperGenerator(address, metadata);
+		TULIP_HOOK_UNWRAP_INTO(auto wrapped, generator->generateWrapper());
 		m_wrappers[address] = wrapped;
 	}
 
@@ -21,8 +21,8 @@ Result<void*> Wrapper::createWrapper(void* address, WrapperMetadata const& metad
 
 Result<void*> Wrapper::createReverseWrapper(void* address, WrapperMetadata const& metadata) {
 	if (m_reverseWrappers.count(address) == 0) {
-		auto generator = PlatformWrapperGenerator(address, metadata);
-		TULIP_HOOK_UNWRAP_INTO(auto wrapped, generator.generateReverseWrapper());
+		auto generator = Target::get().getWrapperGenerator(address, metadata);
+		TULIP_HOOK_UNWRAP_INTO(auto wrapped, generator->generateReverseWrapper());
 		m_reverseWrappers[address] = wrapped;
 	}
 

@@ -54,7 +54,7 @@ uint32_t WindowsTarget::getMaxProtection() {
 	return PAGE_EXECUTE_READWRITE;
 }
 
-WindowsTarget& WindowsTarget::get() {
+Target& Target::get() {
 	static WindowsTarget ret;
 	return ret;
 }
@@ -68,6 +68,16 @@ Result<csh> WindowsTarget::openCapstone() {
 	}
 
 	return Ok(m_capstone);
+}
+
+std::unique_ptr<HandlerGenerator> WindowsTarget::getHandlerGenerator(
+	void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata
+) {
+	return std::make_unique<X86HandlerGenerator>(address, trampoline, handler, content, wrapped, metadata);
+}
+
+std::unique_ptr<WrapperGenerator> WindowsTarget::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {
+	return std::make_unique<X86WrapperGenerator>(address, metadata);
 }
 
 #endif

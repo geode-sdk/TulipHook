@@ -1,10 +1,15 @@
 #pragma once
 
+#include <HandlerData.hpp>
 #include <TulipResult.hpp>
+#include <WrapperData.hpp>
 #include <capstone/capstone.h>
 #include <memory>
 
 namespace tulip::hook {
+	class HandlerGenerator;
+	class WrapperGenerator;
+
 	class Target {
 	protected:
 		csh m_capstone = 0;
@@ -14,6 +19,10 @@ namespace tulip::hook {
 		size_t m_remainingOffset = 0;
 
 	public:
+		static Target& get();
+
+		virtual ~Target() = default;
+
 		Result<void*> allocateArea(size_t size);
 
 		Result<> writeMemory(void* destination, void const* source, size_t size);
@@ -27,5 +36,11 @@ namespace tulip::hook {
 		virtual Result<> protectMemory(void* address, size_t size, uint32_t protection) = 0;
 		virtual Result<> rawWriteMemory(void* destination, void const* source, size_t size) = 0;
 		virtual uint32_t getMaxProtection() = 0;
+
+		virtual std::unique_ptr<HandlerGenerator> getHandlerGenerator(
+			void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata
+		) = 0;
+		virtual std::unique_ptr<WrapperGenerator> getWrapperGenerator(void* address, WrapperMetadata const& metadata) = 0;
+		// sorry :( virtual BaseAssembler* getAssembler(int64_t baseAddress);
 	};
 };

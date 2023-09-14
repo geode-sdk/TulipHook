@@ -10,7 +10,6 @@ using namespace tulip::hook;
 #include <sys/mman.h>
 
 Result<> AndroidTarget::allocatePage() {
-
 	auto const protection = PROT_READ | PROT_WRITE | PROT_EXEC;
 	auto const flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
@@ -28,7 +27,7 @@ Result<> AndroidTarget::allocatePage() {
 }
 
 Result<uint32_t> AndroidTarget::getProtection(void* address) {
-	// why 
+	// why
 	// just why does posix not have get protection
 	return Ok(this->getMaxProtection());
 }
@@ -56,27 +55,6 @@ Result<> AndroidTarget::rawWriteMemory(void* destination, void const* source, si
 
 uint32_t AndroidTarget::getMaxProtection() {
 	return PROT_READ | PROT_WRITE | PROT_EXEC;
-}
-
-AndroidTarget& AndroidTarget::get() {
-	static AndroidTarget ret;
-	return ret;
-}
-
-Result<csh> AndroidTarget::openCapstone() {
-	cs_err status;
-
-#if defined(TULIP_HOOK_ARM_7)
-	status = cs_open(CS_ARCH_ARM, CS_MODE_32, &m_capstone);
-#elif defined(TULIP_HOOK_ARM_8)
-	status = cs_open(CS_ARCH_ARM64, CS_MODE_64, &m_capstone);
-#endif
-
-	if (status != CS_ERR_OK) {
-		return Err("Couldn't open capstone");
-	}
-
-	return Ok(m_capstone);
 }
 
 #endif

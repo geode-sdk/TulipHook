@@ -2,7 +2,7 @@
 #include "Misc.hpp"
 #include "Pool.hpp"
 #include "Wrapper.hpp"
-#include "platform/PlatformTarget.hpp"
+#include "target/PlatformTarget.hpp"
 
 #include <TulipHook.hpp>
 
@@ -31,7 +31,7 @@ void tulip::hook::updateHookMetadata(
 }
 
 Result<> tulip::hook::writeMemory(void* destination, void const* source, size_t size) noexcept {
-	return PlatformTarget::get().writeMemory(destination, source, size);
+	return Target::get().writeMemory(destination, source, size);
 }
 
 Result<void*> tulip::hook::followJumps(void* address) noexcept {

@@ -1,15 +1,13 @@
-#include "MacosGenerator.hpp"
+#include "X64Generator.hpp"
 
 #include "../Handler.hpp"
 #include "../assembler/X64Assembler.hpp"
-#include "PlatformTarget.hpp"
+#include "../target/PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
 #include <sstream>
 
 using namespace tulip::hook;
-
-#if defined(TULIP_HOOK_MACOS)
 
 namespace {
 	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content, void* originalReturn) {
@@ -27,7 +25,7 @@ namespace {
 	}
 }
 
-std::vector<uint8_t> MacosHandlerGenerator::handlerBytes(uint64_t address) {
+std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	X64Assembler a(address);
 	RegMem64 m;
 	using enum X64Register;
@@ -134,7 +132,7 @@ std::vector<uint8_t> MacosHandlerGenerator::handlerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> MacosHandlerGenerator::intervenerBytes(uint64_t address) {
+std::vector<uint8_t> X64HandlerGenerator::intervenerBytes(uint64_t address) {
 	X64Assembler a(address);
 	RegMem64 m;
 	using enum X64Register;
@@ -144,7 +142,7 @@ std::vector<uint8_t> MacosHandlerGenerator::intervenerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> MacosHandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
+std::vector<uint8_t> X64HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
 	X64Assembler a(address);
 	RegMem64 m;
 	using enum X64Register;
@@ -153,21 +151,3 @@ std::vector<uint8_t> MacosHandlerGenerator::trampolineBytes(uint64_t address, si
 
 	return std::move(a.m_buffer);
 }
-
-Result<void*> MacosWrapperGenerator::generateWrapper() {
-	return Ok(m_address); // only windows needs the wrapper
-}
-
-Result<void*> MacosWrapperGenerator::generateReverseWrapper() {
-	return Ok(m_address); // only windows needs the wrapper
-}
-
-std::vector<uint8_t> MacosWrapperGenerator::wrapperBytes(uint64_t address) {
-	return std::vector<uint8_t>();
-}
-
-std::vector<uint8_t> MacosWrapperGenerator::reverseWrapperBytes(uint64_t address) {
-	return std::vector<uint8_t>();
-}
-
-#endif

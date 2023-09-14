@@ -14,7 +14,9 @@ if(PROJECT_IS_TOP_LEVEL)
 	add_subdirectory(test)
 endif()
 
-add_subdirectory(libraries/dobby)
+if (ANDROID)
+	add_subdirectory(libraries/dobby)
+endif()
 
 CPMAddPackage("gh:bitwizeshift/result#a97e66b")
 

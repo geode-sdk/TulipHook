@@ -13,6 +13,8 @@ add_library(${PROJECT_NAME} STATIC
     ${DOBBY_SOURCES}
 )
 
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+
 target_include_directories(Dobby PUBLIC
     external
     include

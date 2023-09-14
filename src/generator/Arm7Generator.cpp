@@ -1,15 +1,13 @@
-#include "AndroidGenerator.hpp"
+#include "Arm7Generator.hpp"
 
 #include "../Handler.hpp"
-#include "../assembler/ArmThumbAssembler.hpp"
-#include "PlatformTarget.hpp"
+#include "../assembler/Arm7Assembler.hpp"
+#include "../target/PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
 #include <sstream>
 
 using namespace tulip::hook;
-
-#if defined(TULIP_HOOK_ANDROID)
 
 namespace {
 	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content, void* originalReturn) {
@@ -27,28 +25,15 @@ namespace {
 	}
 }
 
-Result<> AndroidHandlerGenerator::generateHandler() {
+Result<Arm7HandlerGenerator::RelocateReturn> Arm7HandlerGenerator::relocateOriginal(uint64_t target) {
 	return Err("Not implemented");
 }
 
-Result<std::vector<uint8_t>> AndroidHandlerGenerator::generateIntervener() {
-	return Err("Not implemented");
-}
+void Arm7HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {}
 
-Result<> AndroidHandlerGenerator::generateTrampoline(RelocateReturn offsets) {
-	return Err("Not implemented");
-}
-
-Result<AndroidHandlerGenerator::RelocateReturn> AndroidHandlerGenerator::relocateOriginal(uint64_t target) {
-	return Err("Not implemented");
-}
-
-void AndroidHandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
-}
-
-std::vector<uint8_t> AndroidHandlerGenerator::handlerBytes(uint64_t address) {
-	ArmThumbAssembler a(address);
-	using enum ArmRegister;
+std::vector<uint8_t> Arm7HandlerGenerator::handlerBytes(uint64_t address) {
+	Arm7Assembler a(address);
+	using enum Arm7Register;
 
 	// preserve registers
 	a.push({R0, R1, R2, R3});
@@ -100,9 +85,9 @@ std::vector<uint8_t> AndroidHandlerGenerator::handlerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> AndroidHandlerGenerator::intervenerBytes(uint64_t address) {
-	ArmThumbAssembler a(address);
-	using enum ArmRegister;
+std::vector<uint8_t> Arm7HandlerGenerator::intervenerBytes(uint64_t address) {
+	Arm7Assembler a(address);
+	using enum Arm7Register;
 
 	a.ldrw(PC, "handler");
 	a.label("handler");
@@ -113,9 +98,9 @@ std::vector<uint8_t> AndroidHandlerGenerator::intervenerBytes(uint64_t address) 
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> AndroidHandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
-	ArmThumbAssembler a(address);
-	using enum ArmRegister;
+std::vector<uint8_t> Arm7HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
+	Arm7Assembler a(address);
+	using enum Arm7Register;
 
 	a.ldrw(PC, "original");
 	a.label("original");
@@ -125,21 +110,3 @@ std::vector<uint8_t> AndroidHandlerGenerator::trampolineBytes(uint64_t address, 
 
 	return std::move(a.m_buffer);
 }
-
-Result<void*> AndroidWrapperGenerator::generateWrapper() {
-	return Ok(m_address); // only windows needs the wrapper
-}
-
-Result<void*> AndroidWrapperGenerator::generateReverseWrapper() {
-	return Ok(m_address); // only windows needs the wrapper
-}
-
-std::vector<uint8_t> AndroidWrapperGenerator::wrapperBytes(uint64_t address) {
-	return std::vector<uint8_t>();
-}
-
-std::vector<uint8_t> AndroidWrapperGenerator::reverseWrapperBytes(uint64_t address) {
-	return std::vector<uint8_t>();
-}
-
-#endif
