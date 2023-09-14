@@ -14,7 +14,9 @@ if(TULIP_LINK_SOURCE OR PROJECT_IS_TOP_LEVEL)
 endif()
 
 if(PROJECT_IS_TOP_LEVEL)
-	add_subdirectory(test)
+	if (NOT ANDROID)
+		add_subdirectory(test)
+	endif()
 endif()
 
 CPMAddPackage("gh:bitwizeshift/result#a97e66b")
