@@ -7,16 +7,12 @@ include(cmake/CPM.cmake)
 option(TULIP_LINK_SOURCE "Link to TulipHook source files, including external libs" OFF)
 
 if(TULIP_LINK_SOURCE OR PROJECT_IS_TOP_LEVEL)
-	if (ANDROID)
-		add_subdirectory(libraries/dobby)
-	endif()
+	add_subdirectory(libraries/dobby)
 	add_subdirectory(src)
 endif()
 
 if(PROJECT_IS_TOP_LEVEL)
-	if (NOT ANDROID)
-		add_subdirectory(test)
-	endif()
+	add_subdirectory(test)
 endif()
 
 CPMAddPackage("gh:bitwizeshift/result#a97e66b")
