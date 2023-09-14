@@ -1,7 +1,7 @@
-#include "Arm7Generator.hpp"
+#include "ArmV7Generator.hpp"
 
 #include "../Handler.hpp"
-#include "../assembler/Arm7Assembler.hpp"
+#include "../assembler/ArmV7Assembler.hpp"
 #include "../target/PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
@@ -26,10 +26,10 @@ namespace {
 }
 
 // I'm lazy
-#if defined(TULIP_HOOK_ARM_7)
+#if defined(TULIP_HOOK_ARMV7)
 #include <InstructionRelocation/InstructionRelocation.h>
 
-Result<Arm7HandlerGenerator::RelocateReturn> Arm7HandlerGenerator::relocateOriginal(uint64_t target) {
+Result<ArmV7HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocateOriginal(uint64_t target) {
 	auto origin = new CodeMemBlock((uint64_t)m_address, target);
 	auto relocated = new CodeMemBlock();
 	// idk about arm thumb stuff help me
@@ -48,18 +48,18 @@ Result<Arm7HandlerGenerator::RelocateReturn> Arm7HandlerGenerator::relocateOrigi
 	});
 }
 #else
-Result<Arm7HandlerGenerator::RelocateReturn> Arm7HandlerGenerator::relocateOriginal(uint64_t target) {
+Result<ArmV7HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocateOriginal(uint64_t target) {
 	return Err("Not implemented");
 }
 #endif
 
-void Arm7HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
+void ArmV7HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
 	// Dobby handles the relocation of instructions
 }
 
-std::vector<uint8_t> Arm7HandlerGenerator::handlerBytes(uint64_t address) {
-	Arm7Assembler a(address);
-	using enum Arm7Register;
+std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
+	ArmV7Assembler a(address);
+	using enum ArmV7Register;
 
 	// preserve registers
 	a.push({R0, R1, R2, R3});
@@ -111,9 +111,9 @@ std::vector<uint8_t> Arm7HandlerGenerator::handlerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> Arm7HandlerGenerator::intervenerBytes(uint64_t address) {
-	Arm7Assembler a(address);
-	using enum Arm7Register;
+std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address) {
+	ArmV7Assembler a(address);
+	using enum ArmV7Register;
 
 	a.ldrw(PC, "handler");
 	a.label("handler");
@@ -124,9 +124,9 @@ std::vector<uint8_t> Arm7HandlerGenerator::intervenerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> Arm7HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
-	Arm7Assembler a(address);
-	using enum Arm7Register;
+std::vector<uint8_t> ArmV7HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
+	ArmV7Assembler a(address);
+	using enum ArmV7Register;
 
 	a.ldrw(PC, "original");
 	a.label("original");
@@ -137,7 +137,7 @@ std::vector<uint8_t> Arm7HandlerGenerator::trampolineBytes(uint64_t address, siz
 	return std::move(a.m_buffer);
 }
 
-Result<> Arm7HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
+Result<> ArmV7HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
 	// Dobby handles the creation of the trampoline
 	return Ok();
 }
