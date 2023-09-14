@@ -8,7 +8,7 @@ AssemblyCode *AssemblyCodeBuilder::FinalizeFromTurboAssembler(AssemblerBase *ass
   auto realized_addr = (addr_t)assembler->GetRealizedAddress();
 
   // Realize the buffer code to the executable memory address, remove the external label, etc
-  std::memcpy((void *)realized_addr, buffer->GetBuffer(), buffer->GetBufferSize());
+  memcpy((void *)realized_addr, buffer->GetBuffer(), buffer->GetBufferSize());
 
   auto block = new AssemblyCode(realized_addr, buffer->GetBufferSize());
   return block;
