@@ -614,7 +614,6 @@ std::shared_ptr<MembercallConvention> MembercallConvention::create() {
 
 MembercallConvention::~MembercallConvention() {}
 
-
 void StdcallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) {
 	return PushParameters::fromStdcall(static_cast<X86Assembler&>(a), function).generateDefaultCleanup();
 }

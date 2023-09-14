@@ -1,14 +1,12 @@
 #pragma once
 
-#include "../Generator.hpp"
+#include "Generator.hpp"
 
 #include <Platform.hpp>
 
-#if defined(TULIP_HOOK_MACOS)
-
 namespace tulip::hook {
 
-	class MacosHandlerGenerator : public HandlerGenerator {
+	class Arm8HandlerGenerator : public HandlerGenerator {
 	public:
 		using HandlerGenerator::HandlerGenerator;
 
@@ -24,9 +22,7 @@ namespace tulip::hook {
 		void relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) override;
 	};
 
-	using PlatformHandlerGenerator = MacosHandlerGenerator;
-
-	class MacosWrapperGenerator : public WrapperGenerator {
+	class Arm8WrapperGenerator : public WrapperGenerator {
 	public:
 		using WrapperGenerator::WrapperGenerator;
 
@@ -36,8 +32,4 @@ namespace tulip::hook {
 		std::vector<uint8_t> wrapperBytes(uint64_t address) override;
 		std::vector<uint8_t> reverseWrapperBytes(uint64_t address) override;
 	};
-
-	using PlatformWrapperGenerator = MacosWrapperGenerator;
 }
-
-#endif

@@ -2,28 +2,16 @@ cmake_minimum_required(VERSION 3.21)
 
 project(TulipHook LANGUAGES CXX C)
 
+file(GLOB TULIP_HOOK_SOURCES
+	*.cpp
+	assembler/*.cpp
+	convention/*.cpp
+	generator/*.cpp
+	target/*.cpp
+)
+
 add_library(${PROJECT_NAME} STATIC
-	CallingConvention.cpp
-	Generator.cpp
-	Handler.cpp
-	Main.cpp
-	Misc.cpp
-	Pool.cpp
-	Target.cpp
-	Wrapper.cpp
-	platform/DefaultConvention.cpp
-	platform/MacosGenerator.cpp
-	platform/MacosTarget.cpp
-	platform/AndroidGenerator.cpp
-	platform/AndroidTarget.cpp
-	platform/WindowsConvention.cpp
-	platform/WindowsGenerator.cpp
-	platform/WindowsTarget.cpp
-	platform/X86Generator.cpp
-	assembler/BaseAssembler.cpp
-	assembler/X86Assembler.cpp
-	assembler/X64Assembler.cpp
-	assembler/ArmThumbAssembler.cpp
+	${TULIP_HOOK_SOURCES}
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
@@ -45,6 +33,10 @@ endif()
 
 
 CPMAddPackage("gh:geode-sdk/capstone#d2a14e5")
+
+if (ANDROID)
+	target_link_libraries(${PROJECT_NAME} PRIVATE dobby)
+endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE capstone)
 target_link_libraries(${PROJECT_NAME} PUBLIC Result)

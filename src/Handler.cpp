@@ -3,8 +3,7 @@
 #include "Hook.hpp"
 #include "Pool.hpp"
 #include "Wrapper.hpp"
-#include "platform/PlatformGenerator.hpp"
-#include "platform/PlatformTarget.hpp"
+#include "target/PlatformTarget.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -19,15 +18,15 @@ Handler::Handler(void* address, HandlerMetadata const& metadata) :
 Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata const& metadata) {
 	auto ret = std::make_unique<Handler>(address, metadata);
 
-	TULIP_HOOK_UNWRAP_INTO(auto area1, PlatformTarget::get().allocateArea(0x200));
+	TULIP_HOOK_UNWRAP_INTO(auto area1, Target::get().allocateArea(0x200));
 	ret->m_content = static_cast<HandlerContent*>(area1);
 	auto content = new (ret->m_content) HandlerContent();
 	// std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
 
-	TULIP_HOOK_UNWRAP_INTO(ret->m_handler, PlatformTarget::get().allocateArea(0x180));
+	TULIP_HOOK_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x180));
 	// std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
 
-	TULIP_HOOK_UNWRAP_INTO(ret->m_trampoline, PlatformTarget::get().allocateArea(0x40));
+	TULIP_HOOK_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x40));
 
 	auto wrapperMetadata = WrapperMetadata{
 		.m_convention = metadata.m_convention,
@@ -45,19 +44,20 @@ Handler::~Handler() {}
 Result<> Handler::init() {
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
 
-	auto generator = PlatformHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_wrapped, m_metadata);
+	auto generator =
+		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_wrapped, m_metadata);
 
-	TULIP_HOOK_UNWRAP(generator.generateHandler());
+	TULIP_HOOK_UNWRAP(generator->generateHandler());
 
-	TULIP_HOOK_UNWRAP_INTO(m_modifiedBytes, generator.generateIntervener());
+	TULIP_HOOK_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener());
 
 	auto target = m_modifiedBytes.size();
 
 	auto address = reinterpret_cast<uint8_t*>(m_address);
 	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
 
-	TULIP_HOOK_UNWRAP_INTO(auto trampolineOffset, generator.relocateOriginal(target));
-	TULIP_HOOK_UNWRAP(generator.generateTrampoline(trampolineOffset));
+	TULIP_HOOK_UNWRAP_INTO(auto trampolineOffset, generator->relocateOriginal(target));
+	TULIP_HOOK_UNWRAP(generator->generateTrampoline(trampolineOffset));
 
 	auto metadata = HookMetadata();
 	metadata.m_priority = INT32_MAX;
@@ -115,11 +115,11 @@ void Handler::reorderFunctions() {
 }
 
 Result<> Handler::interveneFunction() {
-	return PlatformTarget::get().writeMemory(m_address, static_cast<void*>(m_modifiedBytes.data()), m_modifiedBytes.size());
+	return Target::get().writeMemory(m_address, static_cast<void*>(m_modifiedBytes.data()), m_modifiedBytes.size());
 }
 
 Result<> Handler::restoreFunction() {
-	return PlatformTarget::get().writeMemory(m_address, static_cast<void*>(m_originalBytes.data()), m_originalBytes.size());
+	return Target::get().writeMemory(m_address, static_cast<void*>(m_originalBytes.data()), m_originalBytes.size());
 }
 
 // TODO: fully remove the symbol resolver because i dont like it
