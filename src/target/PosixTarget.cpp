@@ -1,15 +1,15 @@
-#include "AndroidTarget.hpp"
+#include "PosixTarget.hpp"
 
 #include <Platform.hpp>
 #include <stdexcept>
 
 using namespace tulip::hook;
 
-#if defined(TULIP_HOOK_ANDROID)
+#if defined(TULIP_HOOK_POSIX)
 
 #include <sys/mman.h>
 
-Result<> AndroidTarget::allocatePage() {
+Result<> PosixTarget::allocatePage() {
 	auto const protection = PROT_READ | PROT_WRITE | PROT_EXEC;
 	auto const flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
@@ -26,13 +26,13 @@ Result<> AndroidTarget::allocatePage() {
 	return Ok();
 }
 
-Result<uint32_t> AndroidTarget::getProtection(void* address) {
+Result<uint32_t> PosixTarget::getProtection(void* address) {
 	// why
 	// just why does posix not have get protection
 	return Ok(this->getMaxProtection());
 }
 
-Result<> AndroidTarget::protectMemory(void* address, size_t size, uint32_t protection) {
+Result<> PosixTarget::protectMemory(void* address, size_t size, uint32_t protection) {
 	auto status = mprotect(address, size, protection);
 
 	if (status != 0) {
@@ -41,7 +41,7 @@ Result<> AndroidTarget::protectMemory(void* address, size_t size, uint32_t prote
 	return Ok();
 }
 
-Result<> AndroidTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
+Result<> PosixTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	auto res = this->protectMemory(destination, size, this->getMaxProtection());
 
 	if (!res) {
@@ -53,7 +53,7 @@ Result<> AndroidTarget::rawWriteMemory(void* destination, void const* source, si
 	return Ok();
 }
 
-uint32_t AndroidTarget::getMaxProtection() {
+uint32_t PosixTarget::getMaxProtection() {
 	return PROT_READ | PROT_WRITE | PROT_EXEC;
 }
 
