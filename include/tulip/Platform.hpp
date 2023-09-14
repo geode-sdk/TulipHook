@@ -53,14 +53,35 @@
 	#define TULIP_HOOK_POSIX 1
 
 	#define TULIP_HOOK_ANDROID 1
-	#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 
 	#define TULIP_HOOK_DEFAULT_CONV 
 
 	#if defined(__arm__)
 		#define TULIP_HOOK_ARMV7 1
+		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 	#elif defined(__aarch64__)
 		#define TULIP_HOOK_ARMV8 1
+		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
+	#endif
+
+	#ifdef TULIP_HOOK_EXPORTING
+		#define TULIP_HOOK_DLL    __attribute__((visibility("default")))
+	#else
+		#define TULIP_HOOK_DLL
+	#endif
+
+#elif defined(__unix__)
+
+	#define TULIP_HOOK_POSIX 1
+
+	#define TULIP_HOOK_DEFAULT_CONV 
+
+	#if defined(__arm__)
+		#define TULIP_HOOK_ARMV7 1
+		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
+	#elif defined(__aarch64__)
+		#define TULIP_HOOK_ARMV8 1
+		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 	#endif
 
 	#ifdef TULIP_HOOK_EXPORTING
