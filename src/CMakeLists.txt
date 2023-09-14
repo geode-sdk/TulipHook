@@ -28,13 +28,13 @@ if (MSVC OR APPLE)
 	set(CAPSTONE_X86_REDUCE Off)
 	set(CAPSTONE_X86_ATT_DISABLE On)
 elseif (ANDROID)
-	set(CAPSTONE_ARM_SUPPORT On)
+	target_link_libraries(${PROJECT_NAME} PRIVATE Dobby)
 endif()
 
 
 CPMAddPackage("gh:geode-sdk/capstone#d2a14e5")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE capstone Dobby)
+target_link_libraries(${PROJECT_NAME} PRIVATE capstone)
 target_link_libraries(${PROJECT_NAME} PUBLIC Result)
 target_compile_definitions(${PROJECT_NAME} PRIVATE -DTULIP_HOOK_EXPORTING=1)
 
