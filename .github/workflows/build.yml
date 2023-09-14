@@ -25,6 +25,12 @@ jobs:
           extra_flags: "-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=Debug"
           out_paths: './build/src/libTulipHook.a'
 
+        - name: 'Android Armv7'
+          id: android-armv7
+          os: ubuntu-latest
+          extra_flags: "-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$NDK_PATH/build/cmake/android.toolchain.cmake -DANDROID_ABI=armeabi-v7a -DANDROID_PLATFORM=android-21 -DANDROID_ARM_NEON=ON"
+          out_paths: './build/src/libTulipHook.so'
+
     name: Build and Test ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
 
@@ -39,6 +45,14 @@ jobs:
       with:
         arch: x86
       if: matrix.config.id == 'win'
+
+    - name: Setup NDK
+      id: setup-ndk
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r21d
+        local-cache: true
+      if: matrix.config.id == 'android-armv7'
 
     - name: Update ccache and Ninja
       shell: bash
@@ -57,7 +71,7 @@ jobs:
 
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3
-      if: matrix.config.id == 'mac'
+      if: matrix.config.id != 'win'
 
     - name: Configure
       shell: bash
@@ -69,6 +83,8 @@ jobs:
         cmake --build ./build --parallel
         mkdir ./out
         cp ${{ matrix.config.out_paths }} ./out
+      env:
+        NDK_PATH: ${{ steps.setup-ndk.outputs.ndk-path }}
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3
