@@ -5,7 +5,6 @@
 #include "../target/PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
-#include <InstructionRelocation/InstructionRelocation.h>
 #include <sstream>
 
 using namespace tulip::hook;
@@ -26,6 +25,10 @@ namespace {
 	}
 }
 
+// I'm lazy
+#if defined(TULIP_HOOK_ARM_7)
+#include <InstructionRelocation/InstructionRelocation.h>
+
 Result<Arm7HandlerGenerator::RelocateReturn> Arm7HandlerGenerator::relocateOriginal(uint64_t target) {
 	auto origin = new CodeMemBlock((uint64_t)m_address, target);
 	auto relocated = new CodeMemBlock();
@@ -44,6 +47,11 @@ Result<Arm7HandlerGenerator::RelocateReturn> Arm7HandlerGenerator::relocateOrigi
 		.m_originalOffset = (uint64_t)origin->size,
 	});
 }
+#else
+Result<Arm7HandlerGenerator::RelocateReturn> Arm7HandlerGenerator::relocateOriginal(uint64_t target) {
+	return Err("Not implemented");
+}
+#endif
 
 void Arm7HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
 	// Dobby handles the relocation of instructions
