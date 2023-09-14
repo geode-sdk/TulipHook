@@ -15,9 +15,9 @@ add_library(${PROJECT_NAME} STATIC
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 
-target_include_directories(Dobby PUBLIC
-    external
-    include
-    source
-    source/dobby
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/external
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/source
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/dobby
 )

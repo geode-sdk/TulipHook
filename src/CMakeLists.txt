@@ -34,13 +34,11 @@ endif()
 
 CPMAddPackage("gh:geode-sdk/capstone#d2a14e5")
 
-if (ANDROID)
-	target_link_libraries(${PROJECT_NAME} PRIVATE dobby)
-endif()
-
-target_link_libraries(${PROJECT_NAME} PRIVATE capstone)
+target_link_libraries(${PROJECT_NAME} PRIVATE capstone Dobby)
 target_link_libraries(${PROJECT_NAME} PUBLIC Result)
 target_compile_definitions(${PROJECT_NAME} PRIVATE -DTULIP_HOOK_EXPORTING=1)
+
+message(STATUS "${Dobby_SOURCE_DIR}/source")
 
 target_include_directories(${PROJECT_NAME} PRIVATE
 	${TulipHookRoot_SOURCE_DIR}/include

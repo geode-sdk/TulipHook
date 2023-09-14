@@ -41,7 +41,9 @@
 #define __PRI_64_prefix "ll"
 #define __PRI_PTR_prefix
 #endif
+#ifndef PRIxPTR
 #define PRIxPTR __PRI_PTR_prefix "x" /* uintptr_t */
+#endif
 
 // deprecated declared
 #if defined(__GNUC__) || defined(__clang__)

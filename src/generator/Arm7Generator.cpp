@@ -5,6 +5,7 @@
 #include "../target/PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
+#include <InstructionRelocation/InstructionRelocation.h>
 #include <sstream>
 
 using namespace tulip::hook;
@@ -26,10 +27,27 @@ namespace {
 }
 
 Result<Arm7HandlerGenerator::RelocateReturn> Arm7HandlerGenerator::relocateOriginal(uint64_t target) {
-	return Err("Not implemented");
+	auto origin = new CodeMemBlock((uint64_t)m_address, target);
+	auto relocated = new CodeMemBlock();
+	// idk about arm thumb stuff help me
+	auto originBuffer = (void*)((uint64_t)m_address + 1);
+	auto relocatedBuffer = (void*)m_trampoline;
+
+	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated);
+
+	if (relocated->size == 0) {
+		return Err("Failed to relocate original function");
+	}
+
+	return Ok(RelocateReturn{
+		.m_trampolineOffset = (uint64_t)relocated->size,
+		.m_originalOffset = (uint64_t)origin->size,
+	});
 }
 
-void Arm7HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {}
+void Arm7HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
+	// Dobby handles the relocation of instructions
+}
 
 std::vector<uint8_t> Arm7HandlerGenerator::handlerBytes(uint64_t address) {
 	Arm7Assembler a(address);
@@ -109,4 +127,9 @@ std::vector<uint8_t> Arm7HandlerGenerator::trampolineBytes(uint64_t address, siz
 	a.updateLabels();
 
 	return std::move(a.m_buffer);
+}
+
+Result<> Arm7HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
+	// Dobby handles the creation of the trampoline
+	return Ok();
 }
