@@ -1,18 +1,16 @@
 #pragma once
 
-#include "AndroidTarget.hpp"
-#include "Target.hpp"
+#include "../generator/ArmV7Generator.hpp"
+#include "PosixTarget.hpp"
 
 #include <Platform.hpp>
 
-#if defined(TULIP_HOOK_ANDROID) && defined(TULIP_HOOK_ARMV7)
+#if defined(TULIP_HOOK_POSIX) && defined(TULIP_HOOK_ARMV7)
 
 namespace tulip::hook {
-	class AndroidArmV8Target : public AndroidTarget {
+	class PosixArmV7Target : public PosixTarget {
 	public:
-		using Target::Target;
-
-		static AndroidArmV8Target& get();
+		using PosixTarget::PosixTarget;
 
 		Result<csh> openCapstone() override;
 
@@ -21,8 +19,6 @@ namespace tulip::hook {
 		) override;
 		std::unique_ptr<WrapperGenerator> getWrapperGenerator(void* address, WrapperMetadata const& metadata) override;
 	};
-
-	using PlatformTarget = AndroidArmV8Target;
 }
 
 #endif

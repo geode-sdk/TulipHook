@@ -12,8 +12,6 @@ namespace tulip::hook {
 	public:
 		using Target::Target;
 
-		static WindowsTarget& get();
-
 		Result<csh> openCapstone() override;
 
 		Result<> allocatePage() override;
@@ -27,9 +25,6 @@ namespace tulip::hook {
 		) override;
 		std::unique_ptr<WrapperGenerator> getWrapperGenerator(void* address, WrapperMetadata const& metadata) override;
 	};
-
-	using PlatformTarget = WindowsTarget;
-
 }
 
 #endif

@@ -25,6 +25,8 @@
 
 #if defined(__APPLE__)
 
+	#define TULIP_HOOK_DARWIN 1
+
 	#include <TargetConditionals.h>
 
 	#if TARGET_OS_MAC
@@ -47,6 +49,8 @@
 #endif
 
 #if defined(__ANDROID__)
+
+	#define TULIP_HOOK_POSIX 1
 
 	#define TULIP_HOOK_ANDROID 1
 	#define TULIP_HOOK_SUPPORTED_PLATFORM 1

@@ -4,11 +4,10 @@
 
 #include <Platform.hpp>
 
-#if defined(TULIP_HOOK_ANDROID)
+#if defined(TULIP_HOOK_MACOS)
 
 namespace tulip::hook {
-
-	class AndroidTarget : public Target {
+	class DarwinTarget : public Target {
 	public:
 		using Target::Target;
 
@@ -18,7 +17,6 @@ namespace tulip::hook {
 		Result<> rawWriteMemory(void* destination, void const* source, size_t size) override;
 		uint32_t getMaxProtection() override;
 	};
-
 }
 
 #endif
