@@ -98,11 +98,11 @@ void ArmV7Assembler::ldr(ArmV7Register dst, std::string const& label) {
 
 void ArmV7Assembler::ldrpcn() {
 	this->write16(0xf85f);
-	this->write16(0xf004);
+	this->write16(0xf000);
 }
 
 void ArmV7Assembler::ldrpcn2() {
-	this->write16(0xf004);
+	this->write16(0xf000);
 	this->write16(0xe51f);
 }
 
