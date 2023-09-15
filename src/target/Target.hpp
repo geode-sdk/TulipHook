@@ -42,5 +42,9 @@ namespace tulip::hook {
 		) = 0;
 		virtual std::unique_ptr<WrapperGenerator> getWrapperGenerator(void* address, WrapperMetadata const& metadata) = 0;
 		// sorry :( virtual BaseAssembler* getAssembler(int64_t baseAddress);
+
+		// These just exist because of arm7! fun!
+		virtual void* getRealPtr(void* ptr);
+		virtual void* getRealPtrAs(void* ptr, void* lookup);
 	};
 };

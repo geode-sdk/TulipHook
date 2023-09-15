@@ -33,3 +33,11 @@ void Target::closeCapstone() {
 csh Target::getCapstone() {
 	return m_capstone;
 }
+
+void* Target::getRealPtr(void* ptr) {
+	return ptr;
+}
+
+void* Target::getRealPtrAs(void* ptr, void* lookup) {
+	return ptr;
+}

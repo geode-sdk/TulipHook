@@ -30,8 +30,8 @@ Result<ArmV7HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocateOri
 	auto origin = new CodeMemBlock((uint64_t)m_address, target);
 	auto relocated = new CodeMemBlock();
 	// idk about arm thumb stuff help me
-	auto originBuffer = (void*)((uint64_t)m_address + 1);
-	auto relocatedBuffer = (void*)m_trampoline;
+	auto originBuffer = m_address;
+	auto relocatedBuffer = m_trampoline;
 
 	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated);
 
@@ -109,7 +109,8 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address) {
 
 	a.ldrw(PC, "handler");
 	a.label("handler");
-	a.write32(reinterpret_cast<uint64_t>(m_handler));
+	// my thumbs will eat me
+	a.write32(reinterpret_cast<uint64_t>(m_handler) + 1);
 
 	a.updateLabels();
 
@@ -117,16 +118,8 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address) {
 }
 
 std::vector<uint8_t> ArmV7HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
-	ArmV7Assembler a(address);
-	using enum ArmV7Register;
-
-	a.ldrw(PC, "original");
-	a.label("original");
-	a.write32(reinterpret_cast<uint64_t>(m_address) + offset);
-
-	a.updateLabels();
-
-	return std::move(a.m_buffer);
+	// Dobby handles the creation of the trampoline
+	return {};
 }
 
 Result<> ArmV7HandlerGenerator::generateTrampoline(RelocateReturn offsets) {

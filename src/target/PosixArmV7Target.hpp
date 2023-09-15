@@ -18,6 +18,9 @@ namespace tulip::hook {
 			void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata
 		) override;
 		std::unique_ptr<WrapperGenerator> getWrapperGenerator(void* address, WrapperMetadata const& metadata) override;
+
+		void* getRealPtr(void* ptr) override;
+		void* getRealPtrAs(void* ptr, void* lookup) override;
 	};
 }
 
