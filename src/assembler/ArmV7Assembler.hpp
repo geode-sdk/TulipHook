@@ -56,7 +56,13 @@ namespace tulip::hook {
 		void vpop(ArmV7RegisterArray const& array);
 
 		void ldr(ArmV7Register dst, std::string const& label);
-		void ldrw(ArmV7Register dst, std::string const& label);
+
+		// ldr.w pc, [pc, #-0x4]
+		// i cant bother to do stuff
+		void ldrpcn();
+
+		// non thumb version
+		void ldrpcn2();
 
 		void mov(ArmV7Register dst, ArmV7Register src);
 
