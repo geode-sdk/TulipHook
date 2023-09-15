@@ -49,6 +49,8 @@ namespace tulip::hook {
 
 		void clearHooks();
 
+		void addOriginal();
+
 		void reorderFunctions();
 
 		void updateHookMetadata(HookHandle const& hook, HookMetadata const& metadata);

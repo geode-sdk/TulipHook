@@ -53,17 +53,22 @@ Result<> Handler::init() {
 
 	auto target = m_modifiedBytes.size();
 
-	auto address = reinterpret_cast<uint8_t*>(m_address);
+	auto address = reinterpret_cast<uint8_t*>(Target::get().getRealPtr(m_address));
 	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
 
 	TULIP_HOOK_UNWRAP_INTO(auto trampolineOffset, generator->relocateOriginal(target));
 	TULIP_HOOK_UNWRAP(generator->generateTrampoline(trampolineOffset));
 
-	auto metadata = HookMetadata();
-	metadata.m_priority = INT32_MAX;
-	static_cast<void>(this->createHook(m_wrapped, metadata));
+	this->addOriginal();
 
 	return Ok();
+}
+
+void Handler::addOriginal() {
+	auto metadata = HookMetadata{
+		.m_priority = INT32_MAX,
+	};
+	static_cast<void>(this->createHook(Target::get().getRealPtrAs(m_wrapped, m_address), metadata));
 }
 
 HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
@@ -96,10 +101,7 @@ void Handler::clearHooks() {
 	m_handles.clear();
 	m_content->m_functions.clear();
 
-	auto metadata = HookMetadata{
-		.m_priority = INT32_MAX,
-	};
-	static_cast<void>(this->createHook(m_wrapped, metadata));
+	this->addOriginal();
 }
 
 void Handler::updateHookMetadata(HookHandle const& hook, HookMetadata const& metadata) {
@@ -115,68 +117,19 @@ void Handler::reorderFunctions() {
 }
 
 Result<> Handler::interveneFunction() {
-	return Target::get().writeMemory(m_address, static_cast<void*>(m_modifiedBytes.data()), m_modifiedBytes.size());
+	return Target::get().writeMemory(
+		Target::get().getRealPtr(m_address), 
+		static_cast<void*>(m_modifiedBytes.data()), 
+		m_modifiedBytes.size()
+	);
 }
 
 Result<> Handler::restoreFunction() {
-	return Target::get().writeMemory(m_address, static_cast<void*>(m_originalBytes.data()), m_originalBytes.size());
-}
-
-// TODO: fully remove the symbol resolver because i dont like it
-bool TULIP_HOOK_DEFAULT_CONV Handler::symbolResolver(char const* csymbol, uint64_t* value) {
-	std::string symbol = csymbol;
-
-	if (symbol.find("_address") != std::string::npos) {
-		auto in = std::istringstream(symbol.substr(8));
-
-		std::string input;
-		std::getline(in, input, '_');
-		HandlerHandle handler = std::stoll(input, nullptr, 16);
-		std::getline(in, input, '_');
-		size_t offset = std::stoll(input, nullptr, 10);
-
-		*value = reinterpret_cast<uint64_t>(Pool::get().getHandler(handler).m_address) + offset;
-		return true;
-	}
-
-	if (symbol.find("_handler") != std::string::npos) {
-		auto in = std::istringstream(symbol.substr(8));
-
-		std::string input;
-		std::getline(in, input, '_');
-		HandlerHandle handler = std::stoll(input, nullptr, 16);
-
-		*value = reinterpret_cast<uint64_t>(Pool::get().getHandler(handler).m_handler);
-		return true;
-	}
-
-	if (symbol.find("_content") != std::string::npos) {
-		auto in = std::istringstream(symbol.substr(8));
-
-		std::string input;
-		std::getline(in, input, '_');
-		HandlerHandle handler = std::stoll(input, nullptr, 16);
-
-		*value = reinterpret_cast<uint64_t>(Pool::get().getHandler(handler).m_content);
-		return true;
-	}
-
-	if (symbol.find("_incrementIndex") != std::string::npos) {
-		*value = reinterpret_cast<uint64_t>(&Handler::incrementIndex);
-		return true;
-	}
-
-	if (symbol.find("_decrementIndex") != std::string::npos) {
-		*value = reinterpret_cast<uint64_t>(&Handler::decrementIndex);
-		return true;
-	}
-
-	if (symbol.find("_getNextFunction") != std::string::npos) {
-		*value = reinterpret_cast<uint64_t>(&Handler::getNextFunction);
-		return true;
-	}
-
-	return false;
+	return Target::get().writeMemory(
+		Target::get().getRealPtr(m_address), 
+		static_cast<void*>(m_originalBytes.data()), 
+		m_originalBytes.size()
+	);
 }
 
 static thread_local std::stack<size_t> s_indexStack;

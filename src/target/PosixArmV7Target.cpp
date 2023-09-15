@@ -36,4 +36,15 @@ std::unique_ptr<WrapperGenerator> PosixArmV7Target::getWrapperGenerator(void* ad
 	return std::make_unique<ArmV7WrapperGenerator>(address, metadata);
 }
 
+// Thumb is very fun to deal with!
+void* PosixArmV7Target::getRealPtr(void* ptr) {
+	return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ptr) & (~1));
+}
+void* PosixArmV7Target::getRealPtrAs(void* ptr, void* lookup) {
+	return reinterpret_cast<void*>(
+		reinterpret_cast<uintptr_t>(this->getRealPtr(ptr)) |
+		(reinterpret_cast<uintptr_t>(lookup) & 1)
+	);
+}
+
 #endif
