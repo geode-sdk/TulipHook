@@ -108,6 +108,11 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address) {
 	ArmV7Assembler a((uint64_t)Target::get().getRealPtr((void*)address));
 	using enum ArmV7Register;
 
+	// align
+	if (address & 0x2) {
+		a.nop();
+	}
+
 	if (address & 0x1) {
 		// thumb
 		a.ldrpcn();
