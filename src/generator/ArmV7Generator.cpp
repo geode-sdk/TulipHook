@@ -28,7 +28,7 @@ namespace {
 }
 
 Result<ArmV7HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocateOriginal(uint64_t target) {
-	auto origin = new CodeMemBlock((uint64_t)m_address, target);
+	auto origin = new CodeMemBlock((uint64_t)Target::get().getRealPtr(m_address), target);
 	auto relocated = new CodeMemBlock();
 	// idk about arm thumb stuff help me
 	auto originBuffer = m_address;

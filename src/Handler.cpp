@@ -26,7 +26,7 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	TULIP_HOOK_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x180));
 	// std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
 
-	TULIP_HOOK_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x40));
+	TULIP_HOOK_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x80));
 
 	auto wrapperMetadata = WrapperMetadata{
 		.m_convention = metadata.m_convention,
