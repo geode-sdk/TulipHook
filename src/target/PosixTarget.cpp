@@ -13,8 +13,7 @@ Result<> PosixTarget::allocatePage() {
 	auto const protection = PROT_READ | PROT_WRITE | PROT_EXEC;
 	auto const flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
-	auto ret = mmap(nullptr, 0x4000, flags, protection, -1, 0);
-
+	auto ret = mmap(nullptr, 0x4000, protection, flags, -1, 0);
 	if (ret == MAP_FAILED) {
 		return Err("Couldn't allocate page");
 	}
@@ -33,7 +32,15 @@ Result<uint32_t> PosixTarget::getProtection(void* address) {
 }
 
 Result<> PosixTarget::protectMemory(void* address, size_t size, uint32_t protection) {
-	auto status = mprotect(address, size, protection);
+	auto const pageSize = 0x1000;
+	auto const pageMask = pageSize - 1;
+
+	auto const ptr = reinterpret_cast<uintptr_t>(address);
+	auto const alignedPtr = ptr & (~pageMask);
+	auto const beginSize = ptr - alignedPtr;
+	auto const alignedSize = beginSize & pageMask ? beginSize + pageSize : beginSize;
+
+	auto status = mprotect(reinterpret_cast<void*>(alignedPtr), alignedSize, protection);
 
 	if (status != 0) {
 		return Err("Couldn't protect memory");
@@ -48,7 +55,7 @@ Result<> PosixTarget::rawWriteMemory(void* destination, void const* source, size
 		return Err("Couldn't protect memory");
 	}
 
-	std::memcpy(destination, source, size);
+	memcpy(destination, source, size);
 
 	return Ok();
 }

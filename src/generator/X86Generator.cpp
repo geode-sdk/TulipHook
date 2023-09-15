@@ -148,7 +148,7 @@ Result<void*> X86WrapperGenerator::generateWrapper() {
 	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
 	auto code = this->wrapperBytes(reinterpret_cast<uintptr_t>(area));
 
-	std::memcpy(area, code.data(), codeSize);
+	memcpy(area, code.data(), codeSize);
 
 	return Ok(area);
 }
@@ -161,13 +161,13 @@ Result<void*> X86WrapperGenerator::generateReverseWrapper() {
 	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
 	auto code = this->reverseWrapperBytes(reinterpret_cast<uintptr_t>(area));
 
-	std::memcpy(area, code.data(), codeSize);
+	memcpy(area, code.data(), codeSize);
 
 	return Ok(area);
 }
 
 Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOriginal(uint64_t target) {
-	// std::memcpy(m_trampoline, m_address, 32);
+	// memcpy(m_trampoline, m_address, 32);
 
 	TULIP_HOOK_UNWRAP_INTO(auto cs, Target::get().openCapstone());
 
@@ -223,7 +223,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 		}
 	}
 
-	std::memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
+	memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
 
 	if (detail->x86.encoding.imm_offset != 0) {
 		// branches, jumps, calls
@@ -236,7 +236,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 			if (id == X86_INS_JMP) {
 				// res = dst - src - 5
 				int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-				std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
+				memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
 				inBinary[0] = 0xe9;
 
 				trampolineAddress += 5;
@@ -244,7 +244,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 			else if (id == X86_INS_CALL) {
 				// res = dst - src - 5
 				int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-				std::memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
+				memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
 				inBinary[0] = 0xe8;
 
 				trampolineAddress += 5;
@@ -255,7 +255,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 				// long conditional jmp size
 				// this is like probably not right idk what instruction this is supposed to be
 				int addrBytes = jmpTargetAddr - trampolineAddress - 6;
-				std::memcpy(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int));
+				memcpy(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int));
 				inBinary[1] = inBinary[0] + 0x10;
 				inBinary[0] = 0x0f;
 
@@ -279,7 +279,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 				int addrBytes = disp - difference;
 				auto offset = detail->x86.encoding.disp_offset;
 
-				std::memcpy(reinterpret_cast<void*>(trampolineAddress + offset), &addrBytes, sizeof(int));
+				memcpy(reinterpret_cast<void*>(trampolineAddress + offset), &addrBytes, sizeof(int));
 
 				trampolineAddress += size;
 				originalAddress += size;

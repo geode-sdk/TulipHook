@@ -7,6 +7,7 @@
 #include <CallingConvention.hpp>
 #include <InstructionRelocation/InstructionRelocation.h>
 #include <sstream>
+#include <iostream>
 
 using namespace tulip::hook;
 
@@ -50,7 +51,7 @@ void ArmV7HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampol
 }
 
 std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
-	ArmV7Assembler a(address);
+	ArmV7Assembler a((uint64_t)Target::get().getRealPtr((void*)address));
 	using enum ArmV7Register;
 
 	// preserve registers
@@ -104,11 +105,18 @@ std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
 }
 
 std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address) {
-	ArmV7Assembler a(address);
+	ArmV7Assembler a((uint64_t)Target::get().getRealPtr((void*)address));
 	using enum ArmV7Register;
 
-	a.ldrw(PC, "handler");
-	a.label("handler");
+	if (address & 0x1) {
+		// thumb
+		a.ldrpcn();
+	}
+	else {
+		// arm
+		a.ldrpcn2();
+	}
+	
 	// my thumbs will eat me
 	a.write32(reinterpret_cast<uint64_t>(m_handler) + 1);
 
