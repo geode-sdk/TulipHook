@@ -102,7 +102,7 @@ void ArmV7Assembler::ldrpcn() {
 }
 
 void ArmV7Assembler::ldrpcn2() {
-	this->write16(0xf000);
+	this->write16(0xf004);
 	this->write16(0xe51f);
 }
 
