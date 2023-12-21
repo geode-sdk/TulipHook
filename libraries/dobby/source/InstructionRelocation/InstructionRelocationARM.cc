@@ -45,7 +45,10 @@ addr_t relo_cur_src_vmaddr(relo_ctx_t* ctx) {
 		return ctx->src_vmaddr + relocated_len + ARM_PC_OFFSET;
 	}
 	else {
-		return ctx->src_vmaddr + relocated_len + Thumb_PC_OFFSET;
+		// Geode bugfix
+		// it is not always relocated_len for thumb, 
+		// instead it takes the size as 2 and pads to 4 
+		return (ctx->src_vmaddr + 4 + Thumb_PC_OFFSET) & 0xfffffffc;
 	}
 }
 
