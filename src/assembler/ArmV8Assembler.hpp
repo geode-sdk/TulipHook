@@ -43,7 +43,14 @@ namespace tulip::hook {
 
 	class ArmV8Assembler : public BaseAssembler {
 	public:
-		using BaseAssembler::BaseAssembler;
+		ArmV8Assembler(int64_t baseAddress);
+		ArmV8Assembler(ArmV8Assembler const&) = delete;
+		ArmV8Assembler(ArmV8Assembler&&) = delete;
+		~ArmV8Assembler();
+
+		void adrp(ArmV8Register dst, uint32_t imm);
+		void add(ArmV8Register dst, ArmV8Register src, uint16_t imm);
+		void br(ArmV8Register reg);
 	};
 	
 }
