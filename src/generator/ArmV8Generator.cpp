@@ -104,14 +104,13 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
 
-    const auto pageOf = [](uint64_t addr) { return addr & ~0xFFFull; };
+	a.ldr(X16, "handler");
+	a.br(X16);
 
-    const uint32_t lower12 = (address & 0xFFF);
-    const uint32_t offset = pageOf(reinterpret_cast<uint64_t>(m_handler)) - pageOf(address);
+	a.label("handler");
+	a.write64(reinterpret_cast<uint64_t>(m_handler));
 
-    a.adrp(X16, offset);
-    a.add(X16, X16, lower12);
-    a.br(X16);
+	a.updateLabels();
 
     return std::move(a.m_buffer);
 }
