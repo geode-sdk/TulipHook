@@ -113,5 +113,5 @@ void ArmV8Assembler::pop(ArmV8RegisterArray const& array) {
 
     const auto alignedSize = array.size() & ~1ull;
     for (auto i = 0u; i < alignedSize; i += 2)
-        this->ldp(array[alignedSize - i - 2], array[alignedSize - i - 1], SP, -0x10, PostIndex);
+        this->ldp(array[alignedSize - i - 2], array[alignedSize - i - 1], SP, 0x10, PostIndex);
 }
