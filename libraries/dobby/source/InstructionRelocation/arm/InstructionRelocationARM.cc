@@ -886,8 +886,8 @@ relocate_remain:
   }
 }
 
-void GenRelocateCodeAndBranch(void *buffer, CodeMemBlock *origin, CodeMemBlock *relocated) {
-  GenRelocateCode(buffer, origin, relocated, true);
+void GenRelocateCodeAndBranch(void *buffer, void* relocated_mem, CodeMemBlock *origin, CodeMemBlock *relocated) {
+  GenRelocateCode(buffer, relocated_mem, origin, relocated, true);
 }
 
 #endif
