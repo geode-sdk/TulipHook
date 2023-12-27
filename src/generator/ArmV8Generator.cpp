@@ -4,6 +4,8 @@
 #include "../assembler/ArmV8Assembler.hpp"
 #include "../target/PlatformTarget.hpp"
 
+#include <InstructionRelocation/InstructionRelocation.h>
+
 using namespace tulip::hook;
 
 namespace {
@@ -23,8 +25,21 @@ namespace {
 }
 
 Result<ArmV8HandlerGenerator::RelocateReturn> ArmV8HandlerGenerator::relocateOriginal(uint64_t target) {
-    // TODO
-	return Err("Unimplemented!");
+    auto origin = new CodeMemBlock(reinterpret_cast<uint64_t>(m_address), target);
+	auto relocated = new CodeMemBlock();
+	auto originBuffer = m_address;
+	auto relocatedBuffer = m_trampoline;
+
+	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated);
+
+	if (relocated->size == 0) {
+		return Err("Failed to relocate original function");
+	}
+
+	return Ok(RelocateReturn{
+		.m_trampolineOffset = (uint64_t)relocated->size,
+		.m_originalOffset = (uint64_t)origin->size,
+	});
 }
 
 void ArmV8HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
@@ -89,7 +104,7 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
 
-    const auto pageOf = [](uint64_t addr) { return addr & ~0xFFFull; }
+    const auto pageOf = [](uint64_t addr) { return addr & ~0xFFFull; };
 
     const uint32_t lower12 = (address & 0xFFF);
     const uint32_t offset = pageOf(reinterpret_cast<uint64_t>(m_handler)) - pageOf(address);

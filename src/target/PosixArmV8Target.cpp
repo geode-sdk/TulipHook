@@ -15,7 +15,7 @@ Target& Target::get() {
 Result<csh> PosixArmV8Target::openCapstone() {
 	cs_err status;
 
-	status = cs_open(CS_ARCH_AARCH64, 0, &m_capstone);
+	status = cs_open(CS_ARCH_ARM64, static_cast<cs_mode>(0), &m_capstone);
 
 	if (status != CS_ERR_OK) {
 		return Err("Couldn't open capstone");
