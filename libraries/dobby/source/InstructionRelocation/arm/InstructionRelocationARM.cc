@@ -48,7 +48,9 @@ addr_t relo_cur_src_vmaddr(relo_ctx_t *ctx) {
   if (ctx->curr_state == zz::arm::ARMExecuteState) {
     return ctx->src_vmaddr + relocated_len + ARM_PC_OFFSET;
   } else {
-    return ctx->src_vmaddr + relocated_len + Thumb_PC_OFFSET;
+    // Geode bugfix
+		// the offsets are always 4 padded
+		return (ctx->src_vmaddr + relocated_len + Thumb_PC_OFFSET) & 0xfffffffc;
   }
 }
 
@@ -99,7 +101,7 @@ uint32_t arm_shift_c(uint32_t val, uint32_t shift_type, uint32_t shift_count, ui
   case arm_shift_lsl:
     r_val = val;
     r_val = r_val << shift_count;
-    carry = (r_val >> 32) & 0x1;
+    carry = (r_val >> 31) & 0x1;
     val = r_val;
     break;
   case arm_shift_lsr:
