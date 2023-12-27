@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MemoryAllocator/CodeBufferBase.h"
+#include "MemoryAllocator/CodeBuffer/CodeBufferBase.h"
 
 class Label {
 public:

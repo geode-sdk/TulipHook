@@ -1,7 +1,7 @@
 #ifndef CORE_CODEGEN_H
 #define CORE_CODEGEN_H
 
-#include "core/assembler.h"
+#include "core/assembler/assembler.h"
 
 using namespace zz;
 

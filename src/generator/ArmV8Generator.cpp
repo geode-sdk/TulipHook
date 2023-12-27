@@ -116,7 +116,7 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
     return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> ArmV7HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
+std::vector<uint8_t> ArmV8HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
 	// Dobby handles the creation of the trampoline
 	return {};
 }

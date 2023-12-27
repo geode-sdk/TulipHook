@@ -3,10 +3,13 @@ project(Dobby)
 enable_language(ASM)
 
 file(GLOB DOBBY_SOURCES
-    source/*.cc
-    source/core/*.cc
-    source/InstructionRelocation/*.cc
+    source/core/arch/*.cc
+    source/core/assembler/*.cc
+    source/core/codegen/*.cc
+    source/InstructionRelocation/arm/*.cc
+    source/InstructionRelocation/arm64/*.cc
     source/MemoryAllocator/*.cc
+    source/MemoryAllocator/CodeBuffer/*.cc
 )
 
 add_library(${PROJECT_NAME} STATIC

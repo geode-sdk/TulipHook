@@ -41,9 +41,7 @@
 #define __PRI_64_prefix "ll"
 #define __PRI_PTR_prefix
 #endif
-#ifndef PRIxPTR
 #define PRIxPTR __PRI_PTR_prefix "x" /* uintptr_t */
-#endif
 
 // deprecated declared
 #if defined(__GNUC__) || defined(__clang__)
@@ -63,7 +61,8 @@
 #define INTERNAL __attribute__((visibility("internal")))
 #endif
 
-#define DEBUG_LOG(...) do {} while (false)
-#define UNREACHABLE() do {} while (false)
-#define UNIMPLEMENTED() do {} while (false)
-#define DCHECK_EQ(...) do {} while (false)
+#define DCHECK(...)
+#define DCHECK_EQ(...)
+#define UNREACHABLE(...) do {} while (true)
+#define DEBUG_LOG(...)
+#define UNIMPLEMENTED(...)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MemoryAllocator/CodeBufferBase.h"
+#include "MemoryAllocator/CodeBuffer/CodeBufferBase.h"
 
 #include "AssemblerPseudoLabel.h"
 
@@ -63,11 +63,11 @@ protected:
 #if 0
 #include "globals.h"
 #if TARGET_ARCH_ARM
-#include "core/assembler-arm.h"
+#include "core/assembler/assembler-arm.h"
 #elif TARGET_ARCH_ARM64
-#include "core/assembler-arm64.h"
+#include "core/assembler/assembler-arm64.h"
 #elif TARGET_ARCH_X64
-#include "core/assembler-x64.h"
+#include "core/assembler/assembler-x64.h"
 #else
 #error "unsupported architecture"
 #endif
