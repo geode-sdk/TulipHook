@@ -29,6 +29,11 @@ namespace tulip::hook {
 		// maybe use span?
 		std::vector<uint8_t> const& buffer() const;
 
+		int8_t read8(int64_t address) const;
+		int16_t read16(int64_t address) const;
+		int32_t read32(int64_t address) const;
+		int64_t read64(int64_t address) const;
+
 		void write8(int8_t value);
 		void write16(int16_t value);
 		void write32(int32_t value);
