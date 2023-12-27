@@ -12,20 +12,20 @@ int8_t BaseAssembler::read8(int64_t address) const {
 }
 
 int16_t BaseAssembler::read16(int64_t address) const {
-	const auto lo = read8(address + 1);
-	const auto hi = read8(address);
+	const auto lo = read8(address);
+	const auto hi = read8(address + 1);
 	return ((static_cast<int16_t>(hi) << 8) | lo);
 }
 
 int32_t BaseAssembler::read32(int64_t address) const {
-	const auto lo = read16(address + 2);
-	const auto hi = read16(address);
+	const auto lo = read16(address);
+	const auto hi = read16(address + 2);
 	return ((static_cast<int32_t>(hi) << 16) | lo);
 }
 
 int64_t BaseAssembler::read64(int64_t address) const {
-	const auto lo = read32(address + 4);
-	const auto hi = read32(address);
+	const auto lo = read32(address);
+	const auto hi = read32(address + 4);
 	return ((static_cast<int64_t>(hi) << 32) | lo);
 }
 
