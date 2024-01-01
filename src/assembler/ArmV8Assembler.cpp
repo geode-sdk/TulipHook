@@ -18,7 +18,14 @@ void ArmV8Assembler::updateLabels() {
 
 using enum ArmV8Register;
 
-static uint32_t val(ArmV8Register reg) { return static_cast<uint32_t>(reg); }
+static bool is_simd(ArmV8Register reg) { return static_cast<uint32_t>(reg) >= 0x40; }
+
+static uint32_t val(ArmV8Register reg) {
+    auto x = static_cast<uint32_t>(reg);
+    if (is_simd(reg))
+        x -= 0x40;
+    return x;
+}
 
 void ArmV8Assembler::mov(ArmV8Register dst, ArmV8Register src) {
     const auto srcShifted = val(src) << 16;
@@ -34,16 +41,17 @@ void ArmV8Assembler::ldp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register r
     using enum ArmV8IndexKind;
 
     uint32_t opc = 0;
+    const auto use_simd = is_simd(reg1) && is_simd(reg2);
 
     switch (kind) {
         case PreIndex:
-            opc = 0x2A7 << 22;
+            opc = (use_simd ? 0x1B7 : 0x2A7) << 22;
             break;
         case PostIndex:
-            opc = 0x2A3 << 22;
+            opc = (use_simd ? 0x1B3 : 0x2A3) << 22;
             break;
         case SignedOffset:
-            opc = 0x2A5 << 22;
+            opc = (use_simd ? 0x1B5 : 0x2A5) << 22;
             break;
     }
 
@@ -58,16 +66,17 @@ void ArmV8Assembler::stp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register r
     using enum ArmV8IndexKind;
 
     uint32_t opc = 0;
+    const auto use_simd = is_simd(reg1) && is_simd(reg2);
 
     switch (kind) {
         case PreIndex:
-            opc = (0x2A6 << 22);
+            opc = (use_simd ? 0x1B6 : 0x2A6) << 22;
             break;
         case PostIndex:
-            opc = (0x2A2 << 22);
+            opc = (use_simd ? 0x1B2 : 0x2A2) << 22;
             break;
         case SignedOffset:
-            opc = (0x2A4 << 22);
+            opc = (use_simd ? 0x1B4 : 0x2A4) << 22;
             break;
     }
 

@@ -52,7 +52,9 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 
     // preserve registers
 	a.push({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15});
-	// TODO: fp
+	a.push({D0, D1, D2, D3, D4, D5, D6, D7});
+	// v8-15 are callee saved.
+	a.push({D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31});
 
 	// set the parameters
 	a.ldr(X0, "content");
@@ -64,7 +66,8 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 	a.mov(X30, X0);
 
 	// recover registers
-	// TODO: fp
+	a.pop({D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31});
+	a.pop({D0, D1, D2, D3, D4, D5, D6, D7});
 	a.pop({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15});
 
 	// call the func
@@ -72,6 +75,7 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 
 	// preserve the return values
 	a.push({X0, X1, X2, X3, X4, X5, X6, X7});
+	a.push({D0, D1, D2, D3, D4, D5, D6, D7});
 
 	// call the post handler, decrementing
 	a.ldr(X0, "handlerPost");
@@ -81,6 +85,7 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 	a.mov(X30, X0);
 
 	// recover the return values
+	a.pop({D0, D1, D2, D3, D4, D5, D6, D7});
 	a.pop({X0, X1, X2, X3, X4, X5, X6, X7});
 
 	// done!
