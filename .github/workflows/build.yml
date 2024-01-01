@@ -53,7 +53,7 @@ jobs:
       id: setup-ndk
       uses: nttld/setup-ndk@v1
       with:
-        ndk-version: r25c
+        ndk-version: r26b
         local-cache: true
       if: matrix.config.id == 'android-armv7'
 
