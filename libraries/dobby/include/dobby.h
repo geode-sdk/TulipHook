@@ -108,14 +108,14 @@ typedef struct {
 } DobbyRegisterContext;
 #endif
 
-#define install_hook_name(name, fn_ret_t, fn_args_t...)                                                                \
-  static fn_ret_t fake_##name(fn_args_t);                                                                              \
-  static fn_ret_t (*orig_##name)(fn_args_t);                                                                           \
+#define install_hook_name(name, fn_ret_t, ...)                                                                \
+  static fn_ret_t fake_##name(__VA_ARGS__);                                                                              \
+  static fn_ret_t (*orig_##name)(__VA_ARGS__);                                                                           \
   /* __attribute__((constructor)) */ static void install_hook_##name(void *sym_addr) {                                 \
     DobbyHook(sym_addr, (dobby_dummy_func_t)fake_##name, (dobby_dummy_func_t *)&orig_##name);                          \
     return;                                                                                                            \
   }                                                                                                                    \
-  fn_ret_t fake_##name(fn_args_t)
+  fn_ret_t fake_##name(__VA_ARGS__)
 
 // memory code patch
 int DobbyCodePatch(void *address, uint8_t *buffer, uint32_t buffer_size);
