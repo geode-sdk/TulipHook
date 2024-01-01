@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MemoryAllocator/CodeBufferBase.h"
+#include "MemoryAllocator/CodeBuffer/CodeBufferBase.h"
 
 typedef int32_t arm_inst_t;
 typedef int16_t thumb1_inst_t;

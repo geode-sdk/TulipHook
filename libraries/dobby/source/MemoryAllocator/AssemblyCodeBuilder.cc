@@ -1,11 +1,18 @@
 #include "MemoryAllocator/AssemblyCodeBuilder.h"
 
 #include "dobby/dobby_internal.h"
-#include "PlatformUnifiedInterface/CodePatchTool.h"
+#include "PlatformUnifiedInterface/ExecMemory/CodePatchTool.h"
 
 AssemblyCode *AssemblyCodeBuilder::FinalizeFromTurboAssembler(AssemblerBase *assembler) {
   auto buffer = (CodeBufferBase *)assembler->GetCodeBuffer();
   auto realized_addr = (addr_t)assembler->GetRealizedAddress();
+#if defined(TEST_WITH_UNICORN)
+  // impl: unicorn emulator map memory
+  realized_addr = 0;
+#endif
+  if (!realized_addr) {
+      return nullptr;
+  }
 
   // Realize the buffer code to the executable memory address, remove the external label, etc
   memcpy((void *)realized_addr, buffer->GetBuffer(), buffer->GetBufferSize());

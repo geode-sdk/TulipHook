@@ -8,7 +8,7 @@
 #if defined(TULIP_HOOK_POSIX) && defined(TULIP_HOOK_ARMV8)
 
 namespace tulip::hook {
-	class AndroidArmV8Target : public PosixTarget {
+	class PosixArmV8Target : public PosixTarget {
 	public:
 		using PosixTarget::PosixTarget;
 

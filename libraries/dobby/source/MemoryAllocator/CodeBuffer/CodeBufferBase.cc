@@ -1,4 +1,4 @@
-#include "MemoryAllocator/CodeBufferBase.h"
+#include "MemoryAllocator/CodeBuffer/CodeBufferBase.h"
 
 CodeBufferBase *CodeBufferBase::Copy() {
   CodeBufferBase *result = new CodeBufferBase();

@@ -1,9 +1,9 @@
 #ifndef CORE_CODEGEN_ARM_H
 #define CORE_CODEGEN_ARM_H
 
-#include "core/codegen.h"
-#include "core/assembler.h"
-#include "core/assembler-arm.h"
+#include "core/codegen/codegen.h"
+#include "core/assembler/assembler.h"
+#include "core/assembler/assembler-arm.h"
 
 namespace zz {
 namespace arm {

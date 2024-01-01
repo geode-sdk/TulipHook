@@ -1,7 +1,7 @@
 #include "platform_detect_macro.h"
 #if TARGET_ARCH_ARM
 
-#include "core/assembler-arm.h"
+#include "core/assembler/assembler-arm.h"
 
 void AssemblerPseudoLabel::link_confused_instructions(CodeBufferBase *buffer) {
   CodeBuffer *_buffer = (CodeBuffer *)buffer;

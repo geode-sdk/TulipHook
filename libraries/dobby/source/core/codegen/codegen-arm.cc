@@ -1,7 +1,7 @@
 #include "platform_detect_macro.h"
 #if defined(TARGET_ARCH_ARM)
 
-#include "core/codegen-arm.h"
+#include "core/codegen/codegen-arm.h"
 
 namespace zz {
 namespace arm {

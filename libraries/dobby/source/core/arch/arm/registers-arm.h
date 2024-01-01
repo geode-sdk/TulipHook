@@ -1,8 +1,8 @@
 #ifndef ARCH_ARM_REGISTERS
 #define ARCH_ARM_REGISTERS
 
-#include "core/constants-arm.h"
-#include "core/CpuRegister.h"
+#include "core/arch/arm/constants-arm.h"
+#include "core/arch/Cpu.h"
 
 namespace zz {
 namespace arm {
