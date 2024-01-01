@@ -42,6 +42,7 @@ namespace tulip::hook {
 		Fastcall,
 		Optcall,
 		Membercall,
+		Sdtcall,
 	};
 
 	TULIP_HOOK_DLL std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept;
