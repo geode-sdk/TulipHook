@@ -48,8 +48,17 @@ addr_t relo_cur_src_vmaddr(relo_ctx_t *ctx) {
   if (ctx->curr_state == zz::arm::ARMExecuteState) {
     return ctx->src_vmaddr + relocated_len + ARM_PC_OFFSET;
   } else {
-    // Geode bugfix
-		// the offsets are always 4 padded
+    return ctx->src_vmaddr + relocated_len + Thumb_PC_OFFSET;
+  }
+}
+
+// Geode bugfix
+// the offsets are always 4 padded for ldr
+addr_t relo_cur_src_vmaddr_ldr(relo_ctx_t *ctx) {
+  int relocated_len = ctx->buffer_cursor - ctx->buffer;
+  if (ctx->curr_state == zz::arm::ARMExecuteState) {
+    return ctx->src_vmaddr + relocated_len + ARM_PC_OFFSET;
+  } else {
 		return (ctx->src_vmaddr + relocated_len + Thumb_PC_OFFSET) & 0xfffffffc;
   }
 }
@@ -166,7 +175,7 @@ static void ARMRelocateSingleInsn(relo_ctx_t *ctx, int32_t insn) {
     uint32_t P_W = (P << 1) | W;
     do {
       // LDR (literal)
-      DEBUG_LOG("%d:relo <ldr_literal> at %p", ctx->relocated_offset_map.size(), relo_cur_src_vmaddr(ctx));
+      DEBUG_LOG("%d:relo <ldr_literal> at %p", ctx->relocated_offset_map.size(), relo_cur_src_vmaddr_ldr(ctx));
       if (o1 == 1 && o2 == 0 && P_W != 0b01 && Rn == 0b1111) {
         goto load_literal_fix_scheme;
       }
@@ -177,9 +186,9 @@ static void ARMRelocateSingleInsn(relo_ctx_t *ctx, int32_t insn) {
     load_literal_fix_scheme:
       addr32_t dst_vmaddr = 0;
       if (U == 0b1)
-        dst_vmaddr = relo_cur_src_vmaddr(ctx) + imm12;
+        dst_vmaddr = relo_cur_src_vmaddr_ldr(ctx) + imm12;
       else
-        dst_vmaddr = relo_cur_src_vmaddr(ctx) - imm12;
+        dst_vmaddr = relo_cur_src_vmaddr_ldr(ctx) - imm12;
       Register regRt = Register::R(Rt);
 
       auto label = RelocLabel::withData(dst_vmaddr);
@@ -368,11 +377,11 @@ static void Thumb1RelocateSingleInsn(relo_ctx_t *ctx, int16_t insn) {
   // LDR (literal) - T1 variant on page F5-4243
   // ldr literal
   if ((insn & 0xf800) == 0x4800) {
-    DEBUG_LOG("%d:relo <thumb1: ldr literal> at %p", ctx->relocated_offset_map.size(), relo_cur_src_vmaddr(ctx));
+    DEBUG_LOG("%d:relo <thumb1: ldr literal> at %p", ctx->relocated_offset_map.size(), relo_cur_src_vmaddr_ldr(ctx));
 
     uint32_t imm8 = bits(insn, 0, 7);
     uint32_t imm = imm8 << 2;
-    addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + imm;
+    addr_t dst_vmaddr = relo_cur_src_vmaddr_ldr(ctx) + imm;
     dst_vmaddr = ALIGN_FLOOR(dst_vmaddr, 4);
     rt = bits(insn, 8, 10);
 
@@ -656,9 +665,9 @@ static void Thumb2RelocateSingleInsn(relo_ctx_t *ctx, thumb1_inst_t insn1, thumb
 
     addr_t dst_vmaddr = 0;
     if (U == 1) {
-      dst_vmaddr = relo_cur_src_vmaddr(ctx) + imm;
+      dst_vmaddr = relo_cur_src_vmaddr_ldr(ctx) + imm;
     } else {
-      dst_vmaddr = relo_cur_src_vmaddr(ctx) - imm;
+      dst_vmaddr = relo_cur_src_vmaddr_ldr(ctx) - imm;
     }
 
     Register regRt = Register::R(rt);
