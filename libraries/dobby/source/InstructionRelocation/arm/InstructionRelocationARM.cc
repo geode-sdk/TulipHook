@@ -430,7 +430,7 @@ static void Thumb1RelocateSingleInsn(relo_ctx_t *ctx, int16_t insn) {
     auto label = ThumbRelocLabelEntry::withData(dst_vmaddr, true);
     _ AppendRelocLabel(label);
 
-    thumb1_inst_t b_cond_insn = 0xe000;
+    thumb1_inst_t b_cond_insn = 0xd000;
     set_bits(b_cond_insn, 8, 11, cond);
     _ EmitInt16(b_cond_insn | (4 >> 1));
     _ t1_nop(); // align
