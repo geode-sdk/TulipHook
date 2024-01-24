@@ -490,7 +490,7 @@ static void Thumb1RelocateSingleInsn(relo_ctx_t *ctx, int16_t insn) {
   if (!is_insn_relocated) {
 #if 0
         if (relo_cur_src_vmaddr(ctx) % Thumb2_INST_LEN)
-            _ t1_nop();
+            _ AlignThumbNop();
 #endif
     _ EmitInt16(insn);
   }
@@ -503,7 +503,7 @@ static void Thumb2RelocateSingleInsn(relo_ctx_t *ctx, thumb1_inst_t insn1, thumb
   bool is_insn_relocated = false;
 
   // if (turbo_assembler->pc_offset() % 4) {
-  //   _ t1_nop();
+  //   _ AlignThumbNop();
   // }
 
   _ AlignThumbNop();
@@ -684,7 +684,7 @@ static void Thumb2RelocateSingleInsn(relo_ctx_t *ctx, thumb1_inst_t insn1, thumb
   if (!is_insn_relocated) {
 #if 0
         if (relo_cur_src_vmaddr(ctx) % Thumb2_INST_LEN)
-          _ t1_nop();
+          _ AlignThumbNop();
 #endif
     _ EmitInt16(insn1);
     _ EmitInt16(insn2);
@@ -746,7 +746,7 @@ void gen_thumb_relocate_code(relo_ctx_t *ctx) {
     ctx->relocated_offset_map[orig_off] = relocated_off;
 
     // align nop
-    _ t1_nop();
+    _ AlignThumbNop();
 
     thumb2_inst_t insn = *(thumb2_inst_t *)ctx->buffer_cursor;
 
@@ -825,7 +825,7 @@ relocate_remain:
       if (is_translate_interrupted) {
         // add nop to align ARM
         if (thumb_turbo_assembler_.pc_offset() % 4)
-          thumb_turbo_assembler_.t1_nop();
+          thumb_turbo_assembler_.AlignThumbNop();
         goto relocate_remain;
       }
     }
