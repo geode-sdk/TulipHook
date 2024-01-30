@@ -11,7 +11,7 @@ if(TULIP_LINK_SOURCE OR PROJECT_IS_TOP_LEVEL)
 	add_subdirectory(src)
 endif()
 
-if(PROJECT_IS_TOP_LEVEL)
+if(PROJECT_IS_TOP_LEVEL AND NOT TULIP_DONT_BUILD_TESTS)
 	add_subdirectory(test)
 endif()
 
