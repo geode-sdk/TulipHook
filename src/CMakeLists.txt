@@ -13,12 +13,16 @@ file(GLOB TULIP_HOOK_BASE_SOURCES
 if(WIN32)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
 		assembler/X86Assembler.cpp
+		assembler/X64Assembler.cpp
 		generator/X86Generator.cpp
+		generator/X64Generator.cpp
 		target/WindowsTarget.cpp
 	)
 elseif(APPLE)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
+		assembler/X86Assembler.cpp
 		assembler/X64Assembler.cpp
+		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		target/DarwinTarget.cpp
 		target/MacosTarget.cpp
