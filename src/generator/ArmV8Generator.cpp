@@ -42,10 +42,6 @@ Result<ArmV8HandlerGenerator::RelocateReturn> ArmV8HandlerGenerator::relocateOri
 	});
 }
 
-void ArmV8HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
-    // Dobby handles the relocation of instructions
-}
-
 std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
