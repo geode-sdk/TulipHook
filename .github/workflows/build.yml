@@ -17,29 +17,34 @@ jobs:
           id: win
           os: windows-latest
           build_tests: true
-          extra_flags: '-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=Debug'
+          extra_flags: '-DCMAKE_BUILD_TYPE=Debug'
           out_paths: './build/src/TulipHook.lib'
 
         - name: 'macOS'
           id: mac
           os: macos-latest
           build_tests: true
-          extra_flags: "-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_BUILD_TYPE=Debug"
+          extra_flags: "-DCMAKE_BUILD_TYPE=Debug"
           out_paths: './build/src/libTulipHook.a'
 
         - name: 'Android Armv7'
           id: android-armv7
           os: ubuntu-latest
           build_tests: false
-          extra_flags: "-DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$NDK_PATH/build/cmake/android.toolchain.cmake -DANDROID_ABI=armeabi-v7a -DANDROID_PLATFORM=android-25 -DANDROID_ARM_NEON=ON"
+          extra_flags: "-DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI=armeabi-v7a -DANDROID_PLATFORM=android-25 -DANDROID_ARM_NEON=ON"
           out_paths: './build/src/libTulipHook.a'
 
     name: Build and Test ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
 
+    env:
+      CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm-cache
+      CMAKE_C_COMPILER_LAUNCHER: sccache
+      CMAKE_CXX_COMPILER_LAUNCHER: sccache
+
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -49,26 +54,10 @@ jobs:
         arch: x86
       if: matrix.config.id == 'win'
 
-    - name: Setup NDK
-      id: setup-ndk
-      uses: nttld/setup-ndk@v1
-      with:
-        ndk-version: r26b
-      if: matrix.config.id == 'android-armv7'
-
-    - name: Update ccache and Ninja
-      shell: bash
-      run: |
-        choco install ccache
-        choco install ninja
-        ccache --version
-        echo "=============="
-        ninja --version
-      if: matrix.config.id == 'win'
-
-    - name: Setup ccache
+    - name: Setup sccache
       uses: hendrikmuhs/ccache-action@v1
       with:
+        variant: sccache
         key: v1-${{ matrix.config.os }}-${{ github.ref }}
 
     - name: Install ninja-build tool
@@ -78,8 +67,6 @@ jobs:
     - name: Configure
       shell: bash
       run: cmake -G Ninja -B ./build ${{ matrix.config.extra_flags }}
-      env:
-        NDK_PATH: ${{ steps.setup-ndk.outputs.ndk-path }}
 
     - name: Build
       shell: bash
@@ -89,7 +76,7 @@ jobs:
         cp ${{ matrix.config.out_paths }} ./out
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: output-${{ matrix.config.os }}
         path: ${{ github.workspace }}/out
