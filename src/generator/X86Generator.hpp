@@ -3,6 +3,7 @@
 #include "Generator.hpp"
 
 #include <Platform.hpp>
+#include <capstone/capstone.h>
 
 namespace tulip::hook {
 

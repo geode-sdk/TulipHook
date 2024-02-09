@@ -3,7 +3,6 @@
 #include <HandlerData.hpp>
 #include <TulipResult.hpp>
 #include <WrapperData.hpp>
-#include <capstone/capstone.h>
 #include <memory>
 
 namespace tulip::hook {
