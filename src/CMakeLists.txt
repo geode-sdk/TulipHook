@@ -1,7 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
-
-set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT Embedded)
-cmake_policy(SET CMP0141 NEW)
+cmake_minimum_required(VERSION 3.21)
 
 project(TulipHook LANGUAGES CXX C)
 
