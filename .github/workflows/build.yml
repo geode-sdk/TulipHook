@@ -54,11 +54,12 @@ jobs:
         arch: x86
       if: matrix.config.id == 'win'
 
+    # https://github.com/hendrikmuhs/ccache-action/pull/182
     - name: Setup sccache
-      uses: hendrikmuhs/ccache-action@v1
+      uses: chirag-droid/ccache-action@main
       with:
         variant: sccache
-        key: v1-${{ matrix.config.os }}-${{ github.ref }}
+        key: ${{ matrix.config.id }}-v1
 
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3
