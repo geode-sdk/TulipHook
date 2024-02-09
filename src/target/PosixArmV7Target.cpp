@@ -15,15 +15,15 @@ Target& Target::get() {
 }
 
 Result<csh> PosixArmV7Target::openCapstone() {
-	cs_err status;
+	//cs_err status;
 
-	status = cs_open(CS_ARCH_ARM, CS_MODE_32, &m_capstone);
+	//status = cs_open(CS_ARCH_ARM, CS_MODE_32, &m_capstone);
 
-	if (status != CS_ERR_OK) {
+	//if (status != CS_ERR_OK) {
 		return Err("Couldn't open capstone");
-	}
+	//}
 
-	return Ok(m_capstone);
+	//return Ok(m_capstone);
 }
 
 std::unique_ptr<HandlerGenerator> PosixArmV7Target::getHandlerGenerator(

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Target.hpp"
-
 #include <Platform.hpp>
 
 #if defined(TULIP_HOOK_POSIX)
+
+#include "Target.hpp"
 
 namespace tulip::hook {
 

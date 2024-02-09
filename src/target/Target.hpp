@@ -3,8 +3,14 @@
 #include <HandlerData.hpp>
 #include <TulipResult.hpp>
 #include <WrapperData.hpp>
-#include <capstone/capstone.h>
 #include <memory>
+
+#include <Platform.hpp>
+#if defined(TULIP_HOOK_X86) || defined(TULIP_HOOK_X64)
+#include <capstone/capstone.h>
+#else
+typedef size_t csh;
+#endif
 
 namespace tulip::hook {
 	class HandlerGenerator;

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../generator/X86Generator.hpp"
-#include "Target.hpp"
-
 #include <Platform.hpp>
 
 #if defined(TULIP_HOOK_WINDOWS)
+
+#include "../generator/X86Generator.hpp"
+#include "Target.hpp"
 
 namespace tulip::hook {
 	class WindowsTarget : public Target {

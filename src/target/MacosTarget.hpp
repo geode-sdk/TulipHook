@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../generator/X64Generator.hpp"
-#include "DarwinTarget.hpp"
-
 #include <Platform.hpp>
 
 #if defined(TULIP_HOOK_MACOS)
+
+#include "../generator/X64Generator.hpp"
+#include "DarwinTarget.hpp"
 
 namespace tulip::hook {
 	class MacosTarget : public DarwinTarget {

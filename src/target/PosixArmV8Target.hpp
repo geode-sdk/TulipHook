@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../generator/ArmV8Generator.hpp"
-#include "PosixTarget.hpp"
-
 #include <Platform.hpp>
 
 #if defined(TULIP_HOOK_POSIX) && defined(TULIP_HOOK_ARMV8)
+
+#include "../generator/ArmV8Generator.hpp"
+#include "PosixTarget.hpp"
 
 namespace tulip::hook {
 	class PosixArmV8Target : public PosixTarget {
