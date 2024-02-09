@@ -26,7 +26,9 @@ Result<> Target::writeMemory(void* destination, void const* source, size_t size)
 }
 
 void Target::closeCapstone() {
+#if defined(TULIP_HOOK_X86) || defined(TULIP_HOOK_X64)
 	cs_close(&m_capstone);
+#endif
 	m_capstone = 0;
 }
 
