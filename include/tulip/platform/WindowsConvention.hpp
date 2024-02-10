@@ -1,5 +1,9 @@
 #pragma once
 
+#include <Platform.hpp>
+
+#ifdef TULIP_HOOK_WINDOWS
+
 #include "../CallingConvention.hpp"
 
 #include <memory>
@@ -80,3 +84,5 @@ namespace tulip::hook {
 		static std::shared_ptr<StdcallConvention> create();
 	};
 }
+
+#endif

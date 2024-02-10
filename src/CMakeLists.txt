@@ -5,7 +5,8 @@ project(TulipHook LANGUAGES CXX C)
 file(GLOB TULIP_HOOK_BASE_SOURCES
 	*.cpp
 	assembler/BaseAssembler.cpp
-	convention/*.cpp
+	convention/CallingConvention.cpp
+	convention/DefaultConvention.cpp
 	generator/Generator.cpp
 	target/Target.cpp
 )
@@ -14,6 +15,7 @@ if(WIN32)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
 		assembler/X86Assembler.cpp
 		assembler/X64Assembler.cpp
+		convention/WindowsConvention.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		target/WindowsTarget.cpp
