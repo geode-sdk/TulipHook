@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Platform.hpp>
+#include "../Platform.hpp"
 
 #ifdef TULIP_HOOK_WINDOWS
 
