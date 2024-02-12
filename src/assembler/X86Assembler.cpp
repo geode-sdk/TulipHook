@@ -30,6 +30,10 @@ void X86Assembler::nop() {
 	this->write8(0x90);
 }
 
+void X86Assembler::int3() {
+	this->write8(0xCC);
+}
+
 void X86Assembler::ret() {
 	this->write8(0xC3);
 }

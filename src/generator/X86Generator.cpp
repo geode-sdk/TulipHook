@@ -50,7 +50,7 @@ std::vector<uint8_t> X86HandlerGenerator::handlerBytes(uint64_t address) {
 		stackSize += (param.m_size + 3) / 4 * 4;
 	}
 	// struct return
-	if (m_metadata.m_abstract.m_return.m_size > 4 * 2) {
+	if (m_metadata.m_abstract.m_return.m_kind == AbstractTypeKind::Other) {
 		stackSize += 4;
 	}
 

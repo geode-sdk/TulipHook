@@ -77,6 +77,7 @@ namespace tulip::hook {
 		void updateLabels() override;
 
 		void nop();
+		void int3();
 
 		void ret();
 		void ret(int16_t offset);
