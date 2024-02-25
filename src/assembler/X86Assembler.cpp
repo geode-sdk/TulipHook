@@ -194,3 +194,24 @@ void X86Assembler::mov(X86Register reg, std::string const& label) {
 	this->write8(0x05 | regIdx(reg) << 3);
 	this->label32(label);
 }
+
+void X86Assembler::fstps(X86Pointer ptr) {
+	// 32 bit fstp
+	this->write8(0xD9);
+	this->encodeModRM(ptr, 3);
+}
+void X86Assembler::flds(X86Pointer ptr) {
+	// 32 bit fld
+	this->write8(0xD9);
+	this->encodeModRM(ptr, 0);
+}
+void X86Assembler::fstpd(X86Pointer ptr) {
+	// 64 bit fstp
+	this->write8(0xDD);
+	this->encodeModRM(ptr, 3);
+}
+void X86Assembler::fldd(X86Pointer ptr) {
+	// 64 bit fld
+	this->write8(0xDD);
+	this->encodeModRM(ptr, 0);
+}

@@ -18,6 +18,7 @@ enum class Register {
 	XMM1,
 	XMM2,
 	XMM3,
+	ST0,
 };
 using Stack = size_t;
 using Location = std::variant<Stack, Register>;
@@ -41,6 +42,16 @@ static Location returnLocation(AbstractFunction const& function) {
 	switch (function.m_return.m_kind) {
 		default:
 		case AbstractTypeKind::Primitive: return Register::EAX;
+		case AbstractTypeKind::FloatingPoint: return Register::ST0;
+		case AbstractTypeKind::Other: return Stack(0x4);
+	}
+}
+
+static Location optimizedReturnLocation(AbstractFunction const& function) {
+	// other
+	switch (function.m_return.m_kind) {
+		default:
+		case AbstractTypeKind::Primitive: return Register::EAX;
 		case AbstractTypeKind::FloatingPoint: return Register::XMM0;
 		case AbstractTypeKind::Other: return Stack(0x4);
 	}
@@ -50,6 +61,8 @@ class PushParameters final {
 private:
 	std::vector<PushParameter> m_params;
 	Location m_returnValueLocation;
+	AbstractType m_returnType;
+
 	// size of the original function's stack
 	size_t m_originalStackSize = 0x0;
 	// size of our converted function's stack
@@ -93,6 +106,7 @@ private:
 public:
 	static PushParameters fromCdecl(X86Assembler& a, AbstractFunction const& function) {
 		auto res = PushParameters(a);
+		res.m_returnType = function.m_return;
 
 		// structs are returned as pointer through first parameter
 		res.m_returnValueLocation = returnLocation(function);
@@ -120,6 +134,7 @@ public:
 
 	static PushParameters fromThiscall(X86Assembler& a, AbstractFunction const& function) {
 		auto res = PushParameters(a);
+		res.m_returnType = function.m_return;
 
 		// structs are returned as pointer through first parameter
 		res.m_returnValueLocation = returnLocation(function);
@@ -150,6 +165,7 @@ public:
 
 	static PushParameters fromFastcall(X86Assembler& a, AbstractFunction const& function) {
 		auto res = PushParameters(a);
+		res.m_returnType = function.m_return;
 		size_t registersUsed = 0;
 
 		// structs are returned as pointer through first parameter
@@ -184,7 +200,8 @@ public:
 		size_t registersUsed = 0;
 
 		// structs are returned as pointer through first parameter
-		res.m_returnValueLocation = returnLocation(function);
+		res.m_returnType = function.m_return;
+		res.m_returnValueLocation = optimizedReturnLocation(function);
 		if (std::holds_alternative<Stack>(res.m_returnValueLocation)) {
 			res.push(AbstractType::from<void*>(), Register::ECX);
 			registersUsed = 1;
@@ -242,7 +259,8 @@ public:
 		size_t registersUsed = 0;
 
 		// structs are returned as pointer through first parameter
-		res.m_returnValueLocation = returnLocation(function);
+		res.m_returnType = function.m_return;
+		res.m_returnValueLocation = optimizedReturnLocation(function);
 		if (std::holds_alternative<Stack>(res.m_returnValueLocation)) {
 			res.push(AbstractType::from<void*>());
 		}
@@ -386,6 +404,22 @@ public:
 		// clean up stack from the ones we added
 		a.add(ESP, m_resultStackSize);
 
+		// in the original(gd) function, the return for floats is in xmm0
+		if (std::holds_alternative<Register>(m_returnValueLocation) && std::get<Register>(m_returnValueLocation) == Register::XMM0) {
+			// move the st0 into xmm0
+			auto size = m_returnType.m_size;
+			a.sub(ESP, size);
+			if (size == 4) {
+				a.fstps(m[ESP]);
+				a.movss(XMM0, m[ESP]);
+			}
+			else {
+				a.fstpd(m[ESP]);
+				a.movsd(XMM0, m[ESP]);
+			}
+			a.add(ESP, size);
+		}
+
 		// if the function is caller cleaned, then generateOriginalCleanup
 		// or the original GD function cleans it up
 		if (m_isCallerCleanup) {
@@ -435,6 +469,22 @@ public:
 	}
 
 	void generateOriginalCleanup() {
+		// in the default(geode) function, the return for floats is in st0
+		if (std::holds_alternative<Register>(m_returnValueLocation) && std::get<Register>(m_returnValueLocation) == Register::XMM0) {
+			// move the xmm into st0
+			auto size = m_returnType.m_size;
+			a.sub(ESP, size);
+			if (size == 4) {
+				a.movss(m[ESP], XMM0);
+				a.flds(m[ESP]);
+			}
+			else {
+				a.movsd(m[ESP], XMM0);
+				a.fldd(m[ESP]);
+			}
+			a.add(ESP, size);
+		}
+
 		if (m_isCallerCleanup) {
 			// for mat: comment this to make your tests work
 			a.add(ESP, m_originalStackSize);

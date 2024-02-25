@@ -111,5 +111,10 @@ namespace tulip::hook {
 		void mov(X86Pointer ptr, X86Register reg);
 		void mov(X86Register reg, X86Register reg2);
 		void mov(X86Register reg, std::string const& label);
+
+		void fstps(X86Pointer ptr);
+		void flds(X86Pointer ptr);
+		void fstpd(X86Pointer ptr);
+		void fldd(X86Pointer ptr);
 	};
 }
