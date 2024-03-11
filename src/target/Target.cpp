@@ -18,9 +18,24 @@ Result<void*> Target::allocateArea(size_t size) {
 Result<> Target::writeMemory(void* destination, void const* source, size_t size) {
 	TULIP_HOOK_UNWRAP_INTO(auto oldProtection, this->getProtection(destination));
 
+#if defined(TULIP_NO_WX)
+	// with no wx pages, we run into the risk of accidentally marking our code as rw
+	// (this causes a crash in the result destructor, which is not very good)
+
+	auto r1 = this->protectMemory(destination, size, this->getMaxProtection());
+	auto r2 = this->rawWriteMemory(destination, source, size);
+	auto r3 = this->protectMemory(destination, size, oldProtection);
+
+	// permissions restored, it's safe to do result stuff now
+	if (r1.isErr() || r2.isErr() || r3.isErr()) {
+		// return the first error
+		return Err(r1.errorOr(r2.errorOr(r3.unwrapErr())));
+	}
+#else
 	TULIP_HOOK_UNWRAP(this->protectMemory(destination, size, this->getMaxProtection()));
 	TULIP_HOOK_UNWRAP(this->rawWriteMemory(destination, source, size));
 	TULIP_HOOK_UNWRAP(this->protectMemory(destination, size, oldProtection));
+#endif
 
 	return Ok();
 }

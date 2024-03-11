@@ -37,6 +37,7 @@
 
 		#if defined(TARGET_CPU_ARM64)
 			#define TULIP_HOOK_ARMV8 1
+			#define TULIP_NO_WX 1
 			#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 		#elif defined(TARGET_CPU_X86_64)
 			#define TULIP_HOOK_X64 1

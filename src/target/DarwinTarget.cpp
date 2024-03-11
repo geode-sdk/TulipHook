@@ -26,7 +26,7 @@ Result<> DarwinTarget::allocatePage() {
 	m_currentOffset = 0;
 	m_remainingOffset = PAGE_MAX_SIZE;
 
-	return this->protectMemory(m_allocatedPage, m_remainingOffset, VM_PROT_COPY | VM_PROT_ALL);
+	return this->protectMemory(m_allocatedPage, m_remainingOffset, VM_PROT_COPY | VM_PROT_READ | VM_PROT_WRITE);
 }
 
 Result<uint32_t> DarwinTarget::getProtection(void* address) {
@@ -82,9 +82,7 @@ Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, siz
 }
 
 uint32_t DarwinTarget::getMaxProtection() {
-	// TODO: on arm, wx pages are not possible. a workaround is probably necessary
-	// considering the tests don't even get far enough to where this matters idrc
-#if defined(TULIP_HOOK_ARMV8)
+#if defined(TULIP_NO_WX)
 	return VM_PROT_COPY | VM_PROT_READ | VM_PROT_WRITE;
 #else
 	return VM_PROT_COPY | VM_PROT_ALL;
