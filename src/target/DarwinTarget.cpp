@@ -16,7 +16,7 @@ Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;
 	mach_vm_address_t ret;
 
-	status = mach_vm_allocate(mach_task_self(), &ret, static_cast<mach_vm_size_t>(0x4000), VM_FLAGS_ANYWHERE);
+	status = mach_vm_allocate(mach_task_self(), &ret, PAGE_MAX_SIZE, VM_FLAGS_ANYWHERE);
 
 	if (status != KERN_SUCCESS) {
 		return Err("Couldn't allocate page");
@@ -24,7 +24,7 @@ Result<> DarwinTarget::allocatePage() {
 
 	m_allocatedPage = reinterpret_cast<void*>(ret);
 	m_currentOffset = 0;
-	m_remainingOffset = 0x4000;
+	m_remainingOffset = PAGE_MAX_SIZE;
 
 	return this->protectMemory(m_allocatedPage, m_remainingOffset, VM_PROT_COPY | VM_PROT_ALL);
 }
@@ -82,7 +82,13 @@ Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, siz
 }
 
 uint32_t DarwinTarget::getMaxProtection() {
+	// TODO: on arm, wx pages are not possible. a workaround is probably necessary
+	// considering the tests don't even get far enough to where this matters idrc
+#if defined(TULIP_HOOK_ARMV8)
+	return VM_PROT_COPY | VM_PROT_READ | VM_PROT_WRITE;
+#else
 	return VM_PROT_COPY | VM_PROT_ALL;
+#endif
 }
 
 #endif

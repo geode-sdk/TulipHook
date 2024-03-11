@@ -24,10 +24,13 @@ elseif(APPLE)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
 		assembler/X86Assembler.cpp
 		assembler/X64Assembler.cpp
+		assembler/ArmV8Assembler.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
+		generator/ArmV8Generator.cpp
 		target/DarwinTarget.cpp
-		target/MacosTarget.cpp
+		target/MacosIntelTarget.cpp
+		target/MacosArmV8Target.cpp
 	)
 elseif(ANDROID OR UNIX)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
@@ -66,7 +69,7 @@ if (WIN32 OR APPLE)
 	target_link_libraries(${PROJECT_NAME} PRIVATE capstone)
 	target_include_directories(${PROJECT_NAME} PRIVATE ${capstone_SOURCE_DIR}/include)
 endif()
-if(ANDROID OR UNIX)
+if(ANDROID OR UNIX OR APPLE)
 	target_link_libraries(${PROJECT_NAME} PRIVATE Dobby)
 	message(STATUS "${Dobby_SOURCE_DIR}/source")
 endif()

@@ -8,6 +8,8 @@
 
 using namespace tulip::hook;
 
+#if defined(TULIP_HOOK_X64) || defined(TULIP_HOOK_X86)
+
 namespace {
 	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content) {
 		Handler::incrementIndex(content);
@@ -291,3 +293,5 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 	trampolineAddress += size;
 	originalAddress += size;
 }
+
+#endif
