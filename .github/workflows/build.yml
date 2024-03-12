@@ -27,6 +27,13 @@ jobs:
           extra_flags: "-DCMAKE_BUILD_TYPE=Debug"
           out_paths: './build/src/libTulipHook.a'
 
+        - name: 'macOS (m1)'
+          id: mac-arm
+          os: macos-14
+          build_tests: true
+          extra_flags: "-DCMAKE_BUILD_TYPE=Debug"
+          out_paths: './build/src/libTulipHook.a'
+
         - name: 'Android Armv7'
           id: android-armv7
           os: ubuntu-latest
