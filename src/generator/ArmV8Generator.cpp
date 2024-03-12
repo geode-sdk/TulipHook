@@ -8,6 +8,8 @@
 
 using namespace tulip::hook;
 
+#if defined(TULIP_HOOK_ARMV8)
+
 namespace {
 	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content, void* originalReturn) {
 		Handler::incrementIndex(content);
@@ -125,3 +127,5 @@ Result<> ArmV8HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
 	// Dobby handles the creation of the trampoline
 	return Ok();
 }
+
+#endif
