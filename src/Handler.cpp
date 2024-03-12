@@ -19,6 +19,12 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	auto ret = std::make_unique<Handler>(address, metadata);
 
 	TULIP_HOOK_UNWRAP_INTO(auto area1, Target::get().allocateArea(0x200));
+
+#if defined(TULIP_NO_WX)
+	constexpr auto maxAreaSize = 0x200 + 0x180 + 0x80;
+	(void)Target::get().toggleWXStatus(area1, maxAreaSize, false);
+#endif
+
 	ret->m_content = static_cast<HandlerContent*>(area1);
 	auto content = new (ret->m_content) HandlerContent();
 	// std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
@@ -36,6 +42,10 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	ret->m_wrapped = trampolineWrap;
 	// std::cout << std::hex << "m_trampoline: " << (void*)ret->m_trampoline << std::endl;
 
+#if defined(TULIP_NO_WX)
+	(void)Target::get().toggleWXStatus(area1, maxAreaSize, true);
+#endif
+
 	return Ok(std::move(ret));
 }
 
@@ -43,6 +53,11 @@ Handler::~Handler() {}
 
 Result<> Handler::init() {
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
+
+#if defined(TULIP_NO_WX)
+	// should be enough bits for anyone, right?
+	(void)Target::get().toggleWXStatus(m_handler, 0x200, false);
+#endif
 
 	auto generator =
 		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_wrapped, m_metadata);
@@ -61,6 +76,10 @@ Result<> Handler::init() {
 
 	this->addOriginal();
 
+#if defined(TULIP_NO_WX)
+	(void)Target::get().toggleWXStatus(m_handler, 0x200, true);
+#endif
+
 	return Ok();
 }
 
@@ -78,7 +97,16 @@ HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
 	m_hooks.emplace(hook, std::make_unique<Hook>(address, m_metadata));
 	m_handles.insert({address, hook});
 
+#if defined(TULIP_NO_WX)
+	// for some reason there's memory here that gets written to
+	(void)Target::get().toggleWXStatus(m_content, 0x200, false);
+#endif
+
 	m_content->m_functions.push_back(address);
+
+#if defined(TULIP_NO_WX)
+	(void)Target::get().toggleWXStatus(m_content, 0x200, true);
+#endif
 
 	this->reorderFunctions();
 
@@ -93,13 +121,29 @@ void Handler::removeHook(HookHandle const& hook) {
 
 	auto& vec = m_content->m_functions;
 
+#if defined(TULIP_NO_WX)
+	(void)Target::get().toggleWXStatus(m_content, 0x200, false);
+#endif
+
 	vec.erase(std::remove(vec.begin(), vec.end(), address), vec.end());
+
+#if defined(TULIP_NO_WX)
+	(void)Target::get().toggleWXStatus(m_content, 0x200, true);
+#endif
 }
 
 void Handler::clearHooks() {
+#if defined(TULIP_NO_WX)
+	(void)Target::get().toggleWXStatus(m_content, 0x200, false);
+#endif
+
 	m_hooks.clear();
 	m_handles.clear();
 	m_content->m_functions.clear();
+
+#if defined(TULIP_NO_WX)
+	(void)Target::get().toggleWXStatus(m_content, 0x200, true);
+#endif
 
 	this->addOriginal();
 }
@@ -117,19 +161,35 @@ void Handler::reorderFunctions() {
 }
 
 Result<> Handler::interveneFunction() {
-	return Target::get().writeMemory(
+	auto r = Target::get().writeMemory(
 		Target::get().getRealPtr(m_address), 
 		static_cast<void*>(m_modifiedBytes.data()), 
 		m_modifiedBytes.size()
 	);
+
+#if defined(TULIP_NO_WX)
+	(void)Target::get().toggleWXStatus(
+		Target::get().getRealPtr(m_address), m_modifiedBytes.size(), true
+	);
+#endif
+
+	return r;
 }
 
 Result<> Handler::restoreFunction() {
-	return Target::get().writeMemory(
+	auto r = Target::get().writeMemory(
 		Target::get().getRealPtr(m_address), 
 		static_cast<void*>(m_originalBytes.data()), 
 		m_originalBytes.size()
 	);
+
+#if defined(TULIP_NO_WX)
+	(void)Target::get().toggleWXStatus(
+		Target::get().getRealPtr(m_address), m_originalBytes.size(), true
+	);
+#endif
+
+	return r;
 }
 
 static thread_local std::stack<size_t> s_indexStack;

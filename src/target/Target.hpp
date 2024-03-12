@@ -52,5 +52,10 @@ namespace tulip::hook {
 		// These just exist because of arm7! fun!
 		virtual void* getRealPtr(void* ptr);
 		virtual void* getRealPtrAs(void* ptr, void* lookup);
+
+		// this one exists just for the m1 chips
+		// corresponds to the `pthread_jit_write_protect_np` api
+		// (even if it's not actually used)
+		virtual Result<> toggleWXStatus(void* address, size_t size, bool executable) = 0;
 	};
 };

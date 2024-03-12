@@ -89,4 +89,12 @@ uint32_t DarwinTarget::getMaxProtection() {
 #endif
 }
 
+Result<> DarwinTarget::toggleWXStatus(void* address, size_t size, bool executable) {
+	if (executable) {
+		return this->protectMemory(address, size, VM_PROT_READ | VM_PROT_EXECUTE);
+	} else {
+		return this->protectMemory(address, size, VM_PROT_COPY | VM_PROT_READ | VM_PROT_WRITE);
+	}
+}
+
 #endif

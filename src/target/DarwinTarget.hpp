@@ -16,6 +16,7 @@ namespace tulip::hook {
 		Result<> protectMemory(void* address, size_t size, uint32_t protection) override;
 		Result<> rawWriteMemory(void* destination, void const* source, size_t size) override;
 		uint32_t getMaxProtection() override;
+		Result<> toggleWXStatus(void* address, size_t size, bool executable) override;
 	};
 }
 
