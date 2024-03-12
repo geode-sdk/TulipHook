@@ -58,3 +58,7 @@ void* Target::getRealPtr(void* ptr) {
 void* Target::getRealPtrAs(void* ptr, void* lookup) {
 	return ptr;
 }
+
+Result<> Target::toggleWXStatus(void* address, size_t size, bool executable) {
+	return Ok();
+}
