@@ -25,7 +25,12 @@ using vm_size = vm_size_t;
 #endif
 
 Result<> DarwinTarget::allocatePage() {
+#if defined(TULIP_NO_WX)
 	auto const protection = PROT_READ | PROT_WRITE;
+#else
+	auto const protection = PROT_READ | PROT_WRITE | PROT_EXEC;
+#endif
+
 	auto const flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
 	auto ret = mmap(nullptr, PAGE_MAX_SIZE, protection, flags, -1, 0);
