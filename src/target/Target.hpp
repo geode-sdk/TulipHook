@@ -56,6 +56,6 @@ namespace tulip::hook {
 		// this one exists just for the m1 chips
 		// corresponds to the `pthread_jit_write_protect_np` api
 		// (even if it's not actually used)
-		virtual Result<> toggleWXStatus(void* address, size_t size, bool executable) = 0;
+		virtual Result<> toggleWXStatus(void* address, size_t size, bool executable);
 	};
 };
