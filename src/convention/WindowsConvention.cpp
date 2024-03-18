@@ -225,12 +225,12 @@ public:
 		size_t index = 0;
 		for (auto& [oindex, param] : reordered) {
 			// first primitive through ecx
-			if (registersUsed == 0 && param.m_kind == AbstractTypeKind::Primitive) {
+			if (registersUsed == 0 && param.m_kind == AbstractTypeKind::Primitive && param.m_size <= sizeof(void*)) {
 				res.push(param, Register::ECX, oindex);
 				registersUsed = 1;
 			}
 			// second primitive through edx
-			else if (registersUsed == 1 && param.m_kind == AbstractTypeKind::Primitive) {
+			else if (registersUsed == 1 && param.m_kind == AbstractTypeKind::Primitive && param.m_size <= sizeof(void*)) {
 				res.push(param, Register::EDX, oindex);
 				registersUsed = 2;
 			}
@@ -283,7 +283,7 @@ public:
 		size_t index = 0;
 		for (auto& [oindex, param] : reordered) {
 			// first primitive through ecx
-			if (registersUsed == 0 && param.m_kind == AbstractTypeKind::Primitive) {
+			if (registersUsed == 0 && param.m_kind == AbstractTypeKind::Primitive && param.m_size <= sizeof(void*)) {
 				res.push(param, Register::ECX, oindex);
 				registersUsed = 1;
 			}
