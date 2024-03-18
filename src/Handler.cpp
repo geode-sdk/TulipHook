@@ -23,10 +23,10 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	auto content = new (ret->m_content) HandlerContent();
 	// std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
 
-	TULIP_HOOK_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x180));
+	TULIP_HOOK_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x300));
 	// std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
 
-	TULIP_HOOK_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x80));
+	TULIP_HOOK_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x100));
 
 	auto wrapperMetadata = WrapperMetadata{
 		.m_convention = metadata.m_convention,
@@ -118,16 +118,16 @@ void Handler::reorderFunctions() {
 
 Result<> Handler::interveneFunction() {
 	return Target::get().writeMemory(
-		Target::get().getRealPtr(m_address), 
-		static_cast<void*>(m_modifiedBytes.data()), 
+		Target::get().getRealPtr(m_address),
+		static_cast<void*>(m_modifiedBytes.data()),
 		m_modifiedBytes.size()
 	);
 }
 
 Result<> Handler::restoreFunction() {
 	return Target::get().writeMemory(
-		Target::get().getRealPtr(m_address), 
-		static_cast<void*>(m_originalBytes.data()), 
+		Target::get().getRealPtr(m_address),
+		static_cast<void*>(m_originalBytes.data()),
 		m_originalBytes.size()
 	);
 }
