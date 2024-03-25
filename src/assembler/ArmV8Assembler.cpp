@@ -99,6 +99,10 @@ void ArmV8Assembler::add(ArmV8Register dst, ArmV8Register src, uint16_t imm) {
     this->write32(0x11000000 | srcShifted | immShifted | val(dst));
 }
 
+void ArmV8Assembler::b(uint32_t imm) {
+    this->write32(0x14000000 | ((imm >> 2) & 0x3FFFFFF));
+}
+
 void ArmV8Assembler::br(ArmV8Register reg) {
     const auto shifted = val(reg) << 5;
     this->write32(0xD61F0000 | shifted);
@@ -124,3 +128,5 @@ void ArmV8Assembler::pop(ArmV8RegisterArray const& array) {
     for (auto i = 0u; i < alignedSize; i += 2)
         this->ldp(array[alignedSize - i - 2], array[alignedSize - i - 1], SP, 0x10, PostIndex);
 }
+
+void ArmV8Assembler::nop() { this->write32(0xD503201F); }

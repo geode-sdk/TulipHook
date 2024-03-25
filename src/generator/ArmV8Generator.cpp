@@ -87,6 +87,10 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 	// done!
 	a.br(X30);
 
+	// Align to 8 bytes for ldr.
+	if (a.currentAddress() & 7)
+		a.nop();
+
 	a.label("handlerPre");
 	a.write64(reinterpret_cast<uint64_t>(preHandler));
 
@@ -105,11 +109,32 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
 
-	a.ldr(X16, "handler");
-	a.br(X16);
+	const auto callback = reinterpret_cast<int64_t>(m_handler);
+	const int64_t delta = callback - static_cast<int64_t>(address);
 
-	a.label("handler");
-	a.write64(reinterpret_cast<uint64_t>(m_handler));
+	// Delta can be encoded in 28 bits or less -> use branch.
+	if (delta >= -0x7FFFFFF && delta <= 0x7FFFFFF) {
+		a.b(delta);
+	}
+	// Delta can be encoded in 33 bits or less -> use adrp.
+	else if (delta >= -static_cast<int64_t>(0xFFFFFFFF) && delta <= 0xFFFFFFFF) {
+		a.adrp(X16, delta);
+		a.add(X16, X16, callback & 0xFFF);
+		a.br(X16);
+	}
+	// Delta is too big -> use branch with register.
+	else {
+		// Align to 8 bytes for ldr.
+		if (address & 7) {
+			a.nop();
+		}
+
+		a.ldr(X16, "handler");
+		a.br(X16);
+
+		a.label("handler");
+		a.write64(callback);
+	}
 
 	a.updateLabels();
 
