@@ -98,8 +98,10 @@ namespace tulip::hook {
 		void stp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register regBase, int16_t imm, ArmV8IndexKind kind);
 		void adrp(ArmV8Register dst, uint32_t imm);
 		void add(ArmV8Register dst, ArmV8Register src, uint16_t imm);
+		void b(uint32_t imm);
 		void br(ArmV8Register reg);
 		void blr(ArmV8Register reg);
+		void nop();
 
 		/* Pseudo instructions */
 
