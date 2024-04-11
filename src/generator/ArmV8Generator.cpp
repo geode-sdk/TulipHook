@@ -117,7 +117,7 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
 		a.b(delta);
 	}
 	// Delta can be encoded in 33 bits or less -> use adrp.
-	else if (delta >= -static_cast<int64_t>(0x100000FFF) && delta <= 0xFFFFFFFF) {
+	else if (delta >= -static_cast<int64_t>(0x100000000) && delta <= 0xFFFFFFFF) {
 		a.adrp(X16, delta);
 		a.add(X16, X16, callback & 0xFFF);
 		a.br(X16);
