@@ -122,6 +122,8 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
     using enum ArmV8Register;
 
 	const auto callback = reinterpret_cast<int64_t>(m_handler);
+	const int64_t alignedAddr = address & ~0xFFF;
+	const int64_t alignedCallback = callback & ~0xFFF;
 	const int64_t delta = callback - static_cast<int64_t>(address);
 
 	// // Delta can be encoded in 28 bits or less -> use branch.
@@ -131,7 +133,7 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
 	// // Delta can be encoded in 33 bits or less -> use adrp.
 	// else 
 	if (delta >= -static_cast<int64_t>(0x100000000) && delta <= 0xFFFFFFFF) {
-		a.adrp(X16, delta);
+		a.adrp(X16, alignedCallback - alignedAddr);
 		a.add(X16, X16, callback & 0xFFF);
 		a.br(X16);
 	}
