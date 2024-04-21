@@ -6,6 +6,7 @@
 
 #include <InstructionRelocation/InstructionRelocation.h>
 #include <iostream>
+#include <iomanip>
 
 using namespace tulip::hook;
 
