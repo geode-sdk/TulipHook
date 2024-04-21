@@ -33,6 +33,7 @@ Result<ArmV8HandlerGenerator::RelocateReturn> ArmV8HandlerGenerator::relocateOri
 	auto relocatedBuffer = m_trampoline;
 
 	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
+		dest = (void*)((uintptr_t)dest - 0x300);
 		std::array<uint8_t, 0x100> buffer;
 		memcpy(buffer.data(), src, size);
 		std::cout << "Relocating original function: " << dest << " from " << (void*)buffer.data() << " size " << size << std::endl;
