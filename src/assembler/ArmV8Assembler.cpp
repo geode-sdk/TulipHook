@@ -96,7 +96,7 @@ void ArmV8Assembler::adrp(ArmV8Register dst, int64_t imm) {
 void ArmV8Assembler::add(ArmV8Register dst, ArmV8Register src, uint16_t imm) {
     const auto srcShifted = val(src) << 5;
     const auto immShifted = static_cast<uint32_t>(imm) << 10;
-    this->write32(0x11000000 | srcShifted | immShifted | val(dst));
+    this->write32(0x91000000 | srcShifted | immShifted | val(dst));
 }
 
 void ArmV8Assembler::b(uint32_t imm) {
