@@ -1,8 +1,6 @@
 #include "Generator.hpp"
 
 #include "../target/PlatformTarget.hpp"
-#include <iostream>
-#include <iomanip>
 
 using namespace tulip::hook;
 
@@ -32,13 +30,6 @@ Result<> HandlerGenerator::generateHandler() {
 Result<std::vector<uint8_t>> HandlerGenerator::generateIntervener() {
 	auto address = reinterpret_cast<uint64_t>(m_address);
 	auto encode = this->intervenerBytes(address);
-
-	std::cout << "address " << m_address << " trampoline " << m_trampoline << " handler " << m_handler << " content " << m_content << " wrapped " << m_wrapped << std::endl;
-
-	for (auto i = 0; i < encode.size(); i++) {
-		std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(encode[i]) << " ";
-	}
-	std::cout << std::endl;
 
 	return Ok(std::move(encode));
 }
