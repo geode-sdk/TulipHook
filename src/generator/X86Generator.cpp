@@ -1,3 +1,5 @@
+#include "X86Generator.hpp"
+
 #include "../Handler.hpp"
 #include "../assembler/X86Assembler.hpp"
 #include "../target/PlatformTarget.hpp"

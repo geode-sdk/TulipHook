@@ -29,7 +29,7 @@ std::unique_ptr<HandlerGenerator> MacosM1Target::getHandlerGenerator(
 }
 
 std::unique_ptr<WrapperGenerator> MacosM1Target::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {
-	return std::make_unique<ArmV8HandlerGenerator>(address, metadata);
+	return std::make_unique<ArmV8WrapperGenerator>(address, metadata);
 }
 
 #endif
