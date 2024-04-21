@@ -72,7 +72,15 @@ Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, siz
 
 	TULIP_HOOK_UNWRAP_INTO(auto protection, this->getProtection(destination));
 
+	std::cout << "Protection: " << protection << std::endl;
+
 	TULIP_HOOK_UNWRAP(this->protectMemory(destination, size, this->getWritableProtection()));
+
+	std::cout << "Protected" << std::endl;
+
+	TULIP_HOOK_UNWRAP_INTO(auto newprotection, this->getProtection(destination));
+
+	std::cout << "New Protection: " << newprotection << std::endl;
 
 	status = vm_write(
 		mach_task_self(),
@@ -80,6 +88,7 @@ Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, siz
 		reinterpret_cast<vm_offset_t>(source),
 		static_cast<mach_msg_type_number_t>(size)
 	);
+	std::cout << "Status: " << status << std::endl;
 
 	if (status != KERN_SUCCESS) {
 		return Err("Couldn't write memory");
