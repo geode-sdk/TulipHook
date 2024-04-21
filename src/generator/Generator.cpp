@@ -22,7 +22,7 @@ Result<> HandlerGenerator::generateHandler() {
 	auto address = reinterpret_cast<uint64_t>(m_handler);
 	auto encode = this->handlerBytes(address);
 
-	memcpy(m_handler, encode.data(), encode.size());
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_handler, encode.data(), encode.size()));
 
 	return Ok();
 }
@@ -38,7 +38,7 @@ Result<> HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
 	auto address = reinterpret_cast<uint64_t>(m_trampoline) + offsets.m_trampolineOffset;
 	auto encode = this->trampolineBytes(address, offsets.m_originalOffset);
 
-	memcpy(reinterpret_cast<void*>(address), encode.data(), encode.size());
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(address), encode.data(), encode.size()));
 
 	return Ok();
 }

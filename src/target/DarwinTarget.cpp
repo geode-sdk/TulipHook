@@ -26,7 +26,7 @@ Result<> DarwinTarget::allocatePage() {
 	m_currentOffset = 0;
 	m_remainingOffset = 0x4000;
 
-	return this->protectMemory(m_allocatedPage, m_remainingOffset, VM_PROT_COPY | VM_PROT_ALL);
+	return this->protectMemory(m_allocatedPage, m_remainingOffset, VM_PROT_EXECUTE | VM_PROT_READ);
 }
 
 Result<uint32_t> DarwinTarget::getProtection(void* address) {
@@ -60,13 +60,17 @@ Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protec
 	status = mach_vm_protect(mach_task_self(), reinterpret_cast<mach_vm_address_t>(address), size, false, protection);
 
 	if (status != KERN_SUCCESS) {
-		return Err("Couldn't protect memory");
+		return Err("Couldn't protect memory with " + std::to_string(protection) + " status: " + std::to_string(status));
 	}
 	return Ok();
 }
 
 Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	kern_return_t status;
+
+	TULIP_HOOK_UNWRAP_INTO(auto protection, this->getProtection(destination));
+
+	TULIP_HOOK_UNWRAP(this->protectMemory(destination, size, this->getWritableProtection()));
 
 	status = mach_vm_write(
 		mach_task_self(),
@@ -78,11 +82,12 @@ Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, siz
 	if (status != KERN_SUCCESS) {
 		return Err("Couldn't write memory");
 	}
+	TULIP_HOOK_UNWRAP(this->protectMemory(destination, size, protection));
 	return Ok();
 }
 
-uint32_t DarwinTarget::getMaxProtection() {
-	return VM_PROT_COPY | VM_PROT_ALL;
+uint32_t DarwinTarget::getWritableProtection() {
+	return VM_PROT_COPY | VM_PROT_READ | VM_PROT_WRITE;
 }
 
 #endif

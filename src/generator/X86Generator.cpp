@@ -148,7 +148,7 @@ Result<void*> X86WrapperGenerator::generateWrapper() {
 	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
 	auto code = this->wrapperBytes(reinterpret_cast<uintptr_t>(area));
 
-	memcpy(area, code.data(), codeSize);
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(area, code.data(), codeSize));
 
 	return Ok(area);
 }
@@ -161,7 +161,7 @@ Result<void*> X86WrapperGenerator::generateReverseWrapper() {
 	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
 	auto code = this->reverseWrapperBytes(reinterpret_cast<uintptr_t>(area));
 
-	memcpy(area, code.data(), codeSize);
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(area, code.data(), codeSize));
 
 	return Ok(area);
 }
@@ -191,7 +191,7 @@ Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOrigina
 			break;
 		}
 
-		this->relocateInstruction(insn, trampolineAddress, originalAddress);
+		TULIP_HOOK_UNWRAP(this->relocateInstruction(insn, trampolineAddress, originalAddress));
 	}
 
 	cs_free(insn, 1);
@@ -204,7 +204,7 @@ Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOrigina
 	});
 }
 
-void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
+Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -223,7 +223,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 		}
 	}
 
-	memcpy(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size);
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size));
 
 	if (detail->x86.encoding.imm_offset != 0) {
 		// branches, jumps, calls
@@ -236,7 +236,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 			if (id == X86_INS_JMP) {
 				// res = dst - src - 5
 				int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-				memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
+				TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int)));
 				inBinary[0] = 0xe9;
 
 				trampolineAddress += 5;
@@ -244,7 +244,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 			else if (id == X86_INS_CALL) {
 				// res = dst - src - 5
 				int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-				memcpy(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int));
+				TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int)));
 				inBinary[0] = 0xe8;
 
 				trampolineAddress += 5;
@@ -255,7 +255,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 				// long conditional jmp size
 				// this is like probably not right idk what instruction this is supposed to be
 				int addrBytes = jmpTargetAddr - trampolineAddress - 6;
-				memcpy(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int));
+				TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int)));
 				inBinary[1] = inBinary[0] + 0x10;
 				inBinary[0] = 0x0f;
 
@@ -263,7 +263,7 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 			}
 
 			originalAddress += size;
-			return;
+			return Ok();
 		}
 	}
 
@@ -279,15 +279,16 @@ void X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolin
 				int addrBytes = disp - difference;
 				auto offset = detail->x86.encoding.disp_offset;
 
-				memcpy(reinterpret_cast<void*>(trampolineAddress + offset), &addrBytes, sizeof(int));
+				TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(trampolineAddress + offset), &addrBytes, sizeof(int)));
 
 				trampolineAddress += size;
 				originalAddress += size;
-				return;
+				return Ok();
 			}
 		}
 	}
 
 	trampolineAddress += size;
 	originalAddress += size;
+	return Ok();
 }
