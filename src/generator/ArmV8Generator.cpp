@@ -33,13 +33,14 @@ Result<ArmV8HandlerGenerator::RelocateReturn> ArmV8HandlerGenerator::relocateOri
 	auto relocatedBuffer = m_trampoline;
 
 	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
+		std::vector<uint8_t> buffer(reinterpret_cast<uint8_t const*>(src), reinterpret_cast<uint8_t const*>(src) + size);
 		std::cout << "Relocating original function: " << dest << " from " << src << " size " << size << std::endl;
-		auto res = Target::get().rawWriteMemory(dest, src, size);
+		auto res = Target::get().rawWriteMemory(dest, buffer.data(), size);
 		if (!res) {
 			std::cout << "Failed to write memory: " << res.error() << std::endl;
 		}
 		for (auto i = 0; i < size; i++) {
-			std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(reinterpret_cast<uint8_t const*>(src)[i]) << " ";
+			std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(buffer[i]) << " ";
 		}
 		std::cout << std::endl;
 	});
