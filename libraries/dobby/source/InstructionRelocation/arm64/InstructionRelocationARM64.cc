@@ -148,7 +148,7 @@ static inline bool inst_is_test_b(uint32_t instr) {
 
 // ---
 
-int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch) {
+int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writer)(void*, void const*, size_t)) {
   int relocated_insn_count = 0;
 
   TurboAssembler turbo_assembler_(0);
@@ -355,7 +355,7 @@ void GenRelocateCode(void *buffer, void* relocated_mem, CodeMemBlock *origin, Co
 
   ctx.origin = origin;
 
-  relo_relocate(&ctx, relocated_mem, branch);
+  relo_relocate(&ctx, relocated_mem, branch, writer);
 
   relocated->reset(ctx.relocated->addr, ctx.relocated->size);
 }
