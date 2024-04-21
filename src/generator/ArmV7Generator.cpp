@@ -38,14 +38,14 @@ Result<ArmV7HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocateOri
 	error = "";
 
 	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
-		auto res = Target::get().writeMemory(dest, (void*)buffer.data(), size);
+		auto res = Target::get().writeMemory(dest, src, size);
 		if (!res) {
 			error = res.error();
 		}
 	});
 
 	if (!error.empty()) {
-		return Err(error);
+		return Err(std::move(error));
 	}
 
 	if (relocated->size == 0) {
