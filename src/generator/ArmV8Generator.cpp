@@ -5,6 +5,7 @@
 #include "../target/PlatformTarget.hpp"
 
 #include <InstructionRelocation/InstructionRelocation.h>
+#include <iostream>
 
 using namespace tulip::hook;
 
@@ -32,6 +33,10 @@ Result<ArmV8HandlerGenerator::RelocateReturn> ArmV8HandlerGenerator::relocateOri
 
 	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
 		(void)Target::get().rawWriteMemory(dest, src, size);
+		for (auto i = 0; i < size; i++) {
+			std::cout << std::hex << static_cast<int>(reinterpret_cast<uint8_t*>(src)[i]) << " ";
+		}
+		std::cout << std::endl;
 	});
 
 	if (relocated->size == 0) {
