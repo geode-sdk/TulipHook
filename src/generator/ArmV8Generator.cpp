@@ -30,7 +30,12 @@ Result<ArmV8HandlerGenerator::RelocateReturn> ArmV8HandlerGenerator::relocateOri
 	auto originBuffer = m_address;
 	auto relocatedBuffer = m_trampoline;
 
+	TULIP_HOOK_UNWRAP_INTO(auto protection, Target::get().getProtection(m_trampoline));
+	TULIP_HOOK_UNWRAP(Target::get().protectMemory(m_trampoline, target, Target::get().getWritableProtection()));
+
 	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated);
+
+	TULIP_HOOK_UNWRAP(Target::get().protectMemory(m_trampoline, target, protection));
 
 	if (relocated->size == 0) {
 		return Err("Failed to relocate original function");
