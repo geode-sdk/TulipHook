@@ -11,6 +11,7 @@ using namespace tulip::hook;
 #include <mach/mach_port.h>
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/task.h>
+#include <iostream>
 
 Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;
@@ -67,6 +68,7 @@ Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protec
 
 Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	kern_return_t status;
+	std::cout << "Writing " << size << " bytes to " << destination << std::endl;
 
 	TULIP_HOOK_UNWRAP_INTO(auto protection, this->getProtection(destination));
 
@@ -83,6 +85,7 @@ Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, siz
 		return Err("Couldn't write memory");
 	}
 	TULIP_HOOK_UNWRAP(this->protectMemory(destination, size, protection));
+	std::cout << "Wrote " << size << " bytes to " << destination << std::endl;
 	return Ok();
 }
 
