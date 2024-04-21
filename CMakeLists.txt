@@ -10,7 +10,7 @@ include(cmake/CPM.cmake)
 option(TULIP_LINK_SOURCE "Link to TulipHook source files, including external libs" OFF)
 
 if(TULIP_LINK_SOURCE OR PROJECT_IS_TOP_LEVEL)
-	if(ANDROID OR UNIX)
+	if(ANDROID OR UNIX OR APPLE)
 		add_subdirectory(libraries/dobby)
 	endif()
 	add_subdirectory(src)

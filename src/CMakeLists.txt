@@ -12,6 +12,8 @@ file(GLOB TULIP_HOOK_BASE_SOURCES
 )
 
 if(WIN32)
+	set(TULIP_HOOK_LINK_DOBBY Off)
+	set(TULIP_HOOK_LINK_CAPSTONE On)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
 		assembler/X86Assembler.cpp
 		assembler/X64Assembler.cpp
@@ -21,16 +23,22 @@ if(WIN32)
 		target/WindowsTarget.cpp
 	)
 elseif(APPLE)
+	set(TULIP_HOOK_LINK_DOBBY On)
+	set(TULIP_HOOK_LINK_CAPSTONE On)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
 		assembler/X86Assembler.cpp
 		assembler/X64Assembler.cpp
+		assembler/ArmV8Assembler.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
+		generator/ArmV8Generator.cpp
 		target/DarwinTarget.cpp
 		target/MacosIntelTarget.cpp
 		target/MacosM1Target.cpp
 	)
 elseif(ANDROID OR UNIX)
+	set(TULIP_HOOK_LINK_DOBBY On)
+	set(TULIP_HOOK_LINK_CAPSTONE Off)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
 		assembler/ArmV7Assembler.cpp
 		assembler/ArmV8Assembler.cpp
@@ -55,7 +63,12 @@ if (MSVC)
 	target_compile_options(${PROJECT_NAME} PUBLIC /EHsc)
 endif ()
 
-if (WIN32 OR APPLE)
+if (TULIP_HOOK_LINK_DOBBY)
+	target_link_libraries(${PROJECT_NAME} PRIVATE Dobby)
+	message(STATUS "${Dobby_SOURCE_DIR}/source")
+endif()
+
+if (TULIP_HOOK_LINK_CAPSTONE)
 	set(CAPSTONE_INSTALL Off)
 	set(CAPSTONE_ARCHITECTURE_DEFAULT Off)
 
@@ -66,10 +79,6 @@ if (WIN32 OR APPLE)
 	CPMAddPackage("gh:geode-sdk/capstone#d2a14e5")
 	target_link_libraries(${PROJECT_NAME} PRIVATE capstone)
 	target_include_directories(${PROJECT_NAME} PRIVATE ${capstone_SOURCE_DIR}/include)
-endif()
-if(ANDROID OR UNIX)
-	target_link_libraries(${PROJECT_NAME} PRIVATE Dobby)
-	message(STATUS "${Dobby_SOURCE_DIR}/source")
 endif()
 
 target_link_libraries(${PROJECT_NAME} PUBLIC Result)
