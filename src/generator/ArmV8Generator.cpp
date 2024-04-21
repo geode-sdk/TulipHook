@@ -34,7 +34,10 @@ Result<ArmV8HandlerGenerator::RelocateReturn> ArmV8HandlerGenerator::relocateOri
 
 	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
 		std::cout << "Relocating original function: " << dest << " from " << src << " size " << size << std::endl;
-		(void)Target::get().rawWriteMemory(dest, src, size);
+		auto res = Target::get().rawWriteMemory(dest, src, size);
+		if (!res) {
+			std::cout << "Failed to write memory: " << res.error() << std::endl;
+		}
 		for (auto i = 0; i < size; i++) {
 			std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(reinterpret_cast<uint8_t const*>(src)[i]) << " ";
 		}
