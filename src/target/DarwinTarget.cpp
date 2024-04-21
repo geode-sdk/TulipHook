@@ -87,8 +87,8 @@ Result<> DarwinTarget::writeMemory(void* destination, void const* source, size_t
 	// (this causes a crash in the result destructor, which is not very good)
 
 	auto r1 = this->protectMemory(destination, size, this->getWritableProtection());
-	auto r2 = r1 ? this->rawWriteMemory(destination, source, size) : r1;
-	auto r3 = r1 ? this->protectMemory(destination, size, oldProtection) : r1;
+	auto r2 = r1.isOk() ? this->rawWriteMemory(destination, source, size) : r1;
+	auto r3 = r1.isOk() ? this->protectMemory(destination, size, oldProtection) : r1;
 
 	// permissions restored, it's safe to do result stuff now
 	if (r1.isErr() || r2.isErr() || r3.isErr()) {
