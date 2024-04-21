@@ -114,29 +114,40 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
 	const auto callback = reinterpret_cast<int64_t>(m_handler);
 	const int64_t delta = callback - static_cast<int64_t>(address);
 
-	// Delta can be encoded in 28 bits or less -> use branch.
-	if (delta >= -0x8000000 && delta <= 0x7FFFFFF) {
-		a.b(delta);
+	// Align to 8 bytes for ldr.
+	if (address & 7) {
+		a.nop();
 	}
-	// Delta can be encoded in 33 bits or less -> use adrp.
-	else if (delta >= -static_cast<int64_t>(0x100000000) && delta <= 0xFFFFFFFF) {
-		a.adrp(X16, delta);
-		a.add(X16, X16, callback & 0xFFF);
-		a.br(X16);
-	}
-	// Delta is too big -> use branch with register.
-	else {
-		// Align to 8 bytes for ldr.
-		if (address & 7) {
-			a.nop();
-		}
 
-		a.ldr(X16, "handler");
-		a.br(X16);
+	a.ldr(X16, "handler");
+	a.br(X16);
 
-		a.label("handler");
-		a.write64(callback);
-	}
+	a.label("handler");
+	a.write64(callback);
+
+	// // Delta can be encoded in 28 bits or less -> use branch.
+	// if (delta >= -0x8000000 && delta <= 0x7FFFFFF) {
+	// 	a.b(delta);
+	// }
+	// // Delta can be encoded in 33 bits or less -> use adrp.
+	// else if (delta >= -static_cast<int64_t>(0x100000000) && delta <= 0xFFFFFFFF) {
+	// 	a.adrp(X16, delta);
+	// 	a.add(X16, X16, callback & 0xFFF);
+	// 	a.br(X16);
+	// }
+	// // Delta is too big -> use branch with register.
+	// else {
+	// 	// Align to 8 bytes for ldr.
+	// 	if (address & 7) {
+	// 		a.nop();
+	// 	}
+
+	// 	a.ldr(X16, "handler");
+	// 	a.br(X16);
+
+	// 	a.label("handler");
+	// 	a.write64(callback);
+	// }
 
 	a.updateLabels();
 
