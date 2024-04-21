@@ -32,11 +32,16 @@
 	#if TARGET_OS_MAC
 
 		#define TULIP_HOOK_MACOS 1
-		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 
 		#define TULIP_HOOK_DEFAULT_CONV
 
-		#define TULIP_HOOK_X64 1
+		#if TARGET_CPU_ARM64
+			#define TULIP_HOOK_ARMV8 1
+			#define TULIP_HOOK_SUPPORTED_PLATFORM 1
+		#elif TARGET_CPU_X86_64
+			#define TULIP_HOOK_X64 1
+			#define TULIP_HOOK_SUPPORTED_PLATFORM 1
+		#endif
 
 		#ifdef TULIP_HOOK_EXPORTING
 			#define TULIP_HOOK_DLL    __attribute__((visibility("default")))

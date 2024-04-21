@@ -2,7 +2,7 @@
 
 #include <Platform.hpp>
 
-#if defined(TULIP_HOOK_MACOS)
+#if defined(TULIP_HOOK_DARWIN)
 
 #include "Target.hpp"
 

@@ -27,7 +27,8 @@ elseif(APPLE)
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		target/DarwinTarget.cpp
-		target/MacosTarget.cpp
+		target/MacosIntelTarget.cpp
+		target/MacosM1Target.cpp
 	)
 elseif(ANDROID OR UNIX)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
