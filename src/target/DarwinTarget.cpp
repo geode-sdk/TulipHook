@@ -11,7 +11,6 @@ using namespace tulip::hook;
 #include <mach/mach_port.h>
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/task.h>
-#include <iostream>
 
 Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;
@@ -71,9 +70,6 @@ Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protec
 	auto const pageCount = (beginSize + size + pageMask) / pageSize;
 	auto const alignedSize = pageCount * pageSize;
 
-	std::cout << "Using " << size << " bytes at " << address << " with " << protection << " max size " << PAGE_SIZE << std::endl;
-	std::cout << "Protecting " << alignedSize << " bytes at " << (void*)alignedPtr << " with " << protection << std::endl;
-
 	kern_return_t status;
 
 	status = vm_protect(mach_task_self(), reinterpret_cast<vm_address_t>(alignedPtr), alignedSize, false, protection);
@@ -86,19 +82,9 @@ Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protec
 
 Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	kern_return_t status;
-	std::cout << "Writing " << size << " bytes to " << destination << std::endl;
 
 	TULIP_HOOK_UNWRAP_INTO(auto protection, this->getProtection(destination));
-
-	std::cout << "Protection: " << protection << std::endl;
-
 	TULIP_HOOK_UNWRAP(this->protectMemory(destination, size, this->getWritableProtection()));
-
-	std::cout << "Protected" << std::endl;
-
-	TULIP_HOOK_UNWRAP_INTO(auto newprotection, this->getProtection(destination));
-
-	std::cout << "New Protection: " << newprotection << std::endl;
 
 	status = vm_write(
 		mach_task_self(),
@@ -106,13 +92,11 @@ Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, siz
 		reinterpret_cast<vm_offset_t>(source),
 		static_cast<mach_msg_type_number_t>(size)
 	);
-	std::cout << "Status: " << status << std::endl;
 
 	if (status != KERN_SUCCESS) {
 		return Err("Couldn't write memory");
 	}
 	TULIP_HOOK_UNWRAP(this->protectMemory(destination, size, protection));
-	std::cout << "Wrote " << size << " bytes to " << destination << std::endl;
 	return Ok();
 }
 

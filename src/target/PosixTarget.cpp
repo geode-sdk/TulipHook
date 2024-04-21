@@ -32,13 +32,14 @@ Result<uint32_t> PosixTarget::getProtection(void* address) {
 }
 
 Result<> PosixTarget::protectMemory(void* address, size_t size, uint32_t protection) {
-	auto const pageSize = 0x1000;
+	auto const pageSize = PAGE_SIZE;
 	auto const pageMask = pageSize - 1;
 
 	auto const ptr = reinterpret_cast<uintptr_t>(address);
 	auto const alignedPtr = ptr & (~pageMask);
 	auto const beginSize = ptr - alignedPtr;
-	auto const alignedSize = beginSize & pageMask ? beginSize + pageSize : beginSize;
+	auto const pageCount = (beginSize + size + pageMask) / pageSize;
+	auto const alignedSize = pageCount * pageSize;
 
 	auto status = mprotect(reinterpret_cast<void*>(alignedPtr), alignedSize, protection);
 
