@@ -31,9 +31,15 @@ Result<> DarwinTarget::allocatePage() {
 }
 
 Result<uint32_t> DarwinTarget::getProtection(void* address) {
+	auto const pageSize = PAGE_SIZE;
+	auto const pageMask = pageSize - 1;
+
+	auto const ptr = reinterpret_cast<uintptr_t>(address);
+	auto const alignedPtr = ptr & (~pageMask);
+
 	kern_return_t status;
 	vm_size_t vmsize;
-	vm_address_t vmaddress = reinterpret_cast<vm_address_t>(address);
+	vm_address_t vmaddress = reinterpret_cast<vm_address_t>(alignedPtr);
 	vm_region_basic_info_data_t info;
 	mach_msg_type_number_t infoCount = VM_REGION_BASIC_INFO_COUNT_64;
 	mach_port_t object;
@@ -56,9 +62,21 @@ Result<uint32_t> DarwinTarget::getProtection(void* address) {
 }
 
 Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protection) {
+	auto const pageSize = PAGE_SIZE;
+	auto const pageMask = pageSize - 1;
+
+	auto const ptr = reinterpret_cast<uintptr_t>(address);
+	auto const alignedPtr = ptr & (~pageMask);
+	auto const beginSize = ptr - alignedPtr;
+	auto const pageCount = (beginSize + size + pageMask) / pageSize;
+	auto const alignedSize = pageCount * pageSize;
+
+	std::cout << "Using " << size << " bytes at " << address << " with " << protection << " max size " << PAGE_SIZE << std::endl;
+	std::cout << "Protecting " << alignedSize << " bytes at " << (void*)alignedPtr << " with " << protection << std::endl;
+
 	kern_return_t status;
 
-	status = vm_protect(mach_task_self(), reinterpret_cast<vm_address_t>(address), size, false, protection);
+	status = vm_protect(mach_task_self(), reinterpret_cast<vm_address_t>(alignedPtr), alignedSize, false, protection);
 
 	if (status != KERN_SUCCESS) {
 		return Err("Couldn't protect memory");
