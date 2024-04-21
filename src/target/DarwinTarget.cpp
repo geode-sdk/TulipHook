@@ -75,7 +75,7 @@ Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, siz
 		static_cast<mach_msg_type_number_t>(size)
 	);
 	if (status != KERN_SUCCESS) {
-		return Err("Couldn't write memory");
+		return Err("Couldn't write memory, status: " + std::to_string(status));
 	}
 	return Ok();
 }
