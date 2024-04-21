@@ -332,11 +332,6 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
     codegen.LiteralLdrBranch(ctx->origin->addr + ctx->origin->size);
   }
 
-  // pad to 8 bytes if not
-  if (turbo_assembler_.pc_offset() % 8) {
-    turbo_assembler_.nop();
-  }
-
   // Bind all labels
   turbo_assembler_.RelocBind();
 
