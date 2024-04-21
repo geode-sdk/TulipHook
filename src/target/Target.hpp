@@ -31,7 +31,7 @@ namespace tulip::hook {
 
 		Result<void*> allocateArea(size_t size);
 
-		Result<> writeMemory(void* destination, void const* source, size_t size);
+		virtual Result<> writeMemory(void* destination, void const* source, size_t size);
 
 		virtual Result<csh> openCapstone() = 0;
 		void closeCapstone();
@@ -41,7 +41,7 @@ namespace tulip::hook {
 		virtual Result<uint32_t> getProtection(void* address) = 0;
 		virtual Result<> protectMemory(void* address, size_t size, uint32_t protection) = 0;
 		virtual Result<> rawWriteMemory(void* destination, void const* source, size_t size) = 0;
-		virtual uint32_t getMaxProtection() = 0;
+		virtual uint32_t getWritableProtection() = 0;
 
 		virtual std::unique_ptr<HandlerGenerator> getHandlerGenerator(
 			void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata

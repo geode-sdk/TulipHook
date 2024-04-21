@@ -34,7 +34,19 @@ Result<ArmV7HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocateOri
 	auto originBuffer = m_address;
 	auto relocatedBuffer = m_trampoline;
 
-	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated);
+	static thread_local std::string error;
+	error = "";
+
+	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
+		auto res = Target::get().writeMemory(dest, src, size);
+		if (!res) {
+			error = res.error();
+		}
+	});
+
+	if (!error.empty()) {
+		return Err(std::move(error));
+	}
 
 	if (relocated->size == 0) {
 		return Err("Failed to relocate original function");

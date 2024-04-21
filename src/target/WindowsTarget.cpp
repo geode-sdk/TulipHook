@@ -11,7 +11,7 @@ using namespace tulip::hook;
 #include <Windows.h>
 
 Result<> WindowsTarget::allocatePage() {
-	m_allocatedPage = VirtualAlloc(nullptr, 0x4000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+	m_allocatedPage = VirtualAlloc(nullptr, 0x4000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READ);
 
 	if (!m_allocatedPage) {
 		return Err("Unable to allocate memory: " + std::to_string(GetLastError()));
@@ -50,8 +50,8 @@ Result<> WindowsTarget::rawWriteMemory(void* destination, void const* source, si
 	return Ok();
 }
 
-uint32_t WindowsTarget::getMaxProtection() {
-	return PAGE_EXECUTE_READWRITE;
+uint32_t WindowsTarget::getWritableProtection() {
+	return PAGE_READWRITE;
 }
 
 Target& Target::get() {

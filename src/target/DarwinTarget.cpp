@@ -9,14 +9,15 @@ using namespace tulip::hook;
 #include <mach/mach.h>
 #include <mach/mach_init.h> /* mach_task_self()     */
 #include <mach/mach_port.h>
-#include <mach/mach_vm.h> /* mach_vm_*            */
+#include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/task.h>
+#include <iostream>
 
 Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;
-	mach_vm_address_t ret;
+	vm_address_t ret;
 
-	status = mach_vm_allocate(mach_task_self(), &ret, static_cast<mach_vm_size_t>(0x4000), VM_FLAGS_ANYWHERE);
+	status = vm_allocate(mach_task_self(), &ret, static_cast<vm_size_t>(PAGE_MAX_SIZE), VM_FLAGS_ANYWHERE);
 
 	if (status != KERN_SUCCESS) {
 		return Err("Couldn't allocate page");
@@ -24,20 +25,20 @@ Result<> DarwinTarget::allocatePage() {
 
 	m_allocatedPage = reinterpret_cast<void*>(ret);
 	m_currentOffset = 0;
-	m_remainingOffset = 0x4000;
+	m_remainingOffset = PAGE_MAX_SIZE;
 
-	return this->protectMemory(m_allocatedPage, m_remainingOffset, VM_PROT_COPY | VM_PROT_ALL);
+	return this->protectMemory(m_allocatedPage, PAGE_MAX_SIZE, VM_PROT_READ | VM_PROT_EXECUTE);
 }
 
 Result<uint32_t> DarwinTarget::getProtection(void* address) {
 	kern_return_t status;
-	mach_vm_size_t vmsize;
-	mach_vm_address_t vmaddress = reinterpret_cast<mach_vm_address_t>(address);
+	vm_size_t vmsize;
+	vm_address_t vmaddress = reinterpret_cast<vm_address_t>(address);
 	vm_region_basic_info_data_t info;
 	mach_msg_type_number_t infoCount = VM_REGION_BASIC_INFO_COUNT_64;
 	mach_port_t object;
 
-	status = mach_vm_region(
+	status = vm_region_64(
 		mach_task_self(),
 		&vmaddress,
 		&vmsize,
@@ -57,7 +58,7 @@ Result<uint32_t> DarwinTarget::getProtection(void* address) {
 Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protection) {
 	kern_return_t status;
 
-	status = mach_vm_protect(mach_task_self(), reinterpret_cast<mach_vm_address_t>(address), size, false, protection);
+	status = vm_protect(mach_task_self(), reinterpret_cast<vm_address_t>(address), size, false, protection);
 
 	if (status != KERN_SUCCESS) {
 		return Err("Couldn't protect memory");
@@ -68,21 +69,38 @@ Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protec
 Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	kern_return_t status;
 
-	status = mach_vm_write(
+	status = vm_write(
 		mach_task_self(),
-		reinterpret_cast<mach_vm_address_t>(destination),
+		reinterpret_cast<vm_address_t>(destination),
 		reinterpret_cast<vm_offset_t>(source),
 		static_cast<mach_msg_type_number_t>(size)
 	);
-
 	if (status != KERN_SUCCESS) {
-		return Err("Couldn't write memory");
+		return Err("Couldn't write memory, status: " + std::to_string(status));
 	}
 	return Ok();
 }
 
-uint32_t DarwinTarget::getMaxProtection() {
-	return VM_PROT_COPY | VM_PROT_ALL;
+Result<> DarwinTarget::writeMemory(void* destination, void const* source, size_t size) {
+	TULIP_HOOK_UNWRAP_INTO(auto oldProtection, this->getProtection(destination));
+
+	// with no wx pages, we run into the risk of accidentally marking our code as rw
+	// (this causes a crash in the result destructor, which is not very good)
+
+	auto r1 = this->protectMemory(destination, size, this->getWritableProtection());
+	auto r2 = r1.isOk() ? this->rawWriteMemory(destination, source, size) : r1;
+	auto r3 = r1.isOk() ? this->protectMemory(destination, size, oldProtection) : r1;
+
+	// permissions restored, it's safe to do result stuff now
+	if (r1.isErr() || r2.isErr() || r3.isErr()) {
+		// return the first error
+		return Err(r1.errorOr(r2.errorOr(r3.unwrapErr())));
+	}
+	return Ok();
+}
+
+uint32_t DarwinTarget::getWritableProtection() {
+	return VM_PROT_COPY | VM_PROT_READ | VM_PROT_WRITE;
 }
 
 #endif

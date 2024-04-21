@@ -10,5 +10,5 @@ using AssemblyCode = CodeMemBlock;
 
 class AssemblyCodeBuilder {
 public:
-  static AssemblyCode *FinalizeFromTurboAssembler(AssemblerBase *assembler);
+  static AssemblyCode *FinalizeFromTurboAssembler(AssemblerBase *assembler, void (*writer)(void*, void const*, size_t));
 };

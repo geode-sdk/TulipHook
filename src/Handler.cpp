@@ -18,9 +18,10 @@ Handler::Handler(void* address, HandlerMetadata const& metadata) :
 Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata const& metadata) {
 	auto ret = std::make_unique<Handler>(address, metadata);
 
-	TULIP_HOOK_UNWRAP_INTO(auto area1, Target::get().allocateArea(0x200));
-	ret->m_content = static_cast<HandlerContent*>(area1);
-	auto content = new (ret->m_content) HandlerContent();
+	ret->m_content = new (std::nothrow) HandlerContent();
+	if (!ret->m_content) {
+		return Err("Failed to allocate HandlerContent");
+	}
 	// std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
 
 	TULIP_HOOK_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x300));

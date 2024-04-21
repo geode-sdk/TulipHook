@@ -30,7 +30,19 @@ Result<ArmV8HandlerGenerator::RelocateReturn> ArmV8HandlerGenerator::relocateOri
 	auto originBuffer = m_address;
 	auto relocatedBuffer = m_trampoline;
 
-	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated);
+	static thread_local std::string error;
+	error = "";
+
+	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
+		auto res = Target::get().writeMemory(dest, src, size);
+		if (!res) {
+			error = res.error();
+		}
+	});
+
+	if (!error.empty()) {
+		return Err(std::move(error));
+	}
 
 	if (relocated->size == 0) {
 		return Err("Failed to relocate original function");
@@ -110,6 +122,8 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
     using enum ArmV8Register;
 
 	const auto callback = reinterpret_cast<int64_t>(m_handler);
+	const int64_t alignedAddr = address & ~0xFFF;
+	const int64_t alignedCallback = callback & ~0xFFF;
 	const int64_t delta = callback - static_cast<int64_t>(address);
 
 	// Delta can be encoded in 28 bits or less -> use branch.
@@ -118,7 +132,7 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
 	}
 	// Delta can be encoded in 33 bits or less -> use adrp.
 	else if (delta >= -static_cast<int64_t>(0x100000000) && delta <= 0xFFFFFFFF) {
-		a.adrp(X16, delta);
+		a.adrp(X16, alignedCallback - alignedAddr);
 		a.add(X16, X16, callback & 0xFFF);
 		a.br(X16);
 	}

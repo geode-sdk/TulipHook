@@ -2,7 +2,7 @@
 
 #include <Platform.hpp>
 
-#if defined(TULIP_HOOK_MACOS)
+#if defined(TULIP_HOOK_DARWIN)
 
 #include "Target.hpp"
 
@@ -15,7 +15,9 @@ namespace tulip::hook {
 		Result<uint32_t> getProtection(void* address) override;
 		Result<> protectMemory(void* address, size_t size, uint32_t protection) override;
 		Result<> rawWriteMemory(void* destination, void const* source, size_t size) override;
-		uint32_t getMaxProtection() override;
+		uint32_t getWritableProtection() override;
+
+		Result<> writeMemory(void* destination, void const* source, size_t size) override;
 	};
 }
 
