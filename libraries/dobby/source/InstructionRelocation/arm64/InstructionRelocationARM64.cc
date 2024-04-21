@@ -338,13 +338,13 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch) {
   // Generate executable code
   {
     turbo_assembler_.SetRealizedAddress((void*)relocated_mem);
-    auto code = AssemblyCodeBuilder::FinalizeFromTurboAssembler(&turbo_assembler_);
+    auto code = AssemblyCodeBuilder::FinalizeFromTurboAssembler(&turbo_assembler_, writer);
     ctx->relocated = code;
   }
   return 0;
 }
 
-void GenRelocateCode(void *buffer, void* relocated_mem, CodeMemBlock *origin, CodeMemBlock *relocated, bool branch) {
+void GenRelocateCode(void *buffer, void* relocated_mem, CodeMemBlock *origin, CodeMemBlock *relocated, bool branch, void (*writer)(void*, void const*, size_t)) {
   relo_ctx_t ctx = {0};
 
   ctx.buffer = ctx.buffer_cursor = (uint8_t *)buffer;
@@ -360,8 +360,8 @@ void GenRelocateCode(void *buffer, void* relocated_mem, CodeMemBlock *origin, Co
   relocated->reset(ctx.relocated->addr, ctx.relocated->size);
 }
 
-void GenRelocateCodeAndBranch(void *buffer, void* relocated_mem, CodeMemBlock *origin, CodeMemBlock *relocated) {
-  GenRelocateCode(buffer, relocated_mem, origin, relocated, true);
+void GenRelocateCodeAndBranch(void *buffer, void* relocated_mem, CodeMemBlock *origin, CodeMemBlock *relocated, void (*writer)(void*, void const*, size_t)) {
+  GenRelocateCode(buffer, relocated_mem, origin, relocated, true, writer);
 }
 
 #endif

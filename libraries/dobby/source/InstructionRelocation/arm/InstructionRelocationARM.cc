@@ -783,7 +783,7 @@ void gen_thumb_relocate_code(relo_ctx_t *ctx) {
   }
 }
 
-void GenRelocateCode(void *buffer, void* relocated_mem, CodeMemBlock *origin, CodeMemBlock *relocated, bool branch) {
+void GenRelocateCode(void *buffer, void* relocated_mem, CodeMemBlock *origin, CodeMemBlock *relocated, bool branch, void (*writer)(void*, void const*, size_t)) {
   relo_ctx_t ctx;
 
   if ((addr_t)buffer % 2) {
@@ -878,7 +878,7 @@ relocate_remain:
     arm_turbo_assembler_.SetRealizedAddress((void *)relocated_mem);
 
     AssemblyCode *code = NULL;
-    code = AssemblyCodeBuilder::FinalizeFromTurboAssembler(ctx.curr_assembler);
+    code = AssemblyCodeBuilder::FinalizeFromTurboAssembler(ctx.curr_assembler, writer);
     relocated->reset(code->addr, code->size);
   }
 
@@ -897,8 +897,8 @@ relocate_remain:
   }
 }
 
-void GenRelocateCodeAndBranch(void *buffer, void* relocated_mem, CodeMemBlock *origin, CodeMemBlock *relocated) {
-  GenRelocateCode(buffer, relocated_mem, origin, relocated, true);
+void GenRelocateCodeAndBranch(void *buffer, void* relocated_mem, CodeMemBlock *origin, CodeMemBlock *relocated, void (*writer)(void*, void const*, size_t)) {
+  GenRelocateCode(buffer, relocated_mem, origin, relocated, true, writer);
 }
 
 #endif

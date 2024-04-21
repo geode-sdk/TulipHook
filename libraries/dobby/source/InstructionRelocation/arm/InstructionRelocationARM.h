@@ -300,7 +300,7 @@ private:
 };
 
 #if 0
-void GenRelocateCodeAndBranch(void *buffer, CodeMemBlock *origin, CodeMemBlock *relocated);
+void GenRelocateCodeAndBranch(void *buffer, CodeMemBlock *origin, CodeMemBlock *relocated, void (*writer)(void*, void const*, size_t));
 #endif
 
 } // namespace arm
