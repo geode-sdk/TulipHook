@@ -31,7 +31,7 @@ namespace tulip::hook {
 
 		Result<void*> allocateArea(size_t size);
 
-		Result<> writeMemory(void* destination, void const* source, size_t size);
+		virtual Result<> writeMemory(void* destination, void const* source, size_t size);
 
 		virtual Result<csh> openCapstone() = 0;
 		void closeCapstone();
