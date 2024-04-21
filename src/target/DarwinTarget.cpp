@@ -69,8 +69,6 @@ Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protec
 Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	kern_return_t status;
 
-	std::cout << "Writing " << size << " bytes to " << destination << " from " << source << std::endl;
-
 	status = vm_write(
 		mach_task_self(),
 		reinterpret_cast<vm_address_t>(destination),

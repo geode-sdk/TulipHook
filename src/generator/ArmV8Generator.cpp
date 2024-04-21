@@ -5,8 +5,6 @@
 #include "../target/PlatformTarget.hpp"
 
 #include <InstructionRelocation/InstructionRelocation.h>
-#include <iostream>
-#include <iomanip>
 
 using namespace tulip::hook;
 
@@ -32,20 +30,19 @@ Result<ArmV8HandlerGenerator::RelocateReturn> ArmV8HandlerGenerator::relocateOri
 	auto originBuffer = m_address;
 	auto relocatedBuffer = m_trampoline;
 
+	static thread_local std::string error;
+	error = "";
+
 	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
-		dest = (void*)((uintptr_t)dest - 0x300);
-		std::array<uint8_t, 0x100> buffer;
-		memcpy(buffer.data(), src, size);
-		std::cout << "Relocating original function: " << dest << " from " << (void*)buffer.data() << " size " << size << std::endl;
-		auto res = Target::get().rawWriteMemory(dest, (void*)buffer.data(), size);
+		auto res = Target::get().writeMemory(dest, (void*)buffer.data(), size);
 		if (!res) {
-			std::cout << "Failed to write memory: " << res.error() << std::endl;
+			error = res.error();
 		}
-		for (auto i = 0; i < size; i++) {
-			std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(buffer[i]) << " ";
-		}
-		std::cout << std::endl;
 	});
+
+	if (!error.empty()) {
+		return Err(error);
+	}
 
 	if (relocated->size == 0) {
 		return Err("Failed to relocate original function");
