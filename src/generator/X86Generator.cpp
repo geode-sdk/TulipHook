@@ -251,15 +251,17 @@ Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& tramp
 
 				trampolineAddress += 5;
 			}
-			else {
+			else if {
 				// std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
 				// conditional jumps
 				// long conditional jmp size
 				// this is like probably not right idk what instruction this is supposed to be
 				int addrBytes = jmpTargetAddr - trampolineAddress - 6;
 				TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int)));
-				inBinary[1] = inBinary[0] + 0x10;
-				inBinary[0] = 0x0f;
+				if (detail->x86.operands[0].size == 1) {
+					inBinary[1] = inBinary[0] + 0x10;
+					inBinary[0] = 0x0f;
+				}
 
 				trampolineAddress += 6;
 			}
