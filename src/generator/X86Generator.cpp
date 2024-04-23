@@ -251,7 +251,7 @@ Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& tramp
 
 				trampolineAddress += 5;
 			}
-			else if {
+			else {
 				// std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
 				// conditional jumps
 				// long conditional jmp size
