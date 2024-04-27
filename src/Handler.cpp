@@ -55,7 +55,7 @@ Result<> Handler::init() {
 	auto target = m_modifiedBytes.size();
 
 	auto address = reinterpret_cast<uint8_t*>(Target::get().getRealPtr(m_address));
-	Target::get().protectMemory(address, target, VM_PROT_READ | VM_PROT_EXECUTE);
+	Target::get().protectMemory(address, target, 5);
 	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
 
 	TULIP_HOOK_UNWRAP_INTO(auto trampolineOffset, generator->relocateOriginal(target));
