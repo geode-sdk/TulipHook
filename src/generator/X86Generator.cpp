@@ -187,18 +187,23 @@ Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOrigina
 
 	auto originalAddress = reinterpret_cast<uint64_t>(m_address);
 	auto trampolineAddress = reinterpret_cast<uint64_t>(m_trampoline);
+	std::array<uint8_t, 64> buffer;
 
 	while (cs_disasm_iter(cs, &code, &size, &address, insn)) {
 		if (insn->address >= targetAddress) {
 			break;
 		}
+		auto bufferOffset = trampolineAddress - reinterpret_cast<uint64_t>(m_trampoline);
 
-		TULIP_HOOK_UNWRAP(this->relocateInstruction(insn, trampolineAddress, originalAddress));
+		TULIP_HOOK_UNWRAP(this->relocateInstruction(insn, buffer.data() + bufferOffset, trampolineAddress, originalAddress));
 	}
 
 	cs_free(insn, 1);
 
 	Target::get().closeCapstone();
+
+	auto bufferOffset = trampolineAddress - reinterpret_cast<uint64_t>(m_trampoline);
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, buffer.data(), bufferOffset));
 
 	return Ok(RelocateReturn{
 		.m_trampolineOffset = trampolineAddress - reinterpret_cast<uint64_t>(m_trampoline),
@@ -206,7 +211,7 @@ Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOrigina
 	});
 }
 
-Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& trampolineAddress, uint64_t& originalAddress) {
+Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -225,50 +230,51 @@ Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& tramp
 		}
 	}
 
-	TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(trampolineAddress), reinterpret_cast<void*>(originalAddress), size));
+	std::memcpy(buffer, insn->bytes, size);
 
-	if (detail->x86.encoding.imm_offset != 0) {
-		// branches, jumps, calls
-		if (relativeGroup) {
-			// std::cout << "testing the disp value: " << detail->x86.operands[0].imm << std::endl;
-			intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) -
-				static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
-			uint8_t* inBinary = reinterpret_cast<uint8_t*>(trampolineAddress);
+	// branches, jumps, calls
+	if (detail->x86.encoding.imm_offset != 0 && relativeGroup) {
+		// std::cout << "testing the disp value: " << detail->x86.operands[0].imm << std::endl;
+		intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) -
+			static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
 
-			if (id == X86_INS_JMP) {
-				// res = dst - src - 5
-				int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-				TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int)));
-				inBinary[0] = 0xe9;
+		if (id == X86_INS_JMP) {
+			// res = dst - src - 5
+			std::array<uint8_t, 5> jmp = {0xe9, 0, 0, 0, 0};
+			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
+			std::memcpy(jmp.data() + 1, &addrBytes, sizeof(int));
+			std::memcpy(buffer, jmp.data(), jmp.size());
 
-				trampolineAddress += 5;
-			}
-			else if (id == X86_INS_CALL) {
-				// res = dst - src - 5
-				int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-				TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(trampolineAddress + 1), &addrBytes, sizeof(int)));
-				inBinary[0] = 0xe8;
+			trampolineAddress += 5;
+		}
+		else if (id == X86_INS_CALL) {
+			// res = dst - src - 5
+			std::array<uint8_t, 5> call = {0xe8, 0, 0, 0, 0};
+			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
+			std::memcpy(call.data() + 1, &addrBytes, sizeof(int));
+			std::memcpy(buffer, call.data(), call.size());
 
-				trampolineAddress += 5;
+			trampolineAddress += 5;
+		}
+		else {
+			// conditional jumps
+			// res = dst - src - 6
+			std::array<uint8_t, 6> jmp = {0x0f, 0, 0, 0, 0, 0};
+			int addrBytes = jmpTargetAddr - trampolineAddress - 6;
+			if (detail->x86.operands[0].size == 1) {
+				jmp[1] = insn->bytes[0] + 0x10;
 			}
 			else {
-				// std::cout << "WARNING: relocating conditional jmp, this is likely broken hehe" << std::endl;
-				// conditional jumps
-				// long conditional jmp size
-				// this is like probably not right idk what instruction this is supposed to be
-				int addrBytes = jmpTargetAddr - trampolineAddress - 6;
-				TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(trampolineAddress + 2), &addrBytes, sizeof(int)));
-				if (detail->x86.operands[0].size == 1) {
-					inBinary[1] = inBinary[0] + 0x10;
-					inBinary[0] = 0x0f;
-				}
-
-				trampolineAddress += 6;
+				jmp[1] = insn->bytes[1];
 			}
+			std::memcpy(jmp.data() + 2, &addrBytes, sizeof(int));
+			std::memcpy(buffer, jmp.data(), jmp.size());
 
-			originalAddress += size;
-			return Ok();
+			trampolineAddress += 6;
 		}
+
+		originalAddress += size;
+		return Ok();
 	}
 
 	if (detail->x86.encoding.disp_offset != 0) {
@@ -283,7 +289,7 @@ Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint64_t& tramp
 				int addrBytes = disp - difference;
 				auto offset = detail->x86.encoding.disp_offset;
 
-				TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(trampolineAddress + offset), &addrBytes, sizeof(int)));
+				std::memcpy(buffer + offset, &addrBytes, sizeof(int));
 
 				trampolineAddress += size;
 				originalAddress += size;
