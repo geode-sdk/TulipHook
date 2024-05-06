@@ -257,17 +257,11 @@ Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint8_t* buffer
 			trampolineAddress += 5;
 		}
 		else {
-			uint8_t opCode;
-			switch (id) {
-				case X86_INS_JE:  opCode = 0x74; break;
-				case X86_INS_JNE: opCode = 0x75; break;
-				default:          opCode = 0x0f; break;
-			}
 			// conditional jumps
 			// res = dst - src - 6
-			std::array<uint8_t, 6> jmp = {opCode, 0, 0, 0, 0, 0};
+			std::array<uint8_t, 6> jmp = {0x0f, 0, 0, 0, 0, 0};
 			int addrBytes = jmpTargetAddr - trampolineAddress - 6;
-			if (detail->x86.operands[0].size == 1) {
+			if (size == 2) {
 				jmp[1] = insn->bytes[0] + 0x10;
 			}
 			else {
