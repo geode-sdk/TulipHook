@@ -30,6 +30,16 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	RegMem64 m;
 	using enum X64Register;
 
+#ifdef TULIP_HOOK_WINDOWS
+	constexpr auto SCRATCH = RAX;
+	constexpr auto FIRST_PARAM = RCX;
+	constexpr auto SECOND_PARAM = RDX;
+#else
+	constexpr auto SCRATCH = RAX;
+	constexpr auto FIRST_PARAM = RDI;
+	constexpr auto SECOND_PARAM = RSI;
+#endif
+
 	for (size_t i = 0; i < 8; ++i) {
 		a.nop();
 	}
@@ -53,19 +63,19 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	a.movaps(m[RSP + 0x00], XMM0);
 
 	// preserve the original return
-	a.mov(RAX, m[RSP + 0xb8]);
+	a.mov(SCRATCH, m[RSP + 0xb8]);
 
 	// set the new return
-	a.lea(RDI, "handlerCont");
-	a.mov(m[RSP + 0xb8], RDI);
+	a.lea(FIRST_PARAM, "handlerCont");
+	a.mov(m[RSP + 0xb8], FIRST_PARAM);
 
 	// set the parameters
-	a.mov(RDI, "content");
-	a.mov(RSI, RAX);
+	a.mov(FIRST_PARAM, "content");
+	a.mov(SECOND_PARAM, SCRATCH);
 
 	// call the pre handler, incrementing
-	a.mov(RAX, "handlerPre");
-	a.call(RAX);
+	a.mov(SCRATCH, "handlerPre");
+	a.call(SCRATCH);
 
 	// recover registers
 	a.movaps(XMM0, m[RSP + 0x00]);
@@ -86,7 +96,7 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	a.add(RSP, 0xb8);
 
 	// call the func
-	a.jmp(RAX);
+	a.jmp(SCRATCH);
 
 	a.label("handlerCont");
 
@@ -101,11 +111,11 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	a.movaps(m[RSP + 0x00], XMM0);
 
 	// call the post handler, decrementing
-	a.mov(RAX, "handlerPost");
-	a.call(RAX);
+	a.mov(SCRATCH, "handlerPost");
+	a.call(SCRATCH);
 
 	// recover the original return
-	a.mov(m[RSP + 0x38], RAX);
+	a.mov(m[RSP + 0x38], SCRATCH);
 
 	// recover the return values
 	a.movaps(XMM0, m[RSP + 0x00]);
