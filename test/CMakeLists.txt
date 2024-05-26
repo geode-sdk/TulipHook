@@ -18,8 +18,10 @@ if(WIN32)
 	# target_link_libraries(WinTest PUBLIC TulipHook)
 	# set_target_properties(WinTest PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
 
-	add_library(TestMod SHARED misc/Mod.cpp)
-	target_link_libraries(TestMod PUBLIC TulipHook)
+	if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+		add_library(TestMod SHARED misc/Mod.cpp)
+		target_link_libraries(TestMod PUBLIC TulipHook)
+	endif()
 endif()
 
 include(GoogleTest)

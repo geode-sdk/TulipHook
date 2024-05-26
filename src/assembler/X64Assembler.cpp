@@ -95,6 +95,12 @@ void X64Assembler::jmp(int64_t address) {
 	X86Assembler::jmp(address);
 }
 
+void X64Assembler::jmprip(int32_t offset) {
+	this->write8(0xff);
+	this->write8(0x25);
+	this->write32(offset);
+}
+
 void X64Assembler::call(X64Register reg) {
 	rex(this, reg, RAX, false);
 	X86Assembler::call(x86reg(reg));

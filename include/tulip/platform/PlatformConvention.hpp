@@ -1,9 +1,9 @@
 #include "../Platform.hpp"
 #include "DefaultConvention.hpp"
-#include "WindowsConvention.hpp"
+#include "Windows32Convention.hpp"
 
 namespace tulip::hook {
-#if defined(TULIP_HOOK_WINDOWS)
+#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X86)
 	using PlatformConvention = CdeclConvention;
 #else
 	using PlatformConvention = DefaultConvention;

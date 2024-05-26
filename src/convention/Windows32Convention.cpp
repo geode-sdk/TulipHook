@@ -5,8 +5,10 @@
 #include <algorithm>
 #include <iostream>
 #include <optional>
-#include <platform/WindowsConvention.hpp>
+#include <platform/Windows32Convention.hpp>
 #include <variant>
+
+#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X86)
 
 using namespace tulip::hook;
 
@@ -685,3 +687,5 @@ std::shared_ptr<StdcallConvention> StdcallConvention::create() {
 }
 
 StdcallConvention::~StdcallConvention() {}
+
+#endif

@@ -8,7 +8,7 @@
 #include "Target.hpp"
 
 namespace tulip::hook {
-	class WindowsTarget : public Target {
+	class Windows32Target : public Target {
 	public:
 		using Target::Target;
 

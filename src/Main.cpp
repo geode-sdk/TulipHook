@@ -49,7 +49,7 @@ Result<void*> tulip::hook::createReverseWrapper(void* address, WrapperMetadata c
 std::shared_ptr<CallingConvention> tulip::hook::createConvention(TulipConvention convention) noexcept {
 	switch (convention) {
 		case TulipConvention::Default: return DefaultConvention::create();
-#ifdef TULIP_HOOK_WINDOWS
+#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X86)
 		case TulipConvention::Cdecl: return CdeclConvention::create();
 		case TulipConvention::Thiscall: return ThiscallConvention::create();
 		case TulipConvention::Fastcall: return FastcallConvention::create();
