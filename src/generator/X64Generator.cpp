@@ -137,7 +137,15 @@ std::vector<uint8_t> X64HandlerGenerator::intervenerBytes(uint64_t address) {
 	RegMem64 m;
 	using enum X64Register;
 
-	a.jmp(reinterpret_cast<uint64_t>(m_handler));
+	auto difference = reinterpret_cast<int64_t>(m_handler) - static_cast<int64_t>(address) - 5;
+
+	if (difference <= 0x7fffffff && difference >= -0x80000000) {
+		a.jmp(reinterpret_cast<uint64_t>(m_handler));
+	}
+	else {
+		a.jmprip(0);
+		a.write64(reinterpret_cast<uint64_t>(m_handler));
+	}
 
 	return std::move(a.m_buffer);
 }
@@ -147,7 +155,15 @@ std::vector<uint8_t> X64HandlerGenerator::trampolineBytes(uint64_t address, size
 	RegMem64 m;
 	using enum X64Register;
 
-	a.jmp(reinterpret_cast<uint64_t>(m_address) + offset);
+	auto difference = reinterpret_cast<int64_t>(m_address) - static_cast<int64_t>(address) - 5;
+
+	if (difference <= 0x7fffffff && difference >= -0x80000000) {
+		a.jmp(reinterpret_cast<uint64_t>(m_address));
+	}
+	else {
+		a.jmprip(0);
+		a.write64(reinterpret_cast<uint64_t>(m_address));
+	}
 
 	return std::move(a.m_buffer);
 }

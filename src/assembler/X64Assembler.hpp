@@ -73,6 +73,8 @@ namespace tulip::hook {
 
 		void jmp(X64Register reg);
 		void jmp(int64_t address);
+		// im lazy again
+		void jmprip(int32_t offset);
 
 		void call(X64Register reg);
 
