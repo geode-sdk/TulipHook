@@ -4,13 +4,13 @@
 
 #if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
 
-#include "../generator/X86Generator.hpp"
+#include "../generator/X64Generator.hpp"
 #include "Windows32Target.hpp"
 
 namespace tulip::hook {
 	class Windows64Target : public Windows32Target {
 	public:
-		using Target::Target;
+		using Windows32Target::Windows32Target;
 
 		Result<csh> openCapstone() override;
 

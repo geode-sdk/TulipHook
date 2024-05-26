@@ -1,5 +1,6 @@
 #include "Windows64Target.hpp"
 
+#include <memory>
 #include <Platform.hpp>
 
 using namespace tulip::hook;

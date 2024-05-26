@@ -7,6 +7,15 @@ using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_WINDOWS)
 
+#if defined(TULIP_HOOK_X86)
+
+Target& Target::get() {
+	static Windows32Target ret;
+	return ret;
+}
+
+#endif
+
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -52,11 +61,6 @@ Result<> Windows32Target::rawWriteMemory(void* destination, void const* source, 
 
 uint32_t Windows32Target::getWritableProtection() {
 	return PAGE_READWRITE;
-}
-
-Target& Target::get() {
-	static Windows32Target ret;
-	return ret;
 }
 
 Result<csh> Windows32Target::openCapstone() {
