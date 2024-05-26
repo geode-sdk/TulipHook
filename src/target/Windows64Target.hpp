@@ -2,23 +2,17 @@
 
 #include <Platform.hpp>
 
-#if defined(TULIP_HOOK_WINDOWS)
+#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
 
 #include "../generator/X86Generator.hpp"
-#include "Target.hpp"
+#include "Windows32Target.hpp"
 
 namespace tulip::hook {
-	class WindowsTarget : public Target {
+	class Windows64Target : public Windows32Target {
 	public:
 		using Target::Target;
 
 		Result<csh> openCapstone() override;
-
-		Result<> allocatePage() override;
-		Result<uint32_t> getProtection(void* address) override;
-		Result<> protectMemory(void* address, size_t size, uint32_t protection) override;
-		Result<> rawWriteMemory(void* destination, void const* source, size_t size) override;
-		uint32_t getWritableProtection() override;
 
 		std::unique_ptr<HandlerGenerator> getHandlerGenerator(
 			void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata

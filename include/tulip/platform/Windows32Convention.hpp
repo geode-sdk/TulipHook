@@ -2,7 +2,7 @@
 
 #include "../Platform.hpp"
 
-#ifdef TULIP_HOOK_WINDOWS
+#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X86)
 
 #include "../CallingConvention.hpp"
 

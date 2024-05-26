@@ -2,14 +2,20 @@
 
 // clang-format off
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__) || defined(WIN64) || defined(_WIN64) || defined(__WIN64) && !defined(__CYGWIN__)
 
 	#define TULIP_HOOK_WINDOWS 1
 	#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 
 	#define TULIP_HOOK_DEFAULT_CONV __cdecl
 
-	#define TULIP_HOOK_X86 1
+	#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+		#if defined(WIN64) || defined(_WIN64) || defined(__WIN64) && !defined(__CYGWIN__)
+			#define TULIP_HOOK_X64 1
+		#else
+			#define TULIP_HOOK_X86 1
+		#endif
+	#endif
 
 	#ifdef TULIP_HOOK_DYNAMIC
 		#ifdef TULIP_HOOK_EXPORTING

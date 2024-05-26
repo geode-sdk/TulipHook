@@ -17,10 +17,11 @@ if(WIN32)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
 		assembler/X86Assembler.cpp
 		assembler/X64Assembler.cpp
-		convention/WindowsConvention.cpp
+		convention/Windows32Convention.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
-		target/WindowsTarget.cpp
+		target/Windows32Target.cpp
+		target/Windows64Target.cpp
 	)
 elseif(APPLE)
 	set(TULIP_HOOK_LINK_DOBBY On)

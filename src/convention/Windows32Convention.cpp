@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include <optional>
-#include <platform/WindowsConvention.hpp>
+#include <platform/Windows32Convention.hpp>
 #include <variant>
 
 using namespace tulip::hook;

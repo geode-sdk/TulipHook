@@ -13,8 +13,17 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        - name: 'Windows'
-          id: win
+        - name: 'Windows (32-bit)'
+          id: win-32
+          arch: x86
+          os: windows-latest
+          build_tests: true
+          extra_flags: '-DCMAKE_BUILD_TYPE=Debug'
+          out_paths: './build/src/TulipHook.lib'
+
+        - name: 'Windows (64-bit)'
+          id: win-64
+          arch: x64
           os: windows-latest
           build_tests: true
           extra_flags: '-DCMAKE_BUILD_TYPE=Debug'
@@ -65,8 +74,8 @@ jobs:
     - name: Setup MSVC
       uses: ilammy/msvc-dev-cmd@v1.12.1
       with:
-        arch: x86
-      if: matrix.config.id == 'win'
+        arch: ${{ matrix.config.arch }}
+      if: matrix.config.id == 'win-32' || matrix.config.id == 'win-64'
 
     # https://github.com/hendrikmuhs/ccache-action/pull/182
     - name: Setup sccache
@@ -77,7 +86,7 @@ jobs:
 
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3
-      if: matrix.config.id != 'win'
+      if: matrix.config.id != 'win-32' && matrix.config.id != 'win-64'
 
     - name: Configure
       shell: bash
