@@ -304,7 +304,7 @@ Result<> X86HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 	auto const size = insn->size;
 	auto difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
 
-	if (difference <= 0x7fffffff && difference >= -0x80000000) {
+	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
 		// std::cout << "short disp: " << disp << std::endl;
 		// std::cout << "difference: " << difference << std::endl;
 

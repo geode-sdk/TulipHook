@@ -177,7 +177,7 @@ std::vector<uint8_t> X64HandlerGenerator::intervenerBytes(uint64_t address) {
 
 	auto difference = reinterpret_cast<int64_t>(m_handler) - static_cast<int64_t>(address) - 5;
 
-	if (difference <= 0x7fffffff && difference >= -0x80000000) {
+	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
 		a.jmp(reinterpret_cast<uint64_t>(m_handler));
 	}
 	else {
@@ -195,7 +195,7 @@ std::vector<uint8_t> X64HandlerGenerator::trampolineBytes(uint64_t address, size
 
 	auto difference = reinterpret_cast<int64_t>(m_address) - static_cast<int64_t>(address) - 5 + offset;
 
-	if (difference <= 0x7fffffff && difference >= -0x80000000) {
+	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
 		a.jmp(reinterpret_cast<uint64_t>(m_address) + offset);
 	}
 	else {
@@ -213,13 +213,13 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 	auto const size = insn->size;
 	auto const difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
 
-	if (difference <= 0x7fffffff && difference >= -0x80000000) {
+	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
 		return X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
 	}
 
 	auto& operand0 = detail->x86.operands[0];
 	X64Register reg;
-	switch (operand0.mem.base) {
+	switch (operand0.reg) {
 		using enum X64Register;
 		case X86_REG_RAX: reg = RAX; break;
 		case X86_REG_RCX: reg = RCX; break;
