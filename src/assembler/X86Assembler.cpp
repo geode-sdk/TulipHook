@@ -111,6 +111,11 @@ void X86Assembler::jmp(int64_t address) {
 	this->write32(address - this->currentAddress() - 5 + 1);
 }
 
+void X86Assembler::jmp(std::string const& label) {
+	this->write8(0xE9);
+	this->label32(label);
+}
+
 void X86Assembler::call(int64_t address) {
 	this->write8(0xE8);
 	// typical formula is target - addr - 5,
@@ -214,4 +219,16 @@ void X86Assembler::fldd(X86Pointer ptr) {
 	// 64 bit fld
 	this->write8(0xDD);
 	this->encodeModRM(ptr, 0);
+}
+
+void X86Assembler::shr(X86Register reg, uint8_t value) {
+	this->write8(0xC1);
+	this->write8(0xE8 | regIdx(reg));
+	this->write8(value);
+}
+
+void X86Assembler::shl(X86Register reg, uint8_t value) {
+	this->write8(0xC1);
+	this->write8(0xE0 | regIdx(reg));
+	this->write8(value);
 }

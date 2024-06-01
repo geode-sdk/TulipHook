@@ -279,26 +279,43 @@ Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint8_t* buffer
 
 	if (detail->x86.encoding.disp_offset != 0) {
 		// [rip + 0xval]s
-		for (int i = 0; i < detail->x86.op_count; ++i) {
-			auto& operand = detail->x86.operands[i];
+		auto& operand0 = detail->x86.operands[0];
+		if (operand0.type == X86_OP_MEM && operand0.mem.base == X86_REG_RIP) {
+			auto disp = operand0.mem.disp;
+			return this->X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
+		}
 
-			if (operand.type == X86_OP_MEM && operand.mem.base == X86_REG_RIP) {
-				auto disp = operand.mem.disp;
-				auto difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
-
-				int addrBytes = disp - difference;
-				auto offset = detail->x86.encoding.disp_offset;
-
-				std::memcpy(buffer + offset, &addrBytes, sizeof(int));
-
-				trampolineAddress += size;
-				originalAddress += size;
-				return Ok();
-			}
+		auto& operand1 = detail->x86.operands[1];
+		if (operand1.type == X86_OP_MEM && operand1.mem.base == X86_REG_RIP) {
+			auto disp = operand1.mem.disp;
+			return this->relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
 		}
 	}
 
 	trampolineAddress += size;
 	originalAddress += size;
 	return Ok();
+}
+
+Result<> X86HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
+	auto const id = insn->id;
+	auto const detail = insn->detail;
+	auto const address = insn->address;
+	auto const size = insn->size;
+	auto difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
+
+	if (difference <= 0x7fffffff && difference >= -0x80000000) {
+		// std::cout << "short disp: " << disp << std::endl;
+		// std::cout << "difference: " << difference << std::endl;
+
+		int addrBytes = disp - difference;
+		auto offset = detail->x86.encoding.disp_offset;
+
+		std::memcpy(buffer + offset, &addrBytes, sizeof(int));
+
+		trampolineAddress += size;
+		originalAddress += size;
+		return Ok();
+	}
+	return Err("rip displacement too large");
 }

@@ -205,3 +205,90 @@ std::vector<uint8_t> X64HandlerGenerator::trampolineBytes(uint64_t address, size
 
 	return std::move(a.m_buffer);
 }
+
+Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
+	auto const id = insn->id;
+	auto const detail = insn->detail;
+	auto const address = insn->address;
+	auto const size = insn->size;
+	auto const difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
+
+	if (difference <= 0x7fffffff && difference >= -0x80000000) {
+		return X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
+	}
+
+	auto& operand0 = detail->x86.operands[0];
+	X64Register reg;
+	switch (operand0.mem.base) {
+		using enum X64Register;
+		case X86_REG_RAX: reg = RAX; break;
+		case X86_REG_RCX: reg = RCX; break;
+		case X86_REG_RDX: reg = RDX; break;
+		case X86_REG_RBX: reg = RBX; break;
+		case X86_REG_RSP: reg = RSP; break;
+		case X86_REG_RBP: reg = RBP; break;
+		case X86_REG_RSI: reg = RSI; break;
+		case X86_REG_RDI: reg = RDI; break;
+		case X86_REG_R8: reg = R8; break;
+		case X86_REG_R9: reg = R9; break;
+		case X86_REG_R10: reg = R10; break;
+		case X86_REG_R11: reg = R11; break;
+		case X86_REG_R12: reg = R12; break;
+		case X86_REG_R13: reg = R13; break;
+		case X86_REG_R14: reg = R14; break;
+		case X86_REG_R15: reg = R15; break;
+		default: goto fail;
+	};
+
+	if (id == X86_INS_MOV) {
+		X64Assembler a(trampolineAddress);
+		RegMem64 m;
+		using enum X64Register;
+
+		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
+
+		a.mov(reg, "absolute-pointer");
+		a.mov(reg, m[reg]);
+		a.jmp("skip-pointer");
+
+		a.label("absolute-pointer");
+		a.write64(absolute);
+
+		a.label("skip-pointer");
+
+		a.updateLabels();
+
+		auto bytes = std::move(a.m_buffer);
+		std::memcpy(buffer, bytes.data(), bytes.size());
+
+		trampolineAddress += bytes.size();
+		originalAddress += size;
+		return Ok();
+	}
+	if (id == X86_INS_LEA) {
+		X64Assembler a(trampolineAddress);
+		RegMem64 m;
+		using enum X64Register;
+
+		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
+
+		a.mov(reg, "absolute-pointer");
+		a.jmp("skip-pointer");
+
+		a.label("absolute-pointer");
+		a.write64(absolute);
+
+		a.label("skip-pointer");
+
+		a.updateLabels();
+
+		auto bytes = std::move(a.m_buffer);
+		std::memcpy(buffer, bytes.data(), bytes.size());
+
+		trampolineAddress += bytes.size();
+		originalAddress += size;
+		return Ok();
+	}
+fail:
+	return X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
+}

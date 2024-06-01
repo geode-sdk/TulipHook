@@ -91,6 +91,7 @@ namespace tulip::hook {
 
 		void jmp(X86Register reg);
 		void jmp(int64_t address);
+		void jmp(std::string const& label);
 
 		void call(X86Register reg);
 		void call(int64_t value);
@@ -116,5 +117,8 @@ namespace tulip::hook {
 		void flds(X86Pointer ptr);
 		void fstpd(X86Pointer ptr);
 		void fldd(X86Pointer ptr);
+
+		void shr(X86Register reg, uint8_t value);
+		void shl(X86Register reg, uint8_t value);
 	};
 }

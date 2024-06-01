@@ -95,6 +95,10 @@ void X64Assembler::jmp(int64_t address) {
 	X86Assembler::jmp(address);
 }
 
+void X64Assembler::jmp(std::string const& label) {
+	X86Assembler::jmp(label);
+}
+
 void X64Assembler::jmprip(int32_t offset) {
 	this->write8(0xff);
 	this->write8(0x25);
@@ -166,4 +170,14 @@ void X64Assembler::mov(X64Register reg, X64Register reg2) {
 void X64Assembler::mov(X64Register reg, std::string const& label) {
 	rex(this, RAX, reg, true);
 	X86Assembler::mov(x86reg(reg), label);
+}
+
+void X64Assembler::shr(X64Register reg, uint8_t value) {
+	rex(this, reg, RAX, true);
+	X86Assembler::shr(x86reg(reg), value);
+}
+
+void X64Assembler::shl(X64Register reg, uint8_t value) {
+	rex(this, reg, RAX, true);
+	X86Assembler::shl(x86reg(reg), value);
 }
