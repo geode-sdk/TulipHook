@@ -90,7 +90,7 @@ TEST(HookTest, NoHandler) {
 TEST(HookTest, NoHooks) {
 	HandlerHandle handlerHandle;
 	makeHandler<1>(handlerHandle);
-	EXPECT_EQ(callFunction<1>(), 2);
+	EXPECT_EQ(callFunction<1>(), 1);
 }
 
 TEST(HookTest, MakeWrapper) {
@@ -104,20 +104,20 @@ TEST(HookTest, SingleHook) {
 	HandlerHandle handlerHandle;
 	makeHandler<3>(handlerHandle);
 
-	// makeHook<3>(handlerHandle);
+	makeHook<3>(handlerHandle);
 
-	// EXPECT_EQ(callFunction<3>(), 3);
+	EXPECT_EQ(callFunction<3>(), 3);
 }
 
 // priorityHook -> hook -> function
 TEST(HookTest, PriorityHook) {
 	HandlerHandle handlerHandle;
-	// makeHandler<4>(handlerHandle);
+	makeHandler<4>(handlerHandle);
 
-	// makeHook<4>(handlerHandle);
-	// makePriorityHook<4>(handlerHandle);
+	makeHook<4>(handlerHandle);
+	makePriorityHook<4>(handlerHandle);
 
-	// EXPECT_EQ(callFunction<4>(), 6);
+	EXPECT_EQ(callFunction<4>(), 6);
 }
 
 // priorityHook -> function

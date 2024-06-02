@@ -156,12 +156,16 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	a.mov(FIRST_PARAM, "content");
 
 	// call the pre handler, incrementing
-	a.callip("handlerPre");
+	// a.callip("handlerPre");
 
 	a.mov(m[RBP - 0x10], RAX);
 
 	// recover registers
 	restoreRegisters(a, preservedSize);
+
+	// early test
+	a.pop(RBP);
+	a.ret();
 
 	// call the func
 	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
