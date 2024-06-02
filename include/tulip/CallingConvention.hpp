@@ -31,5 +31,9 @@ namespace tulip::hook {
 		 * convention is done (since cdecl is caller-cleanup)
 		 */
 		virtual void generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) = 0;
+		/**
+		 * Check if the function needs a wrapper generated
+		 */
+		virtual bool needsWrapper(AbstractFunction const& function) const = 0;
 	};
 }

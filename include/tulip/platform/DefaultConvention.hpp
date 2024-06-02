@@ -16,6 +16,7 @@ namespace tulip::hook {
 		void generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) override;
 		void generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) override;
 		void generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) override;
+		bool needsWrapper(AbstractFunction const& function) const override;
 
 		static std::shared_ptr<DefaultConvention> create();
 	};

@@ -511,6 +511,10 @@ void CdeclConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction co
 	return PushParameters::fromCdecl(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
 }
 
+bool CdeclConvention::needsWrapper(AbstractFunction const& function) const {
+	return false;
+}
+
 std::shared_ptr<CdeclConvention> CdeclConvention::create() {
 	return std::make_shared<CdeclConvention>();
 }
@@ -542,6 +546,10 @@ void ThiscallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunct
 
 void ThiscallConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) {
 	return PushParameters::fromThiscall(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
+}
+
+bool ThiscallConvention::needsWrapper(AbstractFunction const& function) const {
+	return true;
 }
 
 std::shared_ptr<ThiscallConvention> ThiscallConvention::create() {
@@ -584,6 +592,10 @@ void FastcallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunct
 
 void FastcallConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) {
 	return PushParameters::fromFastcall(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
+}
+
+bool FastcallConvention::needsWrapper(AbstractFunction const& function) const {
+	return true;
 }
 
 std::shared_ptr<FastcallConvention> FastcallConvention::create() {
@@ -638,6 +650,10 @@ void OptcallConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction 
 	return PushParameters::fromOptcall(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
 }
 
+bool OptcallConvention::needsWrapper(AbstractFunction const& function) const {
+	return true;
+}
+
 std::shared_ptr<OptcallConvention> OptcallConvention::create() {
 	return std::make_shared<OptcallConvention>();
 }
@@ -660,6 +676,10 @@ void MembercallConvention::generateIntoOriginal(BaseAssembler& a, AbstractFuncti
 	return PushParameters::fromMembercall(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
 }
 
+bool MembercallConvention::needsWrapper(AbstractFunction const& function) const {
+	return true;
+}
+
 std::shared_ptr<MembercallConvention> MembercallConvention::create() {
 	return std::make_shared<MembercallConvention>();
 }
@@ -680,6 +700,10 @@ void StdcallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFuncti
 
 void StdcallConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) {
 	return PushParameters::fromStdcall(static_cast<X86Assembler&>(a), function).generateIntoOriginal();
+}
+
+bool StdcallConvention::needsWrapper(AbstractFunction const& function) const {
+	return true;
 }
 
 std::shared_ptr<StdcallConvention> StdcallConvention::create() {

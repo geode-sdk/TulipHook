@@ -48,6 +48,10 @@ void ThiscallConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunctio
 
 void ThiscallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {}
 
+bool ThiscallConvention::needsWrapper(AbstractFunction const& function) const {
+	return function.m_return.m_kind == AbstractTypeKind::Other;
+}
+
 std::shared_ptr<ThiscallConvention> ThiscallConvention::create() {
 	return std::make_shared<ThiscallConvention>();
 }
