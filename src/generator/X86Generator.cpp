@@ -176,7 +176,7 @@ Result<> X86HandlerGenerator::generateTrampoline(uint64_t target) {
 	using enum X86Register;
 
 	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
-	a.call("relocated")
+	a.call("relocated");
 	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
 
 	a.label("relocated");
