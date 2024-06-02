@@ -13,11 +13,10 @@ namespace tulip::hook {
 		void* const m_trampoline;
 		void* const m_handler;
 		void* const m_content;
-		void* const m_wrapped;
 		HandlerMetadata const m_metadata;
 
 		HandlerGenerator(
-			void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata
+			void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
 		);
 
 		virtual ~HandlerGenerator() = default;

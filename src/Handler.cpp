@@ -33,8 +33,6 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	// 	.m_convention = metadata.m_convention,
 	// 	.m_abstract = metadata.m_abstract,
 	// };
-	// TULIP_HOOK_UNWRAP_INTO(auto trampolineWrap, Wrapper::get().createWrapper(ret->m_trampoline, wrapperMetadata));
-	// ret->m_wrapped = trampolineWrap;
 	// std::cout << std::hex << "m_trampoline: " << (void*)ret->m_trampoline << std::endl;
 
 	return Ok(std::move(ret));
@@ -46,7 +44,7 @@ Result<> Handler::init() {
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
 
 	auto generator =
-		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_wrapped, m_metadata);
+		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
 
 	TULIP_HOOK_UNWRAP(generator->generateHandler());
 

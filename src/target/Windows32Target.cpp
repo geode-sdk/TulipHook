@@ -75,9 +75,9 @@ Result<csh> Windows32Target::openCapstone() {
 }
 
 std::unique_ptr<HandlerGenerator> Windows32Target::getHandlerGenerator(
-	void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata
+	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
 ) {
-	return std::make_unique<X86HandlerGenerator>(address, trampoline, handler, content, wrapped, metadata);
+	return std::make_unique<X86HandlerGenerator>(address, trampoline, handler, content, metadata);
 }
 
 std::unique_ptr<WrapperGenerator> Windows32Target::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {

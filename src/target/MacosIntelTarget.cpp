@@ -23,9 +23,9 @@ Result<csh> MacosIntelTarget::openCapstone() {
 }
 
 std::unique_ptr<HandlerGenerator> MacosIntelTarget::getHandlerGenerator(
-	void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata
+	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
 ) {
-	return std::make_unique<X64HandlerGenerator>(address, trampoline, handler, content, wrapped, metadata);
+	return std::make_unique<X64HandlerGenerator>(address, trampoline, handler, content, metadata);
 }
 
 std::unique_ptr<WrapperGenerator> MacosIntelTarget::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {
