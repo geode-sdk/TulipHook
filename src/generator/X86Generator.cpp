@@ -14,6 +14,7 @@ namespace {
 	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content) {
 		Handler::incrementIndex(content);
 		auto ret = Handler::getNextFunction(content);
+		std::cout << "preHandler: " << ret << std::endl;
 
 		return ret;
 	}
