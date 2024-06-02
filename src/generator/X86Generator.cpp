@@ -143,7 +143,7 @@ std::vector<uint8_t> X86WrapperGenerator::reverseWrapperBytes(uint64_t address) 
 }
 
 Result<void*> X86WrapperGenerator::generateWrapper() {
-	if (!m_metadata.m_convention.needsWrapper(m_metadata.m_abstract)) {
+	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
 		return Ok(m_address);
 	}
 	
@@ -160,7 +160,7 @@ Result<void*> X86WrapperGenerator::generateWrapper() {
 }
 
 Result<void*> X86WrapperGenerator::generateReverseWrapper() {
-	if (!m_metadata.m_convention.needsWrapper(m_metadata.m_abstract)) {
+	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
 		return Ok(m_address);
 	}
 

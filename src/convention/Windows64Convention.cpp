@@ -3,18 +3,16 @@
 #if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
 
 #include <AbstractFunction.hpp>
-#include <algorithm>
-#include <iostream>
-#include <optional>
 #include <platform/Windows64Convention.hpp>
-#include <variant>
 #include "../assembler/X64Assembler.hpp"
 
 using namespace tulip::hook;
 
 ThiscallConvention::~ThiscallConvention() {}
 
-void ThiscallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) {}
+void ThiscallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) {
+    static_cast<X64Assembler&>(a).ret();
+}
 
 // Member functions deal with struct return differently, since in the windows x64 convention
 // a struct return is as a hidden first parameter, member functions end up considering the first parameter
@@ -27,9 +25,7 @@ void ThiscallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFuncti
 // so to undo this we just swap the first two parameters (RCX and RDX).
 
 void ThiscallConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction const& function) {
-    std::cout << "hey?" << std::endl;
     if (function.m_return.m_kind == AbstractTypeKind::Other) {
-        std::cout << "hallo" << std::endl;
         auto& a = static_cast<X64Assembler&>(a_);
         using enum X64Register;
         a.xchg(RCX, RDX);
@@ -37,16 +33,16 @@ void ThiscallConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction
 }
 
 void ThiscallConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunction const& function) {
-    std::cout << "hey?" << std::endl;
     if (function.m_return.m_kind == AbstractTypeKind::Other) {
-        std::cout << "hallo" << std::endl;
         auto& a = static_cast<X64Assembler&>(a_);
         using enum X64Register;
         a.xchg(RCX, RDX);
     }
 }
 
-void ThiscallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {}
+void ThiscallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {
+    static_cast<X64Assembler&>(a).ret();
+}
 
 bool ThiscallConvention::needsWrapper(AbstractFunction const& function) const {
 	return function.m_return.m_kind == AbstractTypeKind::Other;
