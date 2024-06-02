@@ -168,8 +168,8 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
 
 	a.mov(RAX, m[RBP - 0x10]);
-	a.int3();
-	a.call(RAX);
+	// a.int3();
+	// a.call(RAX);
 	// // a.int3();
 	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
 
