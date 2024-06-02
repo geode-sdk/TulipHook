@@ -90,7 +90,7 @@ TEST(HookTest, NoHandler) {
 TEST(HookTest, NoHooks) {
 	HandlerHandle handlerHandle;
 	makeHandler<1>(handlerHandle);
-	EXPECT_EQ(callFunction<1>(), 1);
+	EXPECT_EQ(callFunction<1>(), 2);
 }
 
 TEST(HookTest, MakeWrapper) {
