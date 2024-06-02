@@ -117,10 +117,10 @@ void Handler::updateHookMetadata(HookHandle const& hook, HookMetadata const& met
 void Handler::reorderFunctions() {
 	auto& vec = m_content->m_functions;
 	std::cout << "functions size " << vec.size() << std::endl;
-	std::sort(vec.begin(), vec.end(), [this](auto const a, auto const b) {
-		std::cout << "reordering " << m_handles[a] << " " << m_handles[b] << std::endl;
-		return (m_hooks.at(m_handles[a])->m_metadata.m_priority < m_hooks.at(m_handles[b])->m_metadata.m_priority);
-	});
+	// std::sort(vec.begin(), vec.end(), [this](auto const a, auto const b) {
+	// 	std::cout << "reordering " << m_handles[a] << " " << m_handles[b] << std::endl;
+	// 	return (m_hooks.at(m_handles[a])->m_metadata.m_priority < m_hooks.at(m_handles[b])->m_metadata.m_priority);
+	// });
 	std::cout << "sorted\n";
 }
 
