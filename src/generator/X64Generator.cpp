@@ -184,7 +184,7 @@ std::vector<uint8_t> X64HandlerGenerator::intervenerBytes(uint64_t address) {
 	}
 	else {
 		a.jmpip("handler");
-		a.label("handler")
+		a.label("handler");
 		a.write64(reinterpret_cast<uint64_t>(m_handler));
 
 		a.updateLabels();
@@ -205,7 +205,7 @@ std::vector<uint8_t> X64HandlerGenerator::trampolineBytes(uint64_t address, size
 	}
 	else {
 		a.jmpip("handler");
-		a.label("handler")
+		a.label("handler");
 		a.write64(reinterpret_cast<uint64_t>(m_address) + offset);
 
 		a.updateLabels();
@@ -398,7 +398,7 @@ Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* 
 		using enum X64Register;
 
 		// conditional branch
-		a.write8(0x0f)
+		a.write8(0x0f);
 		if (size == 2) {
 			a.write8(insn->bytes[0] + 0x10);
 		}
