@@ -3,14 +3,12 @@
 #include "Pool.hpp"
 #include "Wrapper.hpp"
 #include "target/PlatformTarget.hpp"
-#include <iostream>
 
 #include <TulipHook.hpp>
 
 using namespace tulip::hook;
 
 Result<HandlerHandle> tulip::hook::createHandler(void* address, HandlerMetadata const& metadata) noexcept {
-	std::cout << "createHandler: " << address << std::endl;
 	return Pool::get().createHandler(address, metadata);
 }
 
@@ -19,7 +17,6 @@ Result<> tulip::hook::removeHandler(HandlerHandle const& handler) noexcept {
 }
 
 HookHandle tulip::hook::createHook(HandlerHandle const& handler, void* function, HookMetadata const& metadata) noexcept {
-	std::cout << "createHook: " << function << std::endl;
 	return Pool::get().getHandler(handler).createHook(function, metadata);
 }
 

@@ -5,8 +5,6 @@
 #include "../target/PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
-#include <sstream>
-#include <iostream>
 
 using namespace tulip::hook;
 
@@ -14,8 +12,6 @@ namespace {
 	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content) {
 		Handler::incrementIndex(content);
 		auto ret = Handler::getNextFunction(content);
-		std::cout << "next function " << ret << std::endl;
-
 		return ret;
 	}
 
@@ -384,24 +380,16 @@ Result<> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 	auto difference = a.currentAddress() - reinterpret_cast<int64_t>(m_address) + 5 - code.m_originalOffset;
 
 	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
-		std::cout << "short jmp offset " << code.m_originalOffset << std::endl;
 		a.jmp(reinterpret_cast<uint64_t>(m_address) + code.m_originalOffset);
 	}
 	else {
-		std::cout << "long jmp offset " << code.m_originalOffset << std::endl;
 		a.jmpip("handler");
 
 		a.label("handler");
 		a.write64(reinterpret_cast<uint64_t>(m_address) + code.m_originalOffset);
 	}
-	// a.int3();
 
 	a.updateLabels();
-
-	for (auto i = 0; i < a.m_buffer.size(); ++i) {
-		std::cout << std::hex << (int)a.m_buffer[i] << " ";
-	}
-	std::cout << std::endl;
 
 	auto codeSize = a.m_buffer.size();
 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);

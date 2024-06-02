@@ -6,9 +6,6 @@
 
 #include <CallingConvention.hpp>
 #include <capstone/capstone.h>
-#include <sstream>
-#include <iostream>
-#include <iomanip>
 
 using namespace tulip::hook;
 
@@ -16,8 +13,6 @@ namespace {
 	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content) {
 		Handler::incrementIndex(content);
 		auto ret = Handler::getNextFunction(content);
-		std::cout << "preHandler: " << ret << std::endl;
-
 		return ret;
 	}
 
@@ -193,10 +188,6 @@ Result<> X86HandlerGenerator::generateTrampoline(uint64_t target) {
 	auto codeSize = a.m_buffer.size();
 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
-	for (auto i = 0; i < a.m_buffer.size(); ++i) {
-		std::cout << std::hex << std::setw(2) << (int)a.m_buffer[i] << " ";
-	}
-	std::cout << std::endl;
 
 	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
 

@@ -1,7 +1,5 @@
 #include "ArmV7Assembler.hpp"
 
-#include <iostream>
-
 using namespace tulip::hook;
 
 ArmV7Assembler::ArmV7Assembler(int64_t baseAddress) :
