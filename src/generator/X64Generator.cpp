@@ -179,7 +179,7 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	restoreReturnRegisters(a, returnPreservedSize);
 
 	// done!
-	a.add(RSP, 0x10)
+	a.add(RSP, 0x10);
 	a.pop(RBP);
 	a.ret();
 
@@ -249,8 +249,7 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 			case X86_REG_R13: reg = R13; break;
 			case X86_REG_R14: reg = R14; break;
 			case X86_REG_R15: reg = R15; break;
-			case X86_REG_RIP: reg = RIP; break;
-			default: goto fail;
+			default: break;
 		};
 	};
 
@@ -323,7 +322,7 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 
 		a.label("absolute-pointer");
 		// it's bad but umm better than the alternative of double indirection
-		a.write64(*static_cast<uint64_t*>(absolute));
+		a.write64(*reinterpret_cast<uint64_t*>(absolute));
 
 		a.updateLabels();
 
@@ -346,7 +345,7 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 
 		a.label("absolute-pointer");
 		// it's bad but umm better than the alternative of double indirection
-		a.write64(*static_cast<uint64_t*>(absolute));
+		a.write64(*reinterpret_cast<uint64_t*>(absolute));
 
 		a.label("skip-pointer");
 
