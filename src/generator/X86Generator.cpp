@@ -8,6 +8,7 @@
 #include <capstone/capstone.h>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 
 using namespace tulip::hook;
 
@@ -193,7 +194,7 @@ Result<> X86HandlerGenerator::generateTrampoline(uint64_t target) {
 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
 	for (auto i = 0; i < a.m_buffer.size(); ++i) {
-		std::cout << std::hex << (int)a.m_buffer[i] << " ";
+		std::cout << std::hex << std::setw(2) << (int)a.m_buffer[i] << " ";
 	}
 	std::cout << std::endl;
 
