@@ -363,8 +363,6 @@ Result<> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 	X64Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
 	using enum X64Register;
 
-	a.ret();
-
 	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
 		a.push(RBP);
 		a.mov(RBP, RSP);
@@ -385,7 +383,6 @@ Result<> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 
 	auto difference = a.currentAddress() - reinterpret_cast<int64_t>(m_address) + 5 - code.m_originalOffset;
 
-	a.ret();
 	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
 		std::cout << "short jmp offset " << code.m_originalOffset << std::endl;
 		a.jmp(reinterpret_cast<uint64_t>(m_address) + code.m_originalOffset);

@@ -118,7 +118,7 @@ void Handler::reorderFunctions() {
 	auto& vec = m_content->m_functions;
 	std::cout << "functions size " << m_content->m_functions.size() << " this " << (void*)this << std::endl;
 	std::sort(m_content->m_functions.begin(), m_content->m_functions.end(), [this](auto const a, auto const b) {
-		std::cout << "reordering  this" << a << " " << b << " "<< (void*)this << std::endl;
+		// std::cout << "reordering  this" << a << " " << b << " "<< (void*)this << std::endl;
 		return a < b;
 	});
 	// std::sort(vec.begin(), vec.end(), [this](auto const a, auto const b) {
