@@ -44,6 +44,8 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 		a.nop();
 	}
 
+	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
+
 	// preserve registers
 #ifdef TULIP_HOOK_WINDOWS
 	constexpr auto PRESERVE_SIZE = 0x78;
