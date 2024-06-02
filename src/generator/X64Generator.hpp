@@ -20,5 +20,8 @@ namespace tulip::hook {
 	class X64WrapperGenerator : public X86WrapperGenerator {
 	public:
 		using X86WrapperGenerator::X86WrapperGenerator;
+
+		std::vector<uint8_t> wrapperBytes(uint64_t address) override;
+		std::vector<uint8_t> reverseWrapperBytes(uint64_t address) override;
 	};
 }

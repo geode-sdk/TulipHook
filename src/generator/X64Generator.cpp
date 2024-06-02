@@ -294,3 +294,45 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 fail:
 	return X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
 }
+
+std::vector<uint8_t> X64WrapperGenerator::wrapperBytes(uint64_t address) {
+	X64Assembler a(address);
+	using enum X64Register;
+
+	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
+
+	a.sub(RSP, 8);
+	a.mov(RAX, "address");
+	a.call(RAX);
+	a.add(RSP, 8);
+
+	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
+
+	a.label("address");
+	a.write64(reinterpret_cast<uintptr_t>(m_address));
+
+	a.updateLabels();
+
+	return std::move(a.m_buffer);
+}
+
+std::vector<uint8_t> X64WrapperGenerator::reverseWrapperBytes(uint64_t address) {
+	X64Assembler a(address);
+	using enum X64Register;
+
+	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
+
+	a.sub(RSP, 8);
+	a.mov(RAX, "address");
+	a.call(RAX);
+	a.add(RSP, 8);
+
+	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
+
+	a.label("address");
+	a.write64(reinterpret_cast<uintptr_t>(m_address));
+
+	a.updateLabels();
+
+	return std::move(a.m_buffer);
+}
