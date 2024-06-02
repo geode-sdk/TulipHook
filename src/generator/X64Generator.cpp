@@ -156,7 +156,7 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	a.mov(FIRST_PARAM, "content");
 
 	// call the pre handler, incrementing
-	// a.callip("handlerPre");
+	a.callip("handlerPre");
 
 	a.mov(m[RBP - 0x10], RAX);
 
