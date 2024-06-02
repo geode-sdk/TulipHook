@@ -77,6 +77,7 @@ namespace tulip::hook {
 		~X86Assembler();
 
 		void label32(std::string const& name);
+		void abslabel32(std::string const& name);
 		void updateLabels() override;
 
 		void nop();
