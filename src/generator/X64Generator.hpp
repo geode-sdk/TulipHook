@@ -17,8 +17,8 @@ namespace tulip::hook {
 		Result<> relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) override;
 	};
 
-	class X64WrapperGenerator : public WrapperGenerator {
+	class X64WrapperGenerator : public X86WrapperGenerator {
 	public:
-		using WrapperGenerator::WrapperGenerator;
+		using X86WrapperGenerator::X86WrapperGenerator;
 	};
 }

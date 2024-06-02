@@ -127,6 +127,10 @@ std::vector<uint8_t> X86WrapperGenerator::wrapperBytes(uint64_t address) {
 
 	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
 
+	if (a.currentAddress() == address + 5) {
+		return std::vector<uint8_t>(); // no wrapper needed
+	}
+
 	return std::move(a.m_buffer);
 }
 
@@ -139,12 +143,20 @@ std::vector<uint8_t> X86WrapperGenerator::reverseWrapperBytes(uint64_t address) 
 
 	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
 
+	if (a.currentAddress() == address + 5) {
+		return std::vector<uint8_t>(); // no wrapper needed
+	}
+
 	return std::move(a.m_buffer);
 }
 
 Result<void*> X86WrapperGenerator::generateWrapper() {
 	// this is silly, butt
 	auto codeSize = this->wrapperBytes(0).size();
+	if (codeSize == 0) {
+		return Ok(m_address);
+	}
+
 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
 	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
@@ -158,6 +170,10 @@ Result<void*> X86WrapperGenerator::generateWrapper() {
 Result<void*> X86WrapperGenerator::generateReverseWrapper() {
 	// this is silly, butt
 	auto codeSize = this->reverseWrapperBytes(0).size();
+	if (codeSize == 0) {
+		return Ok(m_address);
+	}
+
 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
 	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
