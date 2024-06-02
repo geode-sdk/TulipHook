@@ -183,8 +183,11 @@ std::vector<uint8_t> X64HandlerGenerator::intervenerBytes(uint64_t address) {
 		a.jmp(reinterpret_cast<uint64_t>(m_handler));
 	}
 	else {
-		a.jmprip(0);
+		a.jmpip("handler");
+		a.label("handler")
 		a.write64(reinterpret_cast<uint64_t>(m_handler));
+
+		a.updateLabels();
 	}
 
 	return std::move(a.m_buffer);
@@ -201,8 +204,11 @@ std::vector<uint8_t> X64HandlerGenerator::trampolineBytes(uint64_t address, size
 		a.jmp(reinterpret_cast<uint64_t>(m_address) + offset);
 	}
 	else {
-		a.jmprip(0);
+		a.jmpip("handler");
+		a.label("handler")
 		a.write64(reinterpret_cast<uint64_t>(m_address) + offset);
+
+		a.updateLabels();
 	}
 
 	return std::move(a.m_buffer);
@@ -335,4 +341,82 @@ std::vector<uint8_t> X64WrapperGenerator::reverseWrapperBytes(uint64_t address) 
 	a.updateLabels();
 
 	return std::move(a.m_buffer);
+}
+
+Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) {
+	auto const id = insn->id;
+	auto const detail = insn->detail;
+	auto const address = insn->address;
+	auto const size = insn->size;
+	auto const difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
+
+	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
+		return X86HandlerGenerator::relocateBranchInstruction(insn, buffer, trampolineAddress, originalAddress, targetAddress);
+	}
+
+	if (id == X86_INS_JMP) {
+		X64Assembler a(trampolineAddress);
+		RegMem64 m;
+		using enum X64Register;
+
+		a.jmpip("absolute-pointer");
+		a.label("absolute-pointer");
+		a.write64(targetAddress);
+
+		a.updateLabels();
+
+		auto bytes = std::move(a.m_buffer);
+		std::memcpy(buffer, bytes.data(), bytes.size());
+
+		trampolineAddress += bytes.size();
+		originalAddress += size;
+	}
+	else if (id == X86_INS_CALL) {
+		X64Assembler a(trampolineAddress);
+		RegMem64 m;
+		using enum X64Register;
+
+		a.callip("absolute-pointer");
+		a.jmp("skip-pointer");
+
+		a.label("absolute-pointer");
+		a.write64(targetAddress);
+
+		a.label("skip-pointer");
+
+		a.updateLabels();
+
+		auto bytes = std::move(a.m_buffer);
+		std::memcpy(buffer, bytes.data(), bytes.size());
+
+		trampolineAddress += bytes.size();
+		originalAddress += size;
+	}
+	else {
+		X64Assembler a(trampolineAddress);
+		RegMem64 m;
+		using enum X64Register;
+
+		// conditional branch
+		a.write8(0x0f)
+		if (size == 2) {
+			a.write8(insn->bytes[0] + 0x10);
+		}
+		else {
+			a.write8(insn->bytes[1]);
+		}
+		a.label32("jmp-on-branch");
+
+		a.jmp("skip-branch");
+
+		a.label("jmp-on-branch");
+
+		a.jmpip("absolute-pointer");
+		a.label("absolute-pointer");
+		a.write64(targetAddress);
+		
+		a.label("skip-branch");
+
+		a.updateLabels();
+	}
 }

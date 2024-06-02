@@ -74,10 +74,10 @@ namespace tulip::hook {
 		void jmp(X64Register reg);
 		void jmp(int64_t address);
 		void jmp(std::string const& label);
-		// im lazy again
-		void jmprip(int32_t offset);
+		void jmpip(std::string const& label);
 
 		void call(X64Register reg);
+		void callip(std::string const& label);
 
 		void movsd(X64Register reg, X64Pointer ptr);
 		void movsd(X64Pointer ptr, X64Register reg);

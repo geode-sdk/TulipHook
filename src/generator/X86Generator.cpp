@@ -242,47 +242,10 @@ Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint8_t* buffer
 
 	// branches, jumps, calls
 	if (detail->x86.encoding.imm_offset != 0 && relativeGroup) {
-		// std::cout << "testing the disp value: " << detail->x86.operands[0].imm << std::endl;
 		intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) -
-			static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
+		static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
 
-		if (id == X86_INS_JMP) {
-			// res = dst - src - 5
-			std::array<uint8_t, 5> jmp = {0xe9, 0, 0, 0, 0};
-			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-			std::memcpy(jmp.data() + 1, &addrBytes, sizeof(int));
-			std::memcpy(buffer, jmp.data(), jmp.size());
-
-			trampolineAddress += 5;
-		}
-		else if (id == X86_INS_CALL) {
-			// res = dst - src - 5
-			std::array<uint8_t, 5> call = {0xe8, 0, 0, 0, 0};
-			int addrBytes = jmpTargetAddr - trampolineAddress - 5;
-			std::memcpy(call.data() + 1, &addrBytes, sizeof(int));
-			std::memcpy(buffer, call.data(), call.size());
-
-			trampolineAddress += 5;
-		}
-		else {
-			// conditional jumps
-			// res = dst - src - 6
-			std::array<uint8_t, 6> jmp = {0x0f, 0, 0, 0, 0, 0};
-			int addrBytes = jmpTargetAddr - trampolineAddress - 6;
-			if (size == 2) {
-				jmp[1] = insn->bytes[0] + 0x10;
-			}
-			else {
-				jmp[1] = insn->bytes[1];
-			}
-			std::memcpy(jmp.data() + 2, &addrBytes, sizeof(int));
-			std::memcpy(buffer, jmp.data(), jmp.size());
-
-			trampolineAddress += 6;
-		}
-
-		originalAddress += size;
-		return Ok();
+		return this->relocateBranchInstruction(insn, buffer, trampolineAddress, originalAddress, jmpTargetAddr);
 	}
 
 	if (detail->x86.encoding.disp_offset != 0) {
@@ -312,18 +275,66 @@ Result<> X86HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 	auto const size = insn->size;
 	auto difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
 
-	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
-		// std::cout << "short disp: " << disp << std::endl;
-		// std::cout << "difference: " << difference << std::endl;
-
-		int addrBytes = disp - difference;
-		auto offset = detail->x86.encoding.disp_offset;
-
-		std::memcpy(buffer + offset, &addrBytes, sizeof(int));
-
-		trampolineAddress += size;
-		originalAddress += size;
-		return Ok();
+	if (difference > 0x7fffffffll || difference < -0x80000000ll) {
+		return Err("rip displacement too large");
 	}
-	return Err("rip displacement too large");
+
+	// std::cout << "short disp: " << disp << std::endl;
+	// std::cout << "difference: " << difference << std::endl;
+
+	int addrBytes = disp - difference;
+	auto offset = detail->x86.encoding.disp_offset;
+
+	std::memcpy(buffer + offset, &addrBytes, sizeof(int));
+
+	trampolineAddress += size;
+	originalAddress += size;
+	return Ok();
+}
+
+Result<> X86HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) {
+	// std::cout << "testing the disp value: " << detail->x86.operands[0].imm << std::endl;
+	auto difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
+	
+	if (difference > 0x7fffffffll || difference < -0x80000000ll) {
+		return Err("branch displacement too large");
+	}
+
+	if (id == X86_INS_JMP) {
+		// res = dst - src - 5
+		std::array<uint8_t, 5> jmp = {0xe9, 0, 0, 0, 0};
+		int addrBytes = jmpTargetAddr - trampolineAddress - 5;
+		std::memcpy(jmp.data() + 1, &addrBytes, sizeof(int));
+		std::memcpy(buffer, jmp.data(), jmp.size());
+
+		trampolineAddress += 5;
+	}
+	else if (id == X86_INS_CALL) {
+		// res = dst - src - 5
+		std::array<uint8_t, 5> call = {0xe8, 0, 0, 0, 0};
+		int addrBytes = jmpTargetAddr - trampolineAddress - 5;
+		std::memcpy(call.data() + 1, &addrBytes, sizeof(int));
+		std::memcpy(buffer, call.data(), call.size());
+
+		trampolineAddress += 5;
+	}
+	else {
+		// conditional jumps
+		// res = dst - src - 6
+		std::array<uint8_t, 6> jmp = {0x0f, 0, 0, 0, 0, 0};
+		int addrBytes = jmpTargetAddr - trampolineAddress - 6;
+		if (size == 2) {
+			jmp[1] = insn->bytes[0] + 0x10;
+		}
+		else {
+			jmp[1] = insn->bytes[1];
+		}
+		std::memcpy(jmp.data() + 2, &addrBytes, sizeof(int));
+		std::memcpy(buffer, jmp.data(), jmp.size());
+
+		trampolineAddress += 6;
+	}
+
+	originalAddress += size;
+	return Ok();
 }

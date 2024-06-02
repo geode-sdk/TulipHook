@@ -99,15 +99,21 @@ void X64Assembler::jmp(std::string const& label) {
 	X86Assembler::jmp(label);
 }
 
-void X64Assembler::jmprip(int32_t offset) {
+void X64Assembler::jmpip(std::string const& label) {
 	this->write8(0xff);
 	this->write8(0x25);
-	this->write32(offset);
+	this->label32(label);
 }
 
 void X64Assembler::call(X64Register reg) {
 	rex(this, reg, RAX, false);
 	X86Assembler::call(x86reg(reg));
+}
+
+void X64Assembler::callip(std::string const& label) {
+	this->write8(0xff);
+	this->write8(0x15);
+	this->label32(label);
 }
 
 void X64Assembler::lea(X64Register reg, std::string const& label) {

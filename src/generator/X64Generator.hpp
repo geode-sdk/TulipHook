@@ -15,6 +15,7 @@ namespace tulip::hook {
 		std::vector<uint8_t> trampolineBytes(uint64_t address, size_t offset) override;
 
 		Result<> relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) override;
+		Result<> relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) override;
 	};
 
 	class X64WrapperGenerator : public X86WrapperGenerator {
