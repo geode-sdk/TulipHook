@@ -110,6 +110,14 @@ void X64Assembler::call(X64Register reg) {
 	X86Assembler::call(x86reg(reg));
 }
 
+void X64Assembler::call(int64_t address) {
+	X86Assembler::call(address);
+}
+
+void X64Assembler::call(std::string const& label) {
+	X86Assembler::call(label);
+}
+
 void X64Assembler::callip(std::string const& label) {
 	this->write8(0xff);
 	this->write8(0x15);

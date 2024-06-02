@@ -31,6 +31,7 @@ elseif(APPLE)
 		assembler/X86Assembler.cpp
 		assembler/X64Assembler.cpp
 		assembler/ArmV8Assembler.cpp
+		convention/MacosIntelConvention.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		generator/ArmV8Generator.cpp

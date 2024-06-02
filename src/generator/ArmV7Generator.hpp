@@ -10,12 +10,10 @@ namespace tulip::hook {
 	public:
 		using HandlerGenerator::HandlerGenerator;
 
-		Result<> generateTrampoline(RelocateReturn offsets) override;
-		Result<RelocateReturn> relocateOriginal(uint64_t target) override;
+		Result<> generateTrampoline(uint64_t target) override;
 
 		std::vector<uint8_t> handlerBytes(uint64_t address) override;
 		std::vector<uint8_t> intervenerBytes(uint64_t address) override;
-		std::vector<uint8_t> trampolineBytes(uint64_t address, size_t offset) override;
 	};
 
 	class ArmV7WrapperGenerator : public WrapperGenerator {

@@ -26,16 +26,16 @@ namespace tulip::hook {
 		virtual Result<std::vector<uint8_t>> generateIntervener();
 
 		struct RelocateReturn {
-			uint64_t m_trampolineOffset;
-			uint64_t m_originalOffset;
+			std::vector<uint8_t> m_relocatedBytes;
+			int64_t m_originalOffset;
 		};
 
-		virtual Result<> generateTrampoline(RelocateReturn offsets);
-		virtual Result<RelocateReturn> relocateOriginal(uint64_t target) = 0;
+		virtual Result<> generateTrampoline(uint64_t target);
 
-		virtual std::vector<uint8_t> handlerBytes(uint64_t address) = 0;
-		virtual std::vector<uint8_t> intervenerBytes(uint64_t address) = 0;
-		virtual std::vector<uint8_t> trampolineBytes(uint64_t address, size_t offset) = 0;
+		virtual std::vector<uint8_t> handlerBytes(uint64_t address);
+		virtual std::vector<uint8_t> intervenerBytes(uint64_t address);
+		virtual std::vector<uint8_t> trampolineBytes(uint64_t address, size_t offset);
+		virtual Result<RelocateReturn> relocatedBytes(uint64_t base, uint64_t target);
 	};
 
 	class WrapperGenerator {

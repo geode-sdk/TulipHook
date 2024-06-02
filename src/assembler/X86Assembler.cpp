@@ -128,6 +128,11 @@ void X86Assembler::call(X86Register reg) {
 	this->encodeModRM(reg, 2);
 }
 
+void X86Assembler::call(std::string const& label) {
+	this->write8(0xE8);
+	this->label32(label);
+}
+
 void X86Assembler::movsd(X86Register reg, X86Pointer ptr) {
 	this->write8(0xF2);
 	this->write8(0x0F);

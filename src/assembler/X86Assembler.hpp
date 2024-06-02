@@ -35,6 +35,9 @@ namespace tulip::hook {
 	inline X86Pointer operator+(X86Register reg, int32_t offset) {
 		return X86Pointer(reg, offset);
 	}
+	inline X86Pointer operator-(X86Register reg, int32_t offset) {
+		return X86Pointer(reg, -offset);
+	}
 
 	// Use this to easily express a X86Pointer, like so:
 	// RegMem32 m;
@@ -95,6 +98,7 @@ namespace tulip::hook {
 
 		void call(X86Register reg);
 		void call(int64_t value);
+		void call(std::string const& label);
 
 		void movsd(X86Register reg, X86Pointer ptr);
 		void movsd(X86Pointer ptr, X86Register reg);

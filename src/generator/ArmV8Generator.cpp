@@ -24,36 +24,6 @@ namespace {
 	}
 }
 
-Result<ArmV8HandlerGenerator::RelocateReturn> ArmV8HandlerGenerator::relocateOriginal(uint64_t target) {
-    auto origin = new CodeMemBlock(reinterpret_cast<uint64_t>(m_address), target);
-	auto relocated = new CodeMemBlock();
-	auto originBuffer = m_address;
-	auto relocatedBuffer = m_trampoline;
-
-	static thread_local std::string error;
-	error = "";
-
-	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
-		auto res = Target::get().writeMemory(dest, src, size);
-		if (!res) {
-			error = res.error();
-		}
-	});
-
-	if (!error.empty()) {
-		return Err(std::move(error));
-	}
-
-	if (relocated->size == 0) {
-		return Err("Failed to relocate original function");
-	}
-
-	return Ok(RelocateReturn{
-		.m_trampolineOffset = (uint64_t)relocated->size,
-		.m_originalOffset = (uint64_t)origin->size,
-	});
-}
-
 std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
@@ -155,12 +125,28 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
     return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> ArmV8HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
-	// Dobby handles the creation of the trampoline
-	return {};
-}
+Result<> ArmV8HandlerGenerator::generateTrampoline(uint64_t target) {
+	auto origin = new CodeMemBlock(reinterpret_cast<uint64_t>(m_address), target);
+	auto relocated = new CodeMemBlock();
+	auto originBuffer = m_address;
+	auto relocatedBuffer = m_trampoline;
 
-Result<> ArmV8HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
-	// Dobby handles the creation of the trampoline
+	static thread_local std::string error;
+	error = "";
+
+	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
+		auto res = Target::get().writeMemory(dest, src, size);
+		if (!res) {
+			error = res.error();
+		}
+	});
+
+	if (!error.empty()) {
+		return Err(std::move(error));
+	}
+
+	if (relocated->size == 0) {
+		return Err("Failed to relocate original function");
+	}
 	return Ok();
 }

@@ -34,13 +34,32 @@ Result<std::vector<uint8_t>> HandlerGenerator::generateIntervener() {
 	return Ok(std::move(encode));
 }
 
-Result<> HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
-	auto address = reinterpret_cast<uint64_t>(m_trampoline) + offsets.m_trampolineOffset;
+Result<> HandlerGenerator::generateTrampoline(uint64_t target) {
+	TULIP_HOOK_UNWRAP_INTO(auto offsets, this->relocatedBytes(reinterpret_cast<uint64_t>(m_trampoline), target));
+
+	auto address = reinterpret_cast<uint64_t>(m_trampoline) + offsets.m_relocatedBytes.size();
 	auto encode = this->trampolineBytes(address, offsets.m_originalOffset);
 
-	TULIP_HOOK_UNWRAP(Target::get().writeMemory(reinterpret_cast<void*>(address), encode.data(), encode.size()));
+	std::vector<uint8_t> merge;
+	merge.insert(merge.end(), offsets.m_relocatedBytes.begin(), offsets.m_relocatedBytes.end());
+	merge.insert(merge.end(), encode.begin(), encode.end());
+
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, merge.data(), merge.size()));
 
 	return Ok();
+}
+
+std::vector<uint8_t> HandlerGenerator::handlerBytes(uint64_t address) {
+	return std::vector<uint8_t>();
+}
+std::vector<uint8_t> HandlerGenerator::intervenerBytes(uint64_t address) {
+	return std::vector<uint8_t>();
+}
+std::vector<uint8_t> HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
+	return std::vector<uint8_t>();
+}
+Result<HandlerGenerator::RelocateReturn> HandlerGenerator::relocatedBytes(uint64_t base, uint64_t target) {
+	return Ok(HandlerGenerator::RelocateReturn());
 }
 
 Result<void*> WrapperGenerator::generateWrapper() {

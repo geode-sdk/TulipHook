@@ -8,10 +8,43 @@
 
 using namespace tulip::hook;
 
+namespace {
+    size_t getStackParamSize(AbstractFunction const& function) {
+        size_t stackParamSize = 0;
+        int xmmCount = 0;
+        int gprCount = 0;
+        if (function.m_return.m_kind == AbstractTypeKind::Other) {
+            gprCount += 1;
+        }
+        for (auto& param : function.m_parameters) {
+            if (param.m_kind == AbstractTypeKind::FloatingPoint) {
+                if (xmmCount < 4) {
+                    xmmCount++;
+                } else {
+                    stackParamSize += 8;
+                }
+            } else {
+                if (gprCount < 4) {
+                    gprCount++;
+                } else {
+                    stackParamSize += 8;
+                }
+            }
+        }
+        return stackParamSize;
+    }
+}
+
 ThiscallConvention::~ThiscallConvention() {}
 
 void ThiscallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) {
-    static_cast<X64Assembler&>(a).ret();
+    size_t stackParamSize = getStackParamSize(function);
+    if (stackParamSize > 0) {
+        auto& a = static_cast<X64Assembler&>(a_);
+        using enum X64Register;
+        auto const paddedSize = (stackParamSize % 16) ? stackParamSize + 8 : stackParamSize;
+        a.add(RSP, paddedSize);
+    }
 }
 
 // Member functions deal with struct return differently, since in the windows x64 convention
@@ -25,23 +58,38 @@ void ThiscallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFuncti
 // so to undo this we just swap the first two parameters (RCX and RDX).
 
 void ThiscallConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction const& function) {
+    auto& a = static_cast<X64Assembler&>(a_);
+    using enum X64Register;
+    RegMem64 m;
+
     if (function.m_return.m_kind == AbstractTypeKind::Other) {
-        auto& a = static_cast<X64Assembler&>(a_);
-        using enum X64Register;
         a.xchg(RCX, RDX);
+    }
+
+    size_t stackParamSize = getStackParamSize(function);
+    if (stackParamSize > 0) {
+        auto const paddedSize = (stackParamSize % 16) ? stackParamSize + 8 : stackParamSize;
+        a.sub(RSP, paddedSize);
+        int stackOffset = 0;
+
+        for (auto i = 0; i < stackParamSize; i += 8) {
+            a.mov(RAX, m[RBP + (16 + i)]);
+            a.mov(m[RSP + i], RAX);
+        }
     }
 }
 
 void ThiscallConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunction const& function) {
+    auto& a = static_cast<X64Assembler&>(a_);
+    using enum X64Register;
+    RegMem64 m;
+
     if (function.m_return.m_kind == AbstractTypeKind::Other) {
-        auto& a = static_cast<X64Assembler&>(a_);
-        using enum X64Register;
         a.xchg(RCX, RDX);
     }
 }
 
 void ThiscallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {
-    static_cast<X64Assembler&>(a).ret();
 }
 
 bool ThiscallConvention::needsWrapper(AbstractFunction const& function) const {
