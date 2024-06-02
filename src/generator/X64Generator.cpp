@@ -24,7 +24,7 @@ size_t X64HandlerGenerator::preserveRegisters(X64Assembler& a) {
 	using enum X64Register;
 	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
-	constexpr auto PRESERVE_SIZE = 0x70;
+	constexpr auto PRESERVE_SIZE = 0x80;
 	a.sub(RSP, PRESERVE_SIZE);
 
 	a.mov(m[RSP + 0x58], R9);
@@ -94,13 +94,13 @@ size_t X64HandlerGenerator::preserveReturnRegisters(X64Assembler& a) {
 	using enum X64Register;
 	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
-	constexpr auto PRESERVE_SIZE = 0x20;
+	constexpr auto PRESERVE_SIZE = 0x40;
 	a.sub(RSP, PRESERVE_SIZE);
 
 	a.movaps(m[RSP + 0x00], XMM0);
 	a.mov(RSP + 0x10, RAX);
 #else
-	constexpr auto PRESERVE_SIZE = 0x30;
+	constexpr auto PRESERVE_SIZE = 0x40;
 	a.sub(RSP, PRESERVE_SIZE);
 
 	a.movaps(m[RSP + 0x00], XMM0);
@@ -145,7 +145,7 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 
 	a.push(RBP);
 	a.mov(RBP, RSP);
-	a.sub(RSP, 0x10);
+	a.sub(RSP, 0x40);
 	// preserve registers
 	const auto preservedSize = preserveRegisters(a);
 
@@ -179,7 +179,7 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	restoreReturnRegisters(a, returnPreservedSize);
 
 	// done!
-	a.add(RSP, 0x10);
+	a.add(RSP, 0x40);
 	a.pop(RBP);
 	a.ret();
 
