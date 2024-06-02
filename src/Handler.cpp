@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <sstream>
 #include <stack>
+#include <iostream>
 
 using namespace tulip::hook;
 
@@ -22,10 +23,10 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	if (!ret->m_content) {
 		return Err("Failed to allocate HandlerContent");
 	}
-	// std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
+	std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
 
 	TULIP_HOOK_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x300));
-	// std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
+	std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
 
 	TULIP_HOOK_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x100));
 
@@ -33,7 +34,7 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	// 	.m_convention = metadata.m_convention,
 	// 	.m_abstract = metadata.m_abstract,
 	// };
-	// std::cout << std::hex << "m_trampoline: " << (void*)ret->m_trampoline << std::endl;
+	std::cout << std::hex << "m_trampoline: " << (void*)ret->m_trampoline << std::endl;
 
 	return Ok(std::move(ret));
 }
@@ -47,15 +48,19 @@ Result<> Handler::init() {
 		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
 
 	TULIP_HOOK_UNWRAP(generator->generateHandler());
+	std::cout << "generate handler" << std::endl;
 
 	TULIP_HOOK_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener());
+	std::cout << "generate intervener" << std::endl;
 
 	auto target = m_modifiedBytes.size();
 
 	auto address = reinterpret_cast<uint8_t*>(Target::get().getRealPtr(m_address));
 	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
+	std::cout << "add original bytes" << std::endl;
 
 	TULIP_HOOK_UNWRAP(generator->generateTrampoline(target));
+	std::cout << "generate trampoline" << std::endl;
 
 	this->addOriginal();
 
@@ -70,6 +75,7 @@ void Handler::addOriginal() {
 }
 
 HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
+	std::cout << "createHook: " << address << std::endl;
 	static size_t s_nextHookHandle = 0;
 	auto hook = HookHandle(++s_nextHookHandle);
 
