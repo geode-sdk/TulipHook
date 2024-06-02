@@ -107,12 +107,7 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> ArmV7HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
-	// Dobby handles the creation of the trampoline
-	return {};
-}
-
-Result<> ArmV7HandlerGenerator::generateTrampoline(int64_t target) {
+Result<> ArmV7HandlerGenerator::generateTrampoline(uint64_t target) {
 	auto origin = new CodeMemBlock((uint64_t)Target::get().getRealPtr(m_address), target);
 	auto relocated = new CodeMemBlock();
 	// idk about arm thumb stuff help me

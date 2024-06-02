@@ -37,7 +37,7 @@ namespace {
 
 ThiscallConvention::~ThiscallConvention() {}
 
-void ThiscallConvention::generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) {
+void ThiscallConvention::generateDefaultCleanup(BaseAssembler& a_, AbstractFunction const& function) {
     size_t stackParamSize = getStackParamSize(function);
     if (stackParamSize > 0) {
         auto& a = static_cast<X64Assembler&>(a_);
