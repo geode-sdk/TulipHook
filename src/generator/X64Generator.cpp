@@ -179,7 +179,7 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	restoreReturnRegisters(a, returnPreservedSize);
 
 	// done!
-	a.mov(RSP, RBP);
+	a.add(RSP, 0x10)
 	a.pop(RBP);
 	a.ret();
 
@@ -230,30 +230,37 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		return X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
 	}
 
-	auto& operand0 = detail->x86.operands[0];
-	X64Register reg;
-	switch (operand0.reg) {
-		using enum X64Register;
-		case X86_REG_RAX: reg = RAX; break;
-		case X86_REG_RCX: reg = RCX; break;
-		case X86_REG_RDX: reg = RDX; break;
-		case X86_REG_RBX: reg = RBX; break;
-		case X86_REG_RSP: reg = RSP; break;
-		case X86_REG_RBP: reg = RBP; break;
-		case X86_REG_RSI: reg = RSI; break;
-		case X86_REG_RDI: reg = RDI; break;
-		case X86_REG_R8: reg = R8; break;
-		case X86_REG_R9: reg = R9; break;
-		case X86_REG_R10: reg = R10; break;
-		case X86_REG_R11: reg = R11; break;
-		case X86_REG_R12: reg = R12; break;
-		case X86_REG_R13: reg = R13; break;
-		case X86_REG_R14: reg = R14; break;
-		case X86_REG_R15: reg = R15; break;
-		default: goto fail;
+	auto setReg = [&](auto set, auto& reg) {
+		switch (set) {
+			using enum X64Register;
+			case X86_REG_RAX: reg = RAX; break;
+			case X86_REG_RCX: reg = RCX; break;
+			case X86_REG_RDX: reg = RDX; break;
+			case X86_REG_RBX: reg = RBX; break;
+			case X86_REG_RSP: reg = RSP; break;
+			case X86_REG_RBP: reg = RBP; break;
+			case X86_REG_RSI: reg = RSI; break;
+			case X86_REG_RDI: reg = RDI; break;
+			case X86_REG_R8: reg = R8; break;
+			case X86_REG_R9: reg = R9; break;
+			case X86_REG_R10: reg = R10; break;
+			case X86_REG_R11: reg = R11; break;
+			case X86_REG_R12: reg = R12; break;
+			case X86_REG_R13: reg = R13; break;
+			case X86_REG_R14: reg = R14; break;
+			case X86_REG_R15: reg = R15; break;
+			case X86_REG_RIP: reg = RIP; break;
+			default: goto fail;
+		};
 	};
 
-	if (id == X86_INS_MOV) {
+	auto& operand0 = detail->x86.operands[0];
+	auto& operand1 = detail->x86.operands[1];
+
+	if (id == X86_INS_MOV && operand1.type == X86_OP_MEM) {
+		X64Register reg;
+		setReg(operand0.reg, reg);
+
 		X64Assembler a(trampolineAddress);
 		RegMem64 m;
 		using enum X64Register;
@@ -278,7 +285,10 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		originalAddress += size;
 		return Ok();
 	}
-	if (id == X86_INS_LEA) {
+	else if (id == X86_INS_LEA && operand1.type == X86_OP_MEM) {
+		X64Register reg;
+		setReg(operand0.reg, reg);
+
 		X64Assembler a(trampolineAddress);
 		RegMem64 m;
 		using enum X64Register;
@@ -290,6 +300,53 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 
 		a.label("absolute-pointer");
 		a.write64(absolute);
+
+		a.label("skip-pointer");
+
+		a.updateLabels();
+
+		auto bytes = std::move(a.m_buffer);
+		std::memcpy(buffer, bytes.data(), bytes.size());
+
+		trampolineAddress += bytes.size();
+		originalAddress += size;
+		return Ok();
+	}
+	else if (id == X86_INS_JMP && operand0.type == X86_OP_MEM) {
+		X64Assembler a(trampolineAddress);
+		RegMem64 m;
+		using enum X64Register;
+
+		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
+
+		a.jmpip("absolute-pointer");
+
+		a.label("absolute-pointer");
+		// it's bad but umm better than the alternative of double indirection
+		a.write64(*static_cast<uint64_t*>(absolute));
+
+		a.updateLabels();
+
+		auto bytes = std::move(a.m_buffer);
+		std::memcpy(buffer, bytes.data(), bytes.size());
+
+		trampolineAddress += bytes.size();
+		originalAddress += size;
+		return Ok();
+	}
+	else if (id == X86_INS_CALL && operand0.type == X86_OP_MEM) {
+		X64Assembler a(trampolineAddress);
+		RegMem64 m;
+		using enum X64Register;
+
+		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
+
+		a.callip("absolute-pointer");
+		a.jmp("skip-pointer");
+
+		a.label("absolute-pointer");
+		// it's bad but umm better than the alternative of double indirection
+		a.write64(*static_cast<uint64_t*>(absolute));
 
 		a.label("skip-pointer");
 

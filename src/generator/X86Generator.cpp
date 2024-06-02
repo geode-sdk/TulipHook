@@ -269,7 +269,7 @@ Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint8_t* buffer
 		auto& operand0 = detail->x86.operands[0];
 		if (operand0.type == X86_OP_MEM && operand0.mem.base == X86_REG_RIP) {
 			auto disp = operand0.mem.disp;
-			return this->X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
+			return this->relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
 		}
 
 		auto& operand1 = detail->x86.operands[1];
