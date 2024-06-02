@@ -121,7 +121,7 @@ void Handler::reorderFunctions() {
 	// 	std::cout << "reordering " << m_handles[a] << " " << m_handles[b] << std::endl;
 	// 	return (m_hooks.at(m_handles[a])->m_metadata.m_priority < m_hooks.at(m_handles[b])->m_metadata.m_priority);
 	// });
-	std::cout << "sorted\n";
+	std::cout << "sorted" << std::endl;
 }
 
 Result<> Handler::interveneFunction() {
