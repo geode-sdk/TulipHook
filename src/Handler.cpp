@@ -76,7 +76,7 @@ HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
 	m_hooks.emplace(hook, std::make_unique<Hook>(address, m_metadata));
 	m_handles.insert({address, hook});
 
-	m_content->m_functions.push_back(address);
+	// m_content->m_functions.push_back(address);
 
 	this->reorderFunctions();
 
