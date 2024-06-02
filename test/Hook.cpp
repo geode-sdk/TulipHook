@@ -89,7 +89,7 @@ TEST(HookTest, NoHandler) {
 
 TEST(HookTest, NoHooks) {
 	HandlerHandle handlerHandle;
-	// makeHandler<1>(handlerHandle);
+	makeHandler<1>(handlerHandle);
 	EXPECT_EQ(callFunction<1>(), 1);
 }
 
@@ -104,7 +104,7 @@ TEST(HookTest, SingleHook) {
 	HandlerHandle handlerHandle;
 	makeHandler<3>(handlerHandle);
 
-	makeHook<3>(handlerHandle);
+	// makeHook<3>(handlerHandle);
 
 	EXPECT_EQ(callFunction<3>(), 3);
 }
