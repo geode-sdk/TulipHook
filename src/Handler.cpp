@@ -82,7 +82,7 @@ HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
 	m_hooks.emplace(hook, std::make_unique<Hook>(address, m_metadata));
 	m_handles.insert({address, hook});
 
-	std::cout << "before functions size " << vec.size() << std::endl;
+	std::cout << "before functions size " << m_content->m_functions.size() << std::endl;
 	m_content->m_functions.push_back(address);
 
 	this->reorderFunctions();
