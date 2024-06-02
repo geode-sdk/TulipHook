@@ -7,6 +7,7 @@
 #include <CallingConvention.hpp>
 #include <capstone/capstone.h>
 #include <sstream>
+#include <iostream>
 
 using namespace tulip::hook;
 
@@ -175,6 +176,10 @@ Result<> X86HandlerGenerator::generateTrampoline(uint64_t target) {
 	using enum X86Register;
 
 	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
+	a.call("relocated")
+	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
+
+	a.label("relocated");
 
 	TULIP_HOOK_UNWRAP_INTO(auto code, this->relocatedBytes(a.currentAddress(), target));
 
@@ -182,7 +187,7 @@ Result<> X86HandlerGenerator::generateTrampoline(uint64_t target) {
 
 	a.jmp(reinterpret_cast<uintptr_t>(m_address) + code.m_originalOffset);
 
-	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
+	a.updateLabels();
 
 	auto codeSize = a.m_buffer.size();
 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
