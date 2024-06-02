@@ -73,7 +73,7 @@ void ThiscallConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction
         int stackOffset = 0;
 
         for (auto i = 0; i < stackParamSize; i += 8) {
-            a.mov(RAX, m[RBP + (16 + i)]);
+            a.mov(RAX, m[RBP + (32 + i)]);
             a.mov(m[RSP + i], RAX);
         }
     }
