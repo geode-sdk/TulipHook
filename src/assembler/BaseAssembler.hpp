@@ -19,6 +19,7 @@ namespace tulip::hook {
 		std::vector<uint8_t> m_buffer;
 		std::unordered_map<std::string, int64_t> m_labels;
 		std::vector<AssemblerLabelUpdates> m_labelUpdates;
+		std::vector<AssemblerLabelUpdates> m_absoluteLabelUpdates;
 
 		BaseAssembler(int64_t baseAddress);
 		BaseAssembler(BaseAssembler const&) = delete;

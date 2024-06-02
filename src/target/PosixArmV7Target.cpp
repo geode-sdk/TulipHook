@@ -27,9 +27,9 @@ Result<csh> PosixArmV7Target::openCapstone() {
 }
 
 std::unique_ptr<HandlerGenerator> PosixArmV7Target::getHandlerGenerator(
-	void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata
+	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
 ) {
-	return std::make_unique<ArmV7HandlerGenerator>(address, trampoline, handler, content, wrapped, metadata);
+	return std::make_unique<ArmV7HandlerGenerator>(address, trampoline, handler, content, metadata);
 }
 
 std::unique_ptr<WrapperGenerator> PosixArmV7Target::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {

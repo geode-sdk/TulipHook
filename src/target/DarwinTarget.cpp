@@ -11,7 +11,6 @@ using namespace tulip::hook;
 #include <mach/mach_port.h>
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/task.h>
-#include <iostream>
 
 Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;

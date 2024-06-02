@@ -6,8 +6,6 @@
 
 #include <CallingConvention.hpp>
 #include <InstructionRelocation/InstructionRelocation.h>
-#include <sstream>
-#include <iostream>
 
 using namespace tulip::hook;
 
@@ -25,37 +23,6 @@ namespace {
 		Handler::decrementIndex();
 		return ret;
 	}
-}
-
-Result<ArmV7HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocateOriginal(uint64_t target) {
-	auto origin = new CodeMemBlock((uint64_t)Target::get().getRealPtr(m_address), target);
-	auto relocated = new CodeMemBlock();
-	// idk about arm thumb stuff help me
-	auto originBuffer = m_address;
-	auto relocatedBuffer = m_trampoline;
-
-	static thread_local std::string error;
-	error = "";
-
-	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
-		auto res = Target::get().writeMemory(dest, src, size);
-		if (!res) {
-			error = res.error();
-		}
-	});
-
-	if (!error.empty()) {
-		return Err(std::move(error));
-	}
-
-	if (relocated->size == 0) {
-		return Err("Failed to relocate original function");
-	}
-
-	return Ok(RelocateReturn{
-		.m_trampolineOffset = (uint64_t)relocated->size,
-		.m_originalOffset = (uint64_t)origin->size,
-	});
 }
 
 std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
@@ -138,12 +105,29 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> ArmV7HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
-	// Dobby handles the creation of the trampoline
-	return {};
-}
+Result<> ArmV7HandlerGenerator::generateTrampoline(uint64_t target) {
+	auto origin = new CodeMemBlock((uint64_t)Target::get().getRealPtr(m_address), target);
+	auto relocated = new CodeMemBlock();
+	// idk about arm thumb stuff help me
+	auto originBuffer = m_address;
+	auto relocatedBuffer = m_trampoline;
 
-Result<> ArmV7HandlerGenerator::generateTrampoline(RelocateReturn offsets) {
-	// Dobby handles the creation of the trampoline
+	static thread_local std::string error;
+	error = "";
+
+	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
+		auto res = Target::get().writeMemory(dest, src, size);
+		if (!res) {
+			error = res.error();
+		}
+	});
+
+	if (!error.empty()) {
+		return Err(std::move(error));
+	}
+
+	if (relocated->size == 0) {
+		return Err("Failed to relocate original function");
+	}
 	return Ok();
 }

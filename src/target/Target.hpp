@@ -44,7 +44,7 @@ namespace tulip::hook {
 		virtual uint32_t getWritableProtection() = 0;
 
 		virtual std::unique_ptr<HandlerGenerator> getHandlerGenerator(
-			void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata
+			void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
 		) = 0;
 		virtual std::unique_ptr<WrapperGenerator> getWrapperGenerator(void* address, WrapperMetadata const& metadata) = 0;
 		// sorry :( virtual BaseAssembler* getAssembler(int64_t baseAddress);

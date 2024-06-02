@@ -6,7 +6,6 @@
 #include "target/PlatformTarget.hpp"
 
 #include <algorithm>
-#include <sstream>
 #include <stack>
 
 using namespace tulip::hook;
@@ -22,20 +21,9 @@ Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata 
 	if (!ret->m_content) {
 		return Err("Failed to allocate HandlerContent");
 	}
-	// std::cout << std::hex << "m_content: " << (void*)ret->m_content << std::endl;
 
 	TULIP_HOOK_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x300));
-	// std::cout << std::hex << "m_handler: " << (void*)ret->m_handler << std::endl;
-
 	TULIP_HOOK_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x100));
-
-	auto wrapperMetadata = WrapperMetadata{
-		.m_convention = metadata.m_convention,
-		.m_abstract = metadata.m_abstract,
-	};
-	TULIP_HOOK_UNWRAP_INTO(auto trampolineWrap, Wrapper::get().createWrapper(ret->m_trampoline, wrapperMetadata));
-	ret->m_wrapped = trampolineWrap;
-	// std::cout << std::hex << "m_trampoline: " << (void*)ret->m_trampoline << std::endl;
 
 	return Ok(std::move(ret));
 }
@@ -46,7 +34,7 @@ Result<> Handler::init() {
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
 
 	auto generator =
-		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_wrapped, m_metadata);
+		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
 
 	TULIP_HOOK_UNWRAP(generator->generateHandler());
 
@@ -57,8 +45,7 @@ Result<> Handler::init() {
 	auto address = reinterpret_cast<uint8_t*>(Target::get().getRealPtr(m_address));
 	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
 
-	TULIP_HOOK_UNWRAP_INTO(auto trampolineOffset, generator->relocateOriginal(target));
-	TULIP_HOOK_UNWRAP(generator->generateTrampoline(trampolineOffset));
+	TULIP_HOOK_UNWRAP(generator->generateTrampoline(target));
 
 	this->addOriginal();
 
@@ -69,7 +56,7 @@ void Handler::addOriginal() {
 	auto metadata = HookMetadata{
 		.m_priority = INT32_MAX,
 	};
-	static_cast<void>(this->createHook(Target::get().getRealPtrAs(m_wrapped, m_address), metadata));
+	static_cast<void>(this->createHook(Target::get().getRealPtrAs(m_trampoline, m_address), metadata));
 }
 
 HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {

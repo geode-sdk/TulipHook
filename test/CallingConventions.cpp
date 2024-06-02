@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <array>
-#include <iostream>
 #include <tulip/TulipHook.hpp>
 
 using namespace tulip::hook;

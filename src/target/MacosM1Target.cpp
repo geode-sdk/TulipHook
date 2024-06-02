@@ -23,9 +23,9 @@ Result<csh> MacosM1Target::openCapstone() {
 }
 
 std::unique_ptr<HandlerGenerator> MacosM1Target::getHandlerGenerator(
-	void* address, void* trampoline, void* handler, void* content, void* wrapped, HandlerMetadata const& metadata
+	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
 ) {
-	return std::make_unique<ArmV8HandlerGenerator>(address, trampoline, handler, content, wrapped, metadata);
+	return std::make_unique<ArmV8HandlerGenerator>(address, trampoline, handler, content, metadata);
 }
 
 std::unique_ptr<WrapperGenerator> MacosM1Target::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {

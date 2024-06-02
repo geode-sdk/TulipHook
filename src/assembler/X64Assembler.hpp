@@ -43,6 +43,9 @@ namespace tulip::hook {
 	inline X64Pointer operator+(X64Register reg, int32_t offset) {
 		return X64Pointer(reg, offset);
 	}
+	inline X64Pointer operator-(X64Register reg, int32_t offset) {
+		return X64Pointer(reg, -offset);
+	}
 
 	// Use this to easily express a X64Pointer, like so:
 	// RegMem64 m;
@@ -77,6 +80,8 @@ namespace tulip::hook {
 		void jmpip(std::string const& label);
 
 		void call(X64Register reg);
+		void call(int64_t address);
+		void call(std::string const& label);
 		void callip(std::string const& label);
 
 		void movsd(X64Register reg, X64Pointer ptr);

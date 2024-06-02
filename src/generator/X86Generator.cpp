@@ -6,7 +6,6 @@
 
 #include <CallingConvention.hpp>
 #include <capstone/capstone.h>
-#include <sstream>
 
 using namespace tulip::hook;
 
@@ -14,7 +13,6 @@ namespace {
 	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content) {
 		Handler::incrementIndex(content);
 		auto ret = Handler::getNextFunction(content);
-
 		return ret;
 	}
 
@@ -110,14 +108,6 @@ std::vector<uint8_t> X86HandlerGenerator::intervenerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> X86HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
-	X86Assembler a(address);
-
-	a.jmp(reinterpret_cast<uintptr_t>(m_address) + offset);
-
-	return std::move(a.m_buffer);
-}
-
 std::vector<uint8_t> X86WrapperGenerator::wrapperBytes(uint64_t address) {
 	X86Assembler a(address);
 
@@ -130,17 +120,17 @@ std::vector<uint8_t> X86WrapperGenerator::wrapperBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> X86WrapperGenerator::reverseWrapperBytes(uint64_t address) {
-	X86Assembler a(address);
+// std::vector<uint8_t> X86WrapperGenerator::reverseWrapperBytes(uint64_t address) {
+// 	X86Assembler a(address);
 
-	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
+// 	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
 
-	a.call(reinterpret_cast<uintptr_t>(m_address));
+// 	a.call(reinterpret_cast<uintptr_t>(m_address));
 
-	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
+// 	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
 
-	return std::move(a.m_buffer);
-}
+// 	return std::move(a.m_buffer);
+// }
 
 Result<void*> X86WrapperGenerator::generateWrapper() {
 	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
@@ -159,24 +149,52 @@ Result<void*> X86WrapperGenerator::generateWrapper() {
 	return Ok(area);
 }
 
-Result<void*> X86WrapperGenerator::generateReverseWrapper() {
-	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
-		return Ok(m_address);
-	}
+// Result<void*> X86WrapperGenerator::generateReverseWrapper() {
+// 	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
+// 		return Ok(m_address);
+// 	}
 
-	// this is silly, butt
-	auto codeSize = this->reverseWrapperBytes(0).size();
+// 	// this is silly, butt
+// 	auto codeSize = this->reverseWrapperBytes(0).size();
+// 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
+
+// 	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
+// 	auto code = this->reverseWrapperBytes(reinterpret_cast<uintptr_t>(area));
+
+// 	TULIP_HOOK_UNWRAP(Target::get().writeMemory(area, code.data(), codeSize));
+
+// 	return Ok(area);
+// }
+
+Result<> X86HandlerGenerator::generateTrampoline(uint64_t target) {
+	X86Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
+	RegMem32 m;
+	using enum X86Register;
+
+	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
+	a.call("relocated");
+	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
+
+	a.label("relocated");
+
+	TULIP_HOOK_UNWRAP_INTO(auto code, this->relocatedBytes(a.currentAddress(), target));
+
+	a.m_buffer.insert(a.m_buffer.end(), code.m_relocatedBytes.begin(), code.m_relocatedBytes.end());
+
+	a.jmp(reinterpret_cast<uintptr_t>(m_address) + code.m_originalOffset);
+
+	a.updateLabels();
+
+	auto codeSize = a.m_buffer.size();
 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
-	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
-	auto code = this->reverseWrapperBytes(reinterpret_cast<uintptr_t>(area));
 
-	TULIP_HOOK_UNWRAP(Target::get().writeMemory(area, code.data(), codeSize));
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
 
-	return Ok(area);
+	return Ok();
 }
 
-Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOriginal(uint64_t target) {
+Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target) {
 	// memcpy(m_trampoline, m_address, 32);
 
 	TULIP_HOOK_UNWRAP_INTO(auto cs, Target::get().openCapstone());
@@ -185,23 +203,23 @@ Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOrigina
 
 	auto insn = cs_malloc(cs);
 
-	uint64_t address = reinterpret_cast<uint64_t>(m_trampoline);
+	uint64_t address = baseAddress;
 	uint8_t const* code = reinterpret_cast<uint8_t const*>(m_address);
 	size_t size = 32;
 
-	auto difference = reinterpret_cast<uint64_t>(m_trampoline) - reinterpret_cast<uint64_t>(m_address);
+	auto difference = baseAddress - reinterpret_cast<uint64_t>(m_address);
 
 	auto targetAddress = address + target;
 
 	auto originalAddress = reinterpret_cast<uint64_t>(m_address);
-	auto trampolineAddress = reinterpret_cast<uint64_t>(m_trampoline);
-	std::array<uint8_t, 64> buffer;
+	auto trampolineAddress = baseAddress;
+	std::array<uint8_t, 0x80> buffer;
 
 	while (cs_disasm_iter(cs, &code, &size, &address, insn)) {
 		if (insn->address >= targetAddress) {
 			break;
 		}
-		auto bufferOffset = trampolineAddress - reinterpret_cast<uint64_t>(m_trampoline);
+		auto bufferOffset = trampolineAddress - baseAddress;
 
 		TULIP_HOOK_UNWRAP(this->relocateInstruction(insn, buffer.data() + bufferOffset, trampolineAddress, originalAddress));
 	}
@@ -210,12 +228,10 @@ Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocateOrigina
 
 	Target::get().closeCapstone();
 
-	auto bufferOffset = trampolineAddress - reinterpret_cast<uint64_t>(m_trampoline);
-	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, buffer.data(), bufferOffset));
-
+	auto bufferOffset = trampolineAddress - baseAddress;
 	return Ok(RelocateReturn{
-		.m_trampolineOffset = trampolineAddress - reinterpret_cast<uint64_t>(m_trampoline),
-		.m_originalOffset = originalAddress - reinterpret_cast<uint64_t>(m_address),
+		.m_relocatedBytes = std::vector<uint8_t>(buffer.begin(), buffer.begin() + bufferOffset),
+		.m_originalOffset = static_cast<int64_t>(originalAddress - reinterpret_cast<uint64_t>(m_address)),
 	});
 }
 

@@ -5,50 +5,26 @@
 #include "../target/PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
-#include <sstream>
 
 using namespace tulip::hook;
 
 namespace {
-	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content, void* originalReturn) {
+	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content) {
 		Handler::incrementIndex(content);
 		auto ret = Handler::getNextFunction(content);
-		Handler::pushData(originalReturn);
-
 		return ret;
 	}
 
-	void* TULIP_HOOK_DEFAULT_CONV postHandler() {
-		auto ret = Handler::popData();
+	void TULIP_HOOK_DEFAULT_CONV postHandler() {
 		Handler::decrementIndex();
-		return ret;
 	}
 }
 
-std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
-	X64Assembler a(address);
-	RegMem64 m;
+size_t X64HandlerGenerator::preserveRegisters(X64Assembler& a) {
 	using enum X64Register;
-
+	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
-	constexpr auto SCRATCH = RAX;
-	constexpr auto FIRST_PARAM = RCX;
-	constexpr auto SECOND_PARAM = RDX;
-#else
-	constexpr auto SCRATCH = RAX;
-	constexpr auto FIRST_PARAM = RDI;
-	constexpr auto SECOND_PARAM = RSI;
-#endif
-
-	for (size_t i = 0; i < 8; ++i) {
-		a.nop();
-	}
-
-	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
-
-	// preserve registers
-#ifdef TULIP_HOOK_WINDOWS
-	constexpr auto PRESERVE_SIZE = 0x78;
+	constexpr auto PRESERVE_SIZE = 0x70;
 	a.sub(RSP, PRESERVE_SIZE);
 
 	a.mov(m[RSP + 0x58], R9);
@@ -60,7 +36,7 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	a.movaps(m[RSP + 0x10], XMM1);
 	a.movaps(m[RSP + 0x00], XMM0);
 #else
-	constexpr auto PRESERVE_SIZE = 0xb8;
+	constexpr auto PRESERVE_SIZE = 0xc0;
 	a.sub(RSP, PRESERVE_SIZE);
 
 	a.mov(m[RSP + 0xa8], R9);
@@ -78,23 +54,11 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	a.movaps(m[RSP + 0x10], XMM1);
 	a.movaps(m[RSP + 0x00], XMM0);
 #endif
-
-	// preserve the original return
-	a.mov(SCRATCH, m[RSP + PRESERVE_SIZE]);
-
-	// set the new return
-	a.lea(FIRST_PARAM, "handlerCont");
-	a.mov(m[RSP + PRESERVE_SIZE], FIRST_PARAM);
-
-	// set the parameters
-	a.mov(FIRST_PARAM, "content");
-	a.mov(SECOND_PARAM, SCRATCH);
-
-	// call the pre handler, incrementing
-	a.mov(SCRATCH, "handlerPre");
-	a.call(SCRATCH);
-
-	// recover registers
+	return PRESERVE_SIZE;
+}
+void X64HandlerGenerator::restoreRegisters(X64Assembler& a, size_t size) {
+	using enum X64Register;
+	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
 	a.movaps(XMM0, m[RSP + 0x00]);
 	a.movaps(XMM1, m[RSP + 0x10]);
@@ -105,7 +69,7 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	a.mov(R8, m[RSP + 0x50]);
 	a.mov(R9, m[RSP + 0x58]);
 
-	a.add(RSP, PRESERVE_SIZE);
+	a.add(RSP, size);
 #else
 	a.movaps(XMM0, m[RSP + 0x00]);
 	a.movaps(XMM1, m[RSP + 0x10]);
@@ -122,40 +86,101 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	a.mov(R8, m[RSP + 0xa0]);
 	a.mov(R9, m[RSP + 0xa8]);
 
-	a.add(RSP, PRESERVE_SIZE);
+	a.add(RSP, size);
+#endif
+}
+
+size_t X64HandlerGenerator::preserveReturnRegisters(X64Assembler& a) {
+	using enum X64Register;
+	RegMem64 m;
+#ifdef TULIP_HOOK_WINDOWS
+	constexpr auto PRESERVE_SIZE = 0x20;
+	a.sub(RSP, PRESERVE_SIZE);
+
+	a.movaps(m[RSP + 0x00], XMM0);
+	a.mov(RSP + 0x10, RAX);
+#else
+	constexpr auto PRESERVE_SIZE = 0x30;
+	a.sub(RSP, PRESERVE_SIZE);
+
+	a.movaps(m[RSP + 0x00], XMM0);
+	a.movaps(m[RSP + 0x10], XMM1);
+	a.mov(RSP + 0x20, RAX);
+	a.mov(RSP + 0x28, RDX);
+#endif
+	return PRESERVE_SIZE;
+}
+void X64HandlerGenerator::restoreReturnRegisters(X64Assembler& a, size_t size) {
+	using enum X64Register;
+	RegMem64 m;
+#ifdef TULIP_HOOK_WINDOWS
+	a.mov(RAX, m[RSP + 0x10]);
+	a.movaps(XMM0, m[RSP + 0x00]);
+
+	a.add(RSP, size);
+#else
+	a.mov(RDX, m[RSP + 0x28]);
+	a.mov(RAX, m[RSP + 0x20]);
+	a.movaps(XMM1, m[RSP + 0x10]);
+	a.movaps(XMM0, m[RSP + 0x00]);
+
+	a.add(RSP, size);
+#endif
+}
+
+std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
+	X64Assembler a(address);
+	RegMem64 m;
+	using enum X64Register;
+
+#ifdef TULIP_HOOK_WINDOWS
+	constexpr auto FIRST_PARAM = RCX;
+#else
+	constexpr auto FIRST_PARAM = RDI;
 #endif
 
+	for (size_t i = 0; i < 8; ++i) {
+		a.nop();
+	}
+
+	a.push(RBP);
+	a.mov(RBP, RSP);
+	a.sub(RSP, 0x10);
+	// preserve registers
+	const auto preservedSize = preserveRegisters(a);
+
+	// set the parameters
+	a.mov(FIRST_PARAM, "content");
+
+	// call the pre handler, incrementing
+	a.callip("handlerPre");
+
+	a.mov(m[RBP - 0x10], RAX);
+
+	// recover registers
+	restoreRegisters(a, preservedSize);
+
 	// call the func
-	a.jmp(SCRATCH);
+	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
 
-	a.label("handlerCont");
-
-	a.sub(RSP, 0x8);
+	a.mov(RAX, m[RBP - 0x10]);
+	// a.int3();
+	a.call(RAX);
+	// // a.int3();
+	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
 
 	// preserve the return values
-	a.sub(RSP, 0x38);
-
-	a.mov(m[RSP + 0x28], RDX);
-	a.mov(m[RSP + 0x20], RAX);
-	a.movaps(m[RSP + 0x10], XMM1);
-	a.movaps(m[RSP + 0x00], XMM0);
+	const auto returnPreservedSize = preserveReturnRegisters(a);
 
 	// call the post handler, decrementing
-	a.mov(SCRATCH, "handlerPost");
-	a.call(SCRATCH);
-
-	// recover the original return
-	a.mov(m[RSP + 0x38], SCRATCH);
+	a.callip("handlerPost");
 
 	// recover the return values
-	a.movaps(XMM0, m[RSP + 0x00]);
-	a.movaps(XMM1, m[RSP + 0x10]);
-	a.mov(RAX, m[RSP + 0x20]);
-	a.mov(RDX, m[RSP + 0x28]);
-
-	a.add(RSP, 0x38);
+	restoreReturnRegisters(a, returnPreservedSize);
 
 	// done!
+	a.mov(RSP, RBP);
+	a.pop(RBP);
 	a.ret();
 
 	a.label("handlerPre");
@@ -193,26 +218,6 @@ std::vector<uint8_t> X64HandlerGenerator::intervenerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> X64HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {
-	X64Assembler a(address);
-	RegMem64 m;
-	using enum X64Register;
-
-	auto difference = reinterpret_cast<int64_t>(m_address) - static_cast<int64_t>(address) - 5 + offset;
-
-	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
-		a.jmp(reinterpret_cast<uint64_t>(m_address) + offset);
-	}
-	else {
-		a.jmpip("handler");
-		a.label("handler");
-		a.write64(reinterpret_cast<uint64_t>(m_address) + offset);
-
-		a.updateLabels();
-	}
-
-	return std::move(a.m_buffer);
-}
 
 Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
 	auto const id = insn->id;
@@ -305,14 +310,23 @@ std::vector<uint8_t> X64WrapperGenerator::wrapperBytes(uint64_t address) {
 	X64Assembler a(address);
 	using enum X64Register;
 
+	a.push(RBP);
+	a.mov(RBP, RSP);
+
 	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
 
-	a.sub(RSP, 8);
-	a.mov(RAX, "address");
-	a.call(RAX);
-	a.add(RSP, 8);
+	auto difference = a.currentAddress() - reinterpret_cast<int64_t>(m_address) + 5;
+	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
+		a.call(reinterpret_cast<uint64_t>(m_address));
+	}
+	else {
+		a.callip("address");
+	}
 
 	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
+
+	a.pop(RBP);
+	a.ret();
 
 	a.label("address");
 	a.write64(reinterpret_cast<uintptr_t>(m_address));
@@ -322,25 +336,67 @@ std::vector<uint8_t> X64WrapperGenerator::wrapperBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> X64WrapperGenerator::reverseWrapperBytes(uint64_t address) {
-	X64Assembler a(address);
+// std::vector<uint8_t> X64WrapperGenerator::reverseWrapperBytes(uint64_t address) {
+// 	X64Assembler a(address);
+// 	using enum X64Register;
+
+// 	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
+
+// 	a.mov(RAX, "address");
+// 	a.call(RAX);
+
+// 	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
+
+// 	a.label("address");
+// 	a.write64(reinterpret_cast<uintptr_t>(m_address));
+
+// 	a.updateLabels();
+
+// 	return std::move(a.m_buffer);
+// }
+
+Result<> X64HandlerGenerator::generateTrampoline(uint64_t target) {
+	X64Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
 	using enum X64Register;
 
-	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
+	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
+		a.push(RBP);
+		a.mov(RBP, RSP);
+		m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
 
-	a.sub(RSP, 8);
-	a.mov(RAX, "address");
-	a.call(RAX);
-	a.add(RSP, 8);
+		a.call("relocated");
 
-	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
+		m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
+		a.pop(RBP);
+		a.ret();
+	}
 
-	a.label("address");
-	a.write64(reinterpret_cast<uintptr_t>(m_address));
+	a.label("relocated");
+
+	TULIP_HOOK_UNWRAP_INTO(auto code, this->relocatedBytes(a.currentAddress(), target));
+
+	a.m_buffer.insert(a.m_buffer.end(), code.m_relocatedBytes.begin(), code.m_relocatedBytes.end());
+
+	auto difference = a.currentAddress() - reinterpret_cast<int64_t>(m_address) + 5 - code.m_originalOffset;
+
+	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
+		a.jmp(reinterpret_cast<uint64_t>(m_address) + code.m_originalOffset);
+	}
+	else {
+		a.jmpip("handler");
+
+		a.label("handler");
+		a.write64(reinterpret_cast<uint64_t>(m_address) + code.m_originalOffset);
+	}
 
 	a.updateLabels();
 
-	return std::move(a.m_buffer);
+	auto codeSize = a.m_buffer.size();
+	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
+
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
+
+	return Ok();
 }
 
 Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) {

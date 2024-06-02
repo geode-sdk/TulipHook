@@ -20,8 +20,16 @@ void X86Assembler::label32(std::string const& name) {
 	this->write32(0);
 }
 
+void X86Assembler::abslabel32(std::string const& name) {
+	m_absoluteLabelUpdates.push_back({this->currentAddress(), name, 4});
+	this->write32(0);
+}
+
 void X86Assembler::updateLabels() {
 	for (auto const& update : m_labelUpdates) {
+		this->rewrite32(update.m_address, m_labels[update.m_name] - update.m_address - 4);
+	}
+	for (auto const& update : m_absoluteLabelUpdates) {
 		this->rewrite32(update.m_address, m_labels[update.m_name]);
 	}
 }
@@ -128,6 +136,11 @@ void X86Assembler::call(X86Register reg) {
 	this->encodeModRM(reg, 2);
 }
 
+void X86Assembler::call(std::string const& label) {
+	this->write8(0xE8);
+	this->label32(label);
+}
+
 void X86Assembler::movsd(X86Register reg, X86Pointer ptr) {
 	this->write8(0xF2);
 	this->write8(0x0F);
@@ -171,7 +184,7 @@ void X86Assembler::movaps(X86Pointer ptr, X86Register reg) {
 void X86Assembler::lea(X86Register reg, std::string const& label) {
 	this->write8(0x8D);
 	this->write8(0x05 | regIdx(reg) << 3);
-	this->label32(label);
+	this->abslabel32(label);
 }
 
 void X86Assembler::mov(X86Register reg, int32_t value) {
@@ -197,7 +210,7 @@ void X86Assembler::mov(X86Register dst, X86Register src) {
 void X86Assembler::mov(X86Register reg, std::string const& label) {
 	this->write8(0x8B);
 	this->write8(0x05 | regIdx(reg) << 3);
-	this->label32(label);
+	this->abslabel32(label);
 }
 
 void X86Assembler::fstps(X86Pointer ptr) {

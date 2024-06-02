@@ -53,6 +53,10 @@ void X64Assembler::updateLabels() {
 	for (auto const& update : m_labelUpdates) {
 		this->rewrite32(update.m_address, m_labels[update.m_name] - update.m_address - 4);
 	}
+	// absolute is not absolute in 64 bit
+	for (auto const& update : m_absoluteLabelUpdates) {
+		this->rewrite32(update.m_address, m_labels[update.m_name] - update.m_address - 4);
+	}
 }
 
 using enum X64Register;
@@ -108,6 +112,14 @@ void X64Assembler::jmpip(std::string const& label) {
 void X64Assembler::call(X64Register reg) {
 	rex(this, reg, RAX, false);
 	X86Assembler::call(x86reg(reg));
+}
+
+void X64Assembler::call(int64_t address) {
+	X86Assembler::call(address);
+}
+
+void X64Assembler::call(std::string const& label) {
+	X86Assembler::call(label);
 }
 
 void X64Assembler::callip(std::string const& label) {
