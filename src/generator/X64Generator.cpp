@@ -398,6 +398,11 @@ Result<> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 
 	a.updateLabels();
 
+	for (auto i = 0; i < a.m_buffer.size(); ++i) {
+		std::cout << std::hex << (int)a.m_buffer[i] << " ";
+	}
+	std::cout << std::endl;
+
 	auto codeSize = a.m_buffer.size();
 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
