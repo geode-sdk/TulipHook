@@ -11,24 +11,15 @@ using namespace tulip::hook;
 namespace {
     size_t getStackParamSize(AbstractFunction const& function) {
         size_t stackParamSize = 0;
-        int xmmCount = 0;
-        int gprCount = 0;
+        int regCount = 0;
         if (function.m_return.m_kind == AbstractTypeKind::Other) {
-            gprCount += 1;
+            regCount += 1;
         }
         for (auto& param : function.m_parameters) {
-            if (param.m_kind == AbstractTypeKind::FloatingPoint) {
-                if (xmmCount < 4) {
-                    xmmCount++;
-                } else {
-                    stackParamSize += 8;
-                }
+            if (regCount < 4) {
+                regCount++;
             } else {
-                if (gprCount < 4) {
-                    gprCount++;
-                } else {
-                    stackParamSize += 8;
-                }
+                stackParamSize += 8;
             }
         }
         return stackParamSize;
