@@ -418,5 +418,12 @@ Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* 
 		a.label("skip-branch");
 
 		a.updateLabels();
+
+		auto bytes = std::move(a.m_buffer);
+		std::memcpy(buffer, bytes.data(), bytes.size());
+
+		trampolineAddress += bytes.size();
+		originalAddress += size;
 	}
+	return Ok();
 }
