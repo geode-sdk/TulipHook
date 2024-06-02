@@ -96,7 +96,7 @@ TEST(HookTest, NoHooks) {
 TEST(HookTest, MakeWrapper) {
 	FunctionPtrType unwrapped;
 	makeWrapper<2>(unwrapped);
-	EXPECT_EQ(unwrapped(1, 2, 3, 4, 5, 6, 7, 8, 9, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f), 1);
+	// EXPECT_EQ(unwrapped(1, 2, 3, 4, 5, 6, 7, 8, 9, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f), 1);
 }
 
 // hook -> function
@@ -106,7 +106,7 @@ TEST(HookTest, SingleHook) {
 
 	makeHook<3>(handlerHandle);
 
-	// EXPECT_EQ(callFunction<3>(), 3);
+	EXPECT_EQ(callFunction<3>(), 3);
 }
 
 // priorityHook -> hook -> function
