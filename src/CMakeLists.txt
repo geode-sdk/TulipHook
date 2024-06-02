@@ -18,6 +18,7 @@ if(WIN32)
 		assembler/X86Assembler.cpp
 		assembler/X64Assembler.cpp
 		convention/Windows32Convention.cpp
+		convention/Windows64Convention.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		target/Windows32Target.cpp

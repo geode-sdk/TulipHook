@@ -57,6 +57,9 @@ std::shared_ptr<CallingConvention> tulip::hook::createConvention(TulipConvention
 		case TulipConvention::Membercall: return MembercallConvention::create();
 		case TulipConvention::Stdcall: return StdcallConvention::create();
 #endif
+#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
+		case TulipConvention::Thiscall: return ThiscallConvention::create();
+#endif
 		default: return nullptr;
 	}
 }
