@@ -78,7 +78,7 @@ HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
 
 	m_content->m_functions.push_back(address);
 
-	// this->reorderFunctions();
+	this->reorderFunctions();
 
 	return hook;
 }
