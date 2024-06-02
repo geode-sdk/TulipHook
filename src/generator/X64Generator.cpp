@@ -169,7 +169,7 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 
 	a.mov(RAX, m[RBP - 0x10]);
 	// a.int3();
-	// a.call(RAX);
+	a.call(RAX);
 	// // a.int3();
 	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
 
@@ -362,6 +362,8 @@ std::vector<uint8_t> X64WrapperGenerator::wrapperBytes(uint64_t address) {
 Result<> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 	X64Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
 	using enum X64Register;
+
+	a.ret();
 
 	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
 		a.push(RBP);
