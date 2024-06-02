@@ -181,3 +181,8 @@ void X64Assembler::shl(X64Register reg, uint8_t value) {
 	rex(this, reg, RAX, true);
 	X86Assembler::shl(x86reg(reg), value);
 }
+
+void X64Assembler::xchg(X64Register reg, X64Register reg2) {
+	rex(this, reg, reg2, true);
+	X86Assembler::xchg(x86reg(reg), x86reg(reg2));
+}

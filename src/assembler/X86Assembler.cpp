@@ -232,3 +232,8 @@ void X86Assembler::shl(X86Register reg, uint8_t value) {
 	this->write8(0xE0 | regIdx(reg));
 	this->write8(value);
 }
+
+void X86Assembler::xchg(X86Register reg, X86Register reg2) {
+	this->write8(0x87);
+	this->encodeModRM(reg, regIdx(reg2));
+}

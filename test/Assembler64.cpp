@@ -84,3 +84,10 @@ TEST(X64AssemblerTest, Label) {
 		a.buffer(), "\x48\x8B\x05\x07\x00\x00\x00\x48\x8D\x0D\x00\x00\x00\x00\x85\x00\x08\x00\x00\x00\x00\x00"_bytes
 	);
 }
+
+TEST(X64AssemblerTest, Xchg) {
+	X64Assembler a(0x123);
+	a.xchg(RCX, RDX);
+	a.xchg(RBX, R8);
+	EXPECT_EQ(a.buffer(), "\x48\x87\xD1\x4C\x87\xC3"_bytes);
+}
