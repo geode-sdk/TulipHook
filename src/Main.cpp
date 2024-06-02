@@ -19,7 +19,7 @@ Result<> tulip::hook::removeHandler(HandlerHandle const& handler) noexcept {
 }
 
 HookHandle tulip::hook::createHook(HandlerHandle const& handler, void* function, HookMetadata const& metadata) noexcept {
-	std::cout << "createHook: " << address << std::endl;
+	std::cout << "createHook: " << function << std::endl;
 	return Pool::get().getHandler(handler).createHook(function, metadata);
 }
 
