@@ -164,6 +164,7 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	restoreRegisters(a, preservedSize);
 
 	// early test
+	a.mov(RSP, RBP);
 	a.pop(RBP);
 	a.ret();
 
