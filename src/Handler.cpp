@@ -82,15 +82,7 @@ HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
 	m_hooks.emplace(hook, std::make_unique<Hook>(address, m_metadata));
 	m_handles.insert({address, hook});
 
-	std::cout << "before functions size " << m_content->m_functions.size() << std::endl;
-	for (auto it = m_content->m_functions.begin(); it != m_content->m_functions.end(); ++it) {
-		std::cout << "function " << *it << std::endl;
-		if (m_hooks.at(m_handles[*it])->m_metadata.m_priority > m_metadata.m_priority) {
-			m_content->m_functions.insert(it, address);
-			break;
-		}
-	}
-	
+	m_content->m_functions.push_back(address);
 
 	this->reorderFunctions();
 
@@ -123,15 +115,9 @@ void Handler::updateHookMetadata(HookHandle const& hook, HookMetadata const& met
 
 void Handler::reorderFunctions() {
 	auto& vec = m_content->m_functions;
-	std::cout << "functions size " << m_content->m_functions.size() << " this " << (void*)this << std::endl;
-	// std::sort(m_content->m_functions.begin(), m_content->m_functions.end(), [this](auto const a, auto const b) {
-	// 	// std::cout << "reordering  this" << a << " " << b << " "<< (void*)this << std::endl;
-	// 	return a < b;
-	// });
-	// std::sort(vec.begin(), vec.end(), [this](auto const a, auto const b) {
-	// 	std::cout << "reordering " << m_handles[a] << " " << m_handles[b] << std::endl;
-	// 	return (m_hooks.at(m_handles[a])->m_metadata.m_priority < m_hooks.at(m_handles[b])->m_metadata.m_priority);
-	// });
+	std::sort(vec.begin(), vec.end(), [this](auto const a, auto const b) {
+		return (m_hooks.at(m_handles[a])->m_metadata.m_priority < m_hooks.at(m_handles[b])->m_metadata.m_priority);
+	});
 	std::cout << "sorted" << std::endl;
 }
 
