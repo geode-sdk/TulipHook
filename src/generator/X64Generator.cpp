@@ -163,11 +163,6 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	// recover registers
 	restoreRegisters(a, preservedSize);
 
-	// early test
-	a.mov(RSP, RBP);
-	a.pop(RBP);
-	a.ret();
-
 	// call the func
 	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
 
@@ -387,7 +382,7 @@ Result<> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 
 	auto difference = a.currentAddress() - reinterpret_cast<int64_t>(m_address) + 5 - code.m_originalOffset;
 
-	// a.int3();
+	a.int3();
 	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
 		a.jmp(reinterpret_cast<uint64_t>(m_address) + code.m_originalOffset);
 	}

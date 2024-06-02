@@ -82,6 +82,7 @@ HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
 	m_hooks.emplace(hook, std::make_unique<Hook>(address, m_metadata));
 	m_handles.insert({address, hook});
 
+	std::cout << "before functions size " << vec.size() << std::endl;
 	m_content->m_functions.push_back(address);
 
 	this->reorderFunctions();
@@ -115,7 +116,9 @@ void Handler::updateHookMetadata(HookHandle const& hook, HookMetadata const& met
 
 void Handler::reorderFunctions() {
 	auto& vec = m_content->m_functions;
+	std::cout << "functions size " << vec.size() << std::endl;
 	std::sort(vec.begin(), vec.end(), [this](auto const a, auto const b) {
+		std::cout << "reordering " << handles[a] << " " << handles[b] << std::endl;
 		return (m_hooks.at(m_handles[a])->m_metadata.m_priority < m_hooks.at(m_handles[b])->m_metadata.m_priority);
 	});
 }
