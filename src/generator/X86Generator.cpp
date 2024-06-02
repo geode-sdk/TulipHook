@@ -192,6 +192,11 @@ Result<> X86HandlerGenerator::generateTrampoline(uint64_t target) {
 	auto codeSize = a.m_buffer.size();
 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
+	for (auto i = 0; i < a.m_buffer.size(); ++i) {
+		std::cout << std::hex << (int)a.m_buffer[i] << " ";
+	}
+	std::cout << std::endl;
+
 	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
 
 	return Ok();
