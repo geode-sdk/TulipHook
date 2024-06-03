@@ -104,7 +104,13 @@ void ThiscallConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunctio
         a.xchg(RCX, RDX);
     }
 
-    Windows64Convention::generateIntoOriginal(a, function);
+    // the wrapper requires the struct forwarding as well
+    Windows64Convention::generateIntoDefault(a, function);
+}
+
+void ThiscallConvention::generateOriginalCleanup(BaseAssembler& a_, AbstractFunction const& function) {
+    // the wrapper requires the struct forwarding as well
+    Windows64Convention::generateDefaultCleanup(a_, function);
 }
 
 bool ThiscallConvention::needsWrapper(AbstractFunction const& function) const {
