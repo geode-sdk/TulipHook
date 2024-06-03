@@ -23,6 +23,17 @@ namespace {
                 } else {
                     stackParamSize += 8;
                 }
+            } else if (param.m_kind == AbstractTypeKind::Primitive && param.m_size == 16) {
+                if (gprCount < 6) {
+                    gprCount++;
+                } else {
+                    stackParamSize += 8;
+                }
+                if (gprCount < 6) {
+                    gprCount++;
+                } else {
+                    stackParamSize += 8;
+                }
             } else {
                 if (gprCount < 6) {
                     gprCount++;
