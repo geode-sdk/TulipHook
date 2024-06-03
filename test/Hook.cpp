@@ -194,3 +194,47 @@ TEST(HookTest, RecreateHandler) {
 
 	EXPECT_EQ(callFunction<10>(), 1);
 }
+
+int checkParams(int a, int b, int c, int d, int e, int f, int g, float h, int i) {
+	EXPECT_EQ(a, 1);
+	EXPECT_EQ(b, 2);
+	EXPECT_EQ(c, 3);
+	EXPECT_EQ(d, 4);
+	EXPECT_EQ(e, 5);
+	EXPECT_EQ(f, 6);
+	EXPECT_EQ(g, 7);
+	EXPECT_EQ(h, 8.0f);
+	EXPECT_EQ(i, 9);
+	return 11;
+}
+
+int checkParamsHook(int a, int b, int c, int d, int e, int f, int g, float h, int i) {
+	EXPECT_EQ(a, 1);
+	EXPECT_EQ(b, 2);
+	EXPECT_EQ(c, 3);
+	EXPECT_EQ(d, 4);
+	EXPECT_EQ(e, 5);
+	EXPECT_EQ(f, 6);
+	EXPECT_EQ(g, 7);
+	EXPECT_EQ(h, 8.0f);
+	EXPECT_EQ(i, 9);
+	return checkParams(a, b, c, d, e, f, g, h, i);
+}
+
+TEST(HookTest, SingleHookCheckParams) {
+	HandlerMetadata handlerMetadata;
+	// cheating using thiscall because default convention is not properly implemented
+	handlerMetadata.m_convention = tulip::hook::createConvention(tulip::hook::TulipConvention::Thiscall);
+	handlerMetadata.m_abstract = AbstractFunction::from(&checkParams);
+
+	auto handleRes = createHandler(reinterpret_cast<void*>(&checkParams), handlerMetadata);
+
+	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr();
+
+	auto handle = handleRes.unwrap();
+
+	HookMetadata metadata;
+	createHook(handle, reinterpret_cast<void*>(&checkParamsHook), metadata);
+
+	checkParams(1, 2, 3, 4, 5, 6, 7, 8.0f, 9);
+}

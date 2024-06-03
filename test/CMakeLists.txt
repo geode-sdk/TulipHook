@@ -12,7 +12,12 @@ add_executable(${PROJECT_NAME} Assembler86.cpp Assembler64.cpp Hook.cpp)
 target_link_libraries(${PROJECT_NAME} PUBLIC GTest::gtest_main TulipHook)
 
 if(WIN32)
-	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
+	if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
+	CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")	
+		# idk
+	else()
+		set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/INCREMENTAL:NO")
+	endif()
 
 	if (CMAKE_SIZEOF_VOID_P EQUAL 8)
 		add_executable(WinTest misc/WinTest.cpp)

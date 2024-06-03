@@ -155,15 +155,19 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	// call the pre handler, incrementing
 	a.callip("handlerPre");
 
+	// store rax (next function ptr) in the shadow space for a bit
 	a.mov(m[RBP - 0x10], RAX);
 
 	// recover registers
 	restoreRegisters(a, preservedSize);
 
-	// call the func
+	// convert the current cc into the default cc
 	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
 
+	// restore the next function ptr from shadow space
 	a.mov(RAX, m[RBP - 0x10]);
+
+	// call the func
 	// a.int3();
 	a.call(RAX);
 	// // a.int3();

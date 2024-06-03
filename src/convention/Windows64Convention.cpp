@@ -24,17 +24,20 @@ namespace {
         }
         return stackParamSize;
     }
+    size_t getPaddedStackParamSize(AbstractFunction const& function) {
+        auto stackParamSize = getStackParamSize(function);
+        return (stackParamSize % 16) ? stackParamSize + 8 : stackParamSize;
+    }
 }
 
 ThiscallConvention::~ThiscallConvention() {}
 
 void ThiscallConvention::generateDefaultCleanup(BaseAssembler& a_, AbstractFunction const& function) {
-    size_t stackParamSize = getStackParamSize(function);
-    if (stackParamSize > 0) {
+    size_t paddedSize = getPaddedStackParamSize(function);
+    if (paddedSize > 0) {
         auto& a = static_cast<X64Assembler&>(a_);
         using enum X64Register;
-        auto const paddedSize = (stackParamSize % 16) ? stackParamSize + 8 : stackParamSize;
-        a.add(RSP, paddedSize);
+        a.add(RSP, paddedSize + 0x20);
     }
 }
 
@@ -60,12 +63,20 @@ void ThiscallConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction
     size_t stackParamSize = getStackParamSize(function);
     if (stackParamSize > 0) {
         auto const paddedSize = (stackParamSize % 16) ? stackParamSize + 8 : stackParamSize;
-        a.sub(RSP, paddedSize);
+        // + 0x20 for the shadow space before the first arg
+        a.sub(RSP, paddedSize + 0x20);
         int stackOffset = 0;
 
+        // RBP points to this (each cell is 8 bytes):
+        // [orig rbp] [return ptr] [] [] [] [] [1st stack arg] ...
+        // rbp + 0    rbp + 8                  rbp + 0x30 ...
+        // new stack will look like
+        // [] [] [] [] [1st stack arg] ...
+        //             rsp + 0x20 ...
+
         for (auto i = 0; i < stackParamSize; i += 8) {
-            a.mov(RAX, m[RBP + (32 + i)]);
-            a.mov(m[RSP + i], RAX);
+            a.mov(RAX, m[RBP + (0x30 + i)]);
+            a.mov(m[RSP + (0x20 + i)], RAX);
         }
     }
 }
