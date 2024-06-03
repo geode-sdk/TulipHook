@@ -223,8 +223,7 @@ int checkParamsHook(int a, int b, int c, int d, int e, int f, int g, float h, in
 
 TEST(HookTest, SingleHookCheckParams) {
 	HandlerMetadata handlerMetadata;
-	// cheating using thiscall because default convention is not properly implemented
-	handlerMetadata.m_convention = tulip::hook::createConvention(tulip::hook::TulipConvention::Thiscall);
+	handlerMetadata.m_convention = std::make_unique<PlatformConvention>();
 	handlerMetadata.m_abstract = AbstractFunction::from(&checkParams);
 
 	auto handleRes = createHandler(reinterpret_cast<void*>(&checkParams), handlerMetadata);

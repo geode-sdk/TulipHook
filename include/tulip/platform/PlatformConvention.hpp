@@ -9,6 +9,8 @@ namespace tulip::hook {
 	using PlatformConvention = CdeclConvention;
 #elif defined(TULIP_HOOK_MACOS) && defined(TULIP_HOOK_X64)
 	using PlatformConvention = SystemVConvention;
+#elif defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
+	using PlatformConvention = Windows64Convention;
 #else
 	using PlatformConvention = DefaultConvention;
 #endif

@@ -30,9 +30,9 @@ namespace {
     }
 }
 
-ThiscallConvention::~ThiscallConvention() {}
+Windows64Convention::~Windows64Convention() {}
 
-void ThiscallConvention::generateDefaultCleanup(BaseAssembler& a_, AbstractFunction const& function) {
+void Windows64Convention::generateDefaultCleanup(BaseAssembler& a_, AbstractFunction const& function) {
     size_t paddedSize = getPaddedStackParamSize(function);
     if (paddedSize > 0) {
         auto& a = static_cast<X64Assembler&>(a_);
@@ -41,24 +41,10 @@ void ThiscallConvention::generateDefaultCleanup(BaseAssembler& a_, AbstractFunct
     }
 }
 
-// Member functions deal with struct return differently, since in the windows x64 convention
-// a struct return is as a hidden first parameter, member functions end up considering the first parameter
-// the one after the `this`, whereas static functions do not.
-//
-// So where a static function would behave like this:
-// SomeStruct* func(SomeStruct* ret_ptr, Class* self, int a, int b);
-// a member function would behave like this:
-// SomeStruct* Class::method(Class* this, SomeStruct* ret_ptr, int a, int b);
-// so to undo this we just swap the first two parameters (RCX and RDX).
-
-void ThiscallConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction const& function) {
+void Windows64Convention::generateIntoDefault(BaseAssembler& a_, AbstractFunction const& function) {
     auto& a = static_cast<X64Assembler&>(a_);
     using enum X64Register;
     RegMem64 m;
-
-    if (function.m_return.m_kind == AbstractTypeKind::Other) {
-        a.xchg(RCX, RDX);
-    }
 
     size_t stackParamSize = getStackParamSize(function);
     if (stackParamSize > 0) {
@@ -81,6 +67,34 @@ void ThiscallConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction
     }
 }
 
+std::shared_ptr<Windows64Convention> Windows64Convention::create() {
+	return std::make_shared<Windows64Convention>();
+}
+
+// Member functions deal with struct return differently, since in the windows x64 convention
+// a struct return is as a hidden first parameter, member functions end up considering the first parameter
+// the one after the `this`, whereas static functions do not.
+//
+// So where a static function would behave like this:
+// SomeStruct* func(SomeStruct* ret_ptr, Class* self, int a, int b);
+// a member function would behave like this:
+// SomeStruct* Class::method(Class* this, SomeStruct* ret_ptr, int a, int b);
+// so to undo this we just swap the first two parameters (RCX and RDX).
+
+ThiscallConvention::~ThiscallConvention() {}
+
+void ThiscallConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction const& function) {
+    auto& a = static_cast<X64Assembler&>(a_);
+    using enum X64Register;
+    RegMem64 m;
+
+    if (function.m_return.m_kind == AbstractTypeKind::Other) {
+        a.xchg(RCX, RDX);
+    }
+
+    Windows64Convention::generateIntoDefault(a, function);
+}
+
 void ThiscallConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunction const& function) {
     auto& a = static_cast<X64Assembler&>(a_);
     using enum X64Register;
@@ -89,9 +103,8 @@ void ThiscallConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunctio
     if (function.m_return.m_kind == AbstractTypeKind::Other) {
         a.xchg(RCX, RDX);
     }
-}
 
-void ThiscallConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {
+    Windows64Convention::generateIntoOriginal(a, function);
 }
 
 bool ThiscallConvention::needsWrapper(AbstractFunction const& function) const {
