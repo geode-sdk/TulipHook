@@ -33,12 +33,11 @@ namespace {
 Windows64Convention::~Windows64Convention() {}
 
 void Windows64Convention::generateDefaultCleanup(BaseAssembler& a_, AbstractFunction const& function) {
+    auto& a = static_cast<X64Assembler&>(a_);
+    using enum X64Register;
+
     size_t paddedSize = getPaddedStackParamSize(function);
-    if (paddedSize > 0) {
-        auto& a = static_cast<X64Assembler&>(a_);
-        using enum X64Register;
-        a.add(RSP, paddedSize + 0x20);
-    }
+    a.add(RSP, paddedSize + 0x20);
 }
 
 void Windows64Convention::generateIntoDefault(BaseAssembler& a_, AbstractFunction const& function) {
@@ -47,11 +46,11 @@ void Windows64Convention::generateIntoDefault(BaseAssembler& a_, AbstractFunctio
     RegMem64 m;
 
     size_t stackParamSize = getStackParamSize(function);
+    auto const paddedSize = (stackParamSize % 16) ? stackParamSize + 8 : stackParamSize;
+    // + 0x20 for the shadow space before the first arg
+    a.sub(RSP, paddedSize + 0x20);
     if (stackParamSize > 0) {
-        auto const paddedSize = (stackParamSize % 16) ? stackParamSize + 8 : stackParamSize;
-        // + 0x20 for the shadow space before the first arg
-        a.sub(RSP, paddedSize + 0x20);
-        int stackOffset = 0;
+        // theres stack args, so we need to copy them over
 
         // RBP points to this (each cell is 8 bytes):
         // [orig rbp] [return ptr] [] [] [] [] [1st stack arg] ...
