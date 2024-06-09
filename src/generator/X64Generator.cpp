@@ -149,11 +149,16 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 	// preserve registers
 	const auto preservedSize = preserveRegisters(a);
 
+	// shadow space
+	a.sub(RSP, 0x20);
+
 	// set the parameters
 	a.mov(FIRST_PARAM, "content");
 
 	// call the pre handler, incrementing
 	a.callip("handlerPre");
+
+	a.add(RSP, 0x20);
 
 	// store rax (next function ptr) in the shadow space for a bit
 	a.mov(m[RBP - 0x10], RAX);
@@ -530,7 +535,7 @@ Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* 
 		a.jmpip("absolute-pointer");
 		a.label("absolute-pointer");
 		a.write64(targetAddress);
-		
+
 		a.label("skip-branch");
 
 		a.updateLabels();
