@@ -105,5 +105,7 @@ namespace tulip::hook {
 		void shl(X64Register reg, uint8_t value);
 
 		void xchg(X64Register reg, X64Register reg2);
+
+		void align16();
 	};
 }

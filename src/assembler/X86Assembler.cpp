@@ -83,15 +83,29 @@ void X86Assembler::encodeModRM(X86Operand op, uint8_t digit) {
 }
 
 void X86Assembler::add(X86Register reg, int32_t value) {
-	this->write8(0x81);
-	this->write8(0xC0 | regIdx(reg));
-	this->write32(value);
+	if (value > -0x80 && value < 0x7f) {
+		this->write8(0x83);
+		this->write8(0xC0 | regIdx(reg));
+		this->write8(value);
+	}
+	else {
+		this->write8(0x81);
+		this->write8(0xC0 | regIdx(reg));
+		this->write32(value);
+	}
 }
 
 void X86Assembler::sub(X86Register reg, int32_t value) {
-	this->write8(0x81);
-	this->write8(0xE8 | regIdx(reg));
-	this->write32(value);
+	if (value > -0x80 && value < 0x7f) {
+		this->write8(0x83);
+		this->write8(0xE8 | regIdx(reg));
+		this->write8(value);
+	}
+	else {
+		this->write8(0x81);
+		this->write8(0xE8 | regIdx(reg));
+		this->write32(value);
+	}
 }
 
 void X86Assembler::push(X86Register reg) {

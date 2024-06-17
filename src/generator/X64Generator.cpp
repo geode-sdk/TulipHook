@@ -25,19 +25,19 @@ size_t X64HandlerGenerator::preserveRegisters(X64Assembler& a) {
 	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
 	constexpr auto PRESERVE_SIZE = 0x80;
-	a.sub(RSP, PRESERVE_SIZE);
+	// a.sub(RSP, PRESERVE_SIZE);
 
-	a.mov(m[RSP + 0x58], R9);
-	a.mov(m[RSP + 0x50], R8);
-	a.mov(m[RSP + 0x48], RDX);
-	a.mov(m[RSP + 0x40], RCX);
-	a.movaps(m[RSP + 0x30], XMM3);
-	a.movaps(m[RSP + 0x20], XMM2);
-	a.movaps(m[RSP + 0x10], XMM1);
-	a.movaps(m[RSP + 0x00], XMM0);
+	a.mov(m[RSP + 0x78], R9);
+	a.mov(m[RSP + 0x70], R8);
+	a.mov(m[RSP + 0x68], RDX);
+	a.mov(m[RSP + 0x60], RCX);
+	a.movaps(m[RSP + 0x50], XMM3);
+	a.movaps(m[RSP + 0x40], XMM2);
+	a.movaps(m[RSP + 0x30], XMM1);
+	a.movaps(m[RSP + 0x20], XMM0);
 #else
 	constexpr auto PRESERVE_SIZE = 0xc0;
-	a.sub(RSP, PRESERVE_SIZE);
+	// a.sub(RSP, PRESERVE_SIZE);
 
 	a.mov(m[RSP + 0xa8], R9);
 	a.mov(m[RSP + 0xa0], R8);
@@ -60,16 +60,16 @@ void X64HandlerGenerator::restoreRegisters(X64Assembler& a, size_t size) {
 	using enum X64Register;
 	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
-	a.movaps(XMM0, m[RSP + 0x00]);
-	a.movaps(XMM1, m[RSP + 0x10]);
-	a.movaps(XMM2, m[RSP + 0x20]);
-	a.movaps(XMM3, m[RSP + 0x30]);
-	a.mov(RCX, m[RSP + 0x40]);
-	a.mov(RDX, m[RSP + 0x48]);
-	a.mov(R8, m[RSP + 0x50]);
-	a.mov(R9, m[RSP + 0x58]);
+	a.movaps(XMM0, m[RSP + 0x20]);
+	a.movaps(XMM1, m[RSP + 0x30]);
+	a.movaps(XMM2, m[RSP + 0x40]);
+	a.movaps(XMM3, m[RSP + 0x50]);
+	a.mov(RCX, m[RSP + 0x60]);
+	a.mov(RDX, m[RSP + 0x68]);
+	a.mov(R8, m[RSP + 0x70]);
+	a.mov(R9, m[RSP + 0x78]);
 
-	a.add(RSP, size);
+	// a.add(RSP, size);
 #else
 	a.movaps(XMM0, m[RSP + 0x00]);
 	a.movaps(XMM1, m[RSP + 0x10]);
@@ -86,7 +86,7 @@ void X64HandlerGenerator::restoreRegisters(X64Assembler& a, size_t size) {
 	a.mov(R8, m[RSP + 0xa0]);
 	a.mov(R9, m[RSP + 0xa8]);
 
-	a.add(RSP, size);
+	// a.add(RSP, size);
 #endif
 }
 
@@ -95,13 +95,13 @@ size_t X64HandlerGenerator::preserveReturnRegisters(X64Assembler& a) {
 	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
 	constexpr auto PRESERVE_SIZE = 0x40;
-	a.sub(RSP, PRESERVE_SIZE);
+	// a.sub(RSP, PRESERVE_SIZE);
 
-	a.movaps(m[RSP + 0x00], XMM0);
-	a.mov(RSP + 0x10, RAX);
+	a.movaps(m[RSP + 0x20], XMM0);
+	a.mov(RSP + 0x30, RAX);
 #else
 	constexpr auto PRESERVE_SIZE = 0x40;
-	a.sub(RSP, PRESERVE_SIZE);
+	// a.sub(RSP, PRESERVE_SIZE);
 
 	a.movaps(m[RSP + 0x00], XMM0);
 	a.movaps(m[RSP + 0x10], XMM1);
@@ -114,17 +114,17 @@ void X64HandlerGenerator::restoreReturnRegisters(X64Assembler& a, size_t size) {
 	using enum X64Register;
 	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
-	a.mov(RAX, m[RSP + 0x10]);
-	a.movaps(XMM0, m[RSP + 0x00]);
+	a.mov(RAX, m[RSP + 0x30]);
+	a.movaps(XMM0, m[RSP + 0x20]);
 
-	a.add(RSP, size);
+	// a.add(RSP, size);
 #else
 	a.mov(RDX, m[RSP + 0x28]);
 	a.mov(RAX, m[RSP + 0x20]);
 	a.movaps(XMM1, m[RSP + 0x10]);
 	a.movaps(XMM0, m[RSP + 0x00]);
 
-	a.add(RSP, size);
+	// a.add(RSP, size);
 #endif
 }
 
@@ -168,12 +168,12 @@ Result<FunctionData> X64HandlerGenerator::generateHandler() {
 		a.nop();
 	}
 
-	a.label("handler-push");
 	a.push(RBP);
+	a.label("handler-push");
 	a.mov(RBP, RSP);
 	// shadow space
-	a.label("handler-alloc-small");
-	a.sub(RSP, 0x40);
+	a.sub(RSP, 0xc0);
+	a.label("handler-alloc-mid");
 	// preserve registers
 	const auto preservedSize = preserveRegisters(a);
 
@@ -211,7 +211,7 @@ Result<FunctionData> X64HandlerGenerator::generateHandler() {
 	restoreReturnRegisters(a, returnPreservedSize);
 
 	// done!
-	a.add(RSP, 0x40);
+	a.add(RSP, 0xc0);
 	a.pop(RBP);
 	a.ret();
 
@@ -226,6 +226,8 @@ Result<FunctionData> X64HandlerGenerator::generateHandler() {
 
 	a.updateLabels();
 
+	a.align16();
+
 	auto codeSize = a.m_buffer.size();
 
 	#ifdef TULIP_HOOK_WINDOWS
@@ -237,10 +239,9 @@ Result<FunctionData> X64HandlerGenerator::generateHandler() {
 		auto const offsetEnd = (address + a.m_buffer.size()) & 0xffff;
 
 		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("handler-push")) & 0xffff;
-		auto const allocOffset = reinterpret_cast<uint64_t>(a.getLabel("handler-alloc-small")) & 0xffff;
+		auto const allocOffset = reinterpret_cast<uint64_t>(a.getLabel("handler-alloc-mid")) & 0xffff;
 		auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
-		auto const hasConvention = conventionOffset != 0;
-		auto const prologSize = static_cast<uint8_t>(hasConvention ? conventionOffset : allocOffset);
+		auto const prologSize = conventionOffset;
 
 
 		// RUNTIME_FUNCTION
@@ -253,36 +254,35 @@ Result<FunctionData> X64HandlerGenerator::generateHandler() {
 
 		a.write8(
 			0x1 | // Version : 3
-			0x10 // Flags : 5
+			0x0 // Flags : 5
 		); 
 		a.write8(prologSize); // SizeOfProlog
-		a.write8(hasConvention ? 3 : 2); // CountOfUnwindCodes
+		a.write8(4); // CountOfUnwindCodes
 		a.write8(
 			0x0 | // FrameRegister : 4
 			0x0  // FrameOffset : 4
 		);
 		// UNWIND_CODE[]
 
+		auto padded = 0x20 + getPaddedStackParamSize(m_metadata.m_abstract);
+		a.write8(conventionOffset); // CodeOffset
+		a.write8(
+			(((padded >> 3) - 1) << 4) | // UnwindOp : 4
+			0x2  // OpInfo : 4
+		);
+
+		a.write8(allocOffset); // CodeOffset
+		a.write8(
+			0x0 | // UnwindOp : 4
+			0x1  // OpInfo : 4
+		);
+		a.write16(0xc0 >> 3); // UWOP_ALLOC_LARGE continuation
+
 		a.write8(pushOffset); // CodeOffset
 		a.write8(
 			0x50 | // UnwindOp : 4
 			0x0  // OpInfo : 4
 		);
-
-		a.write8(allocOffset); // CodeOffset
-		a.write8(
-			(((0x40 >> 3) - 1) << 4) | // UnwindOp : 4
-			0x2  // OpInfo : 4
-		);
-
-		if (hasConvention) {
-			auto padded = getPaddedStackParamSize(m_metadata.m_abstract);
-			a.write8(conventionOffset); // CodeOffset
-			a.write8(
-				(((padded >> 3) - 1) << 4) | // UnwindOp : 4
-				0x2  // OpInfo : 4
-			);
-		}
 	}
 
 	#endif
@@ -472,8 +472,8 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 	X64Assembler a(address);
 	using enum X64Register;
 
-	a.label("wrapper-push");
 	a.push(RBP);
+	a.label("wrapper-push");
 	a.mov(RBP, RSP);
 
 	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
@@ -496,6 +496,8 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 
 	a.updateLabels();
 
+	a.align16();
+
 	auto codeSize2 = a.m_buffer.size();
 
 #ifdef TULIP_HOOK_WINDOWS
@@ -506,8 +508,7 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 
 		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("wrapper-push")) & 0xffff;
 		auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
-		auto const hasConvention = conventionOffset != 0;
-		auto const prologSize = static_cast<uint8_t>(hasConvention ? conventionOffset : pushOffset);
+		auto const prologSize = conventionOffset;
 
 
 		// RUNTIME_FUNCTION
@@ -520,15 +521,22 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 
 		a.write8(
 			0x1 | // Version : 3
-			0x10 // Flags : 5
+			0x0 // Flags : 5
 		); 
 		a.write8(prologSize); // SizeOfProlog
-		a.write8(hasConvention ? 2 : 1); // CountOfUnwindCodes
+		a.write8(2); // CountOfUnwindCodes
 		a.write8(
 			0x0 | // FrameRegister : 4
 			0x0  // FrameOffset : 4
 		);
 		// UNWIND_CODE[]
+
+		auto padded = 0x20 + getPaddedStackParamSize(m_metadata.m_abstract);
+		a.write8(conventionOffset); // CodeOffset
+		a.write8(
+			(((padded >> 3) - 1) << 4) | // UnwindOp : 4
+			0x2  // OpInfo : 4
+		);
 
 		a.write8(pushOffset); // CodeOffset
 		a.write8(
@@ -536,14 +544,6 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 			0x0  // OpInfo : 4
 		);
 
-		if (hasConvention) {
-			auto padded = getPaddedStackParamSize(m_metadata.m_abstract);
-			a.write8(conventionOffset); // CodeOffset
-			a.write8(
-				(((padded >> 3) - 1) << 4) | // UnwindOp : 4
-				0x2  // OpInfo : 4
-			);
-		}
 	}
 
 #endif
@@ -577,8 +577,8 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 	using enum X64Register;
 
 	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
-		a.label("trampoline-push");
 		a.push(RBP);
+		a.label("trampoline-push");
 		a.mov(RBP, RSP);
 		m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
 
@@ -588,6 +588,8 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 		a.pop(RBP);
 		a.ret();
 	}
+
+	auto codeSizeFake = a.m_buffer.size();
 
 	a.label("relocated");
 
@@ -609,20 +611,19 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 
 	a.updateLabels();
 
-	auto codeSize = a.m_buffer.size();
+	a.align16();
 
 	
 #ifdef TULIP_HOOK_WINDOWS
 
-	{
+	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
 		auto const address = reinterpret_cast<uint64_t>(m_trampoline);
 		auto const offsetBegin = address & 0xffff;
 		auto const offsetEnd = (address + a.m_buffer.size()) & 0xffff;
 
 		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("trampoline-push")) & 0xffff;
 		auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
-		auto const hasConvention = conventionOffset != 0;
-		auto const prologSize = static_cast<uint8_t>(hasConvention ? conventionOffset : pushOffset);
+		auto const prologSize = conventionOffset;
 
 
 		// RUNTIME_FUNCTION
@@ -635,30 +636,28 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 
 		a.write8(
 			0x1 | // Version : 3
-			0x10 // Flags : 5
+			0x0 // Flags : 5
 		); 
 		a.write8(prologSize); // SizeOfProlog
-		a.write8(hasConvention ? 2 : 1); // CountOfUnwindCodes
+		a.write8(2); // CountOfUnwindCodes
 		a.write8(
 			0x0 | // FrameRegister : 4
 			0x0  // FrameOffset : 4
 		);
 		// UNWIND_CODE[]
 
+		auto padded = 0x20 + getPaddedStackParamSize(m_metadata.m_abstract);
+		a.write8(conventionOffset); // CodeOffset
+		a.write8(
+			(((padded >> 3) - 1) << 4) | // UnwindOp : 4
+			0x2  // OpInfo : 4
+		);
+
 		a.write8(pushOffset); // CodeOffset
 		a.write8(
 			0x50 | // UnwindOp : 4
 			0x0  // OpInfo : 4
 		);
-
-		if (hasConvention) {
-			auto padded = getPaddedStackParamSize(m_metadata.m_abstract);
-			a.write8(conventionOffset); // CodeOffset
-			a.write8(
-				(((padded >> 3) - 1) << 4) | // UnwindOp : 4
-				0x2  // OpInfo : 4
-			);
-		}
 	}
 
 #endif
@@ -668,7 +667,7 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 
 	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
 
-	return Ok(FunctionData{m_trampoline, codeSize});
+	return Ok(FunctionData{m_trampoline, codeSizeFake});
 }
 
 Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) {

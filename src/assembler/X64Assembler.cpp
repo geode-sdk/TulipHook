@@ -204,3 +204,10 @@ void X64Assembler::xchg(X64Register reg, X64Register reg2) {
 	rex(this, reg, reg2, true);
 	X86Assembler::xchg(x86reg(reg), x86reg(reg2));
 }
+
+void X64Assembler::align16() {
+	auto align = 16 - (this->currentAddress() % 16);
+	for (auto i = 0; i < align; i++) {
+		this->write8(0x90);
+	}
+}
