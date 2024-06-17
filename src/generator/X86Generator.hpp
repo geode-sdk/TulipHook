@@ -16,7 +16,7 @@ namespace tulip::hook {
 		std::vector<uint8_t> handlerBytes(uint64_t address) override;
 		std::vector<uint8_t> intervenerBytes(uint64_t address) override;
 
-		Result<> generateTrampoline(uint64_t target) override;
+		Result<FunctionData> generateTrampoline(uint64_t target) override;
 
 		virtual Result<> relocateInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress);
 		virtual Result<> relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp);
@@ -27,7 +27,7 @@ namespace tulip::hook {
 	public:
 		using WrapperGenerator::WrapperGenerator;
 
-		Result<void*> generateWrapper() override;
+		Result<FunctionData> generateWrapper() override;
 		// Result<void*> generateReverseWrapper() override;
 
 		std::vector<uint8_t> wrapperBytes(uint64_t address) override;

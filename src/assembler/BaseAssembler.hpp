@@ -47,6 +47,8 @@ namespace tulip::hook {
 
 		void label(std::string const& name);
 
+		void* getLabel(std::string const& name) const;
+
 		virtual void updateLabels();
 	};
 }

@@ -128,7 +128,32 @@ void X64HandlerGenerator::restoreReturnRegisters(X64Assembler& a, size_t size) {
 #endif
 }
 
-std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
+#ifdef TULIP_HOOK_WINDOWS
+namespace {
+    size_t getStackParamSize(AbstractFunction const& function) {
+        size_t stackParamSize = 0;
+        int regCount = 0;
+        if (function.m_return.m_kind == AbstractTypeKind::Other) {
+            regCount += 1;
+        }
+        for (auto& param : function.m_parameters) {
+            if (regCount < 4) {
+                regCount++;
+            } else {
+                stackParamSize += 8;
+            }
+        }
+        return stackParamSize;
+    }
+    size_t getPaddedStackParamSize(AbstractFunction const& function) {
+        auto stackParamSize = getStackParamSize(function);
+        return (stackParamSize % 16) ? stackParamSize + 8 : stackParamSize;
+    }
+}
+#endif
+
+Result<FunctionData> X64HandlerGenerator::generateHandler() {
+	auto address = reinterpret_cast<uint64_t>(m_handler);
 	X64Assembler a(address);
 	RegMem64 m;
 	using enum X64Register;
@@ -143,22 +168,20 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 		a.nop();
 	}
 
+	a.label("handler-push");
 	a.push(RBP);
 	a.mov(RBP, RSP);
+	// shadow space
+	a.label("handler-alloc-small");
 	a.sub(RSP, 0x40);
 	// preserve registers
 	const auto preservedSize = preserveRegisters(a);
-
-	// shadow space
-	a.sub(RSP, 0x20);
 
 	// set the parameters
 	a.mov(FIRST_PARAM, "content");
 
 	// call the pre handler, incrementing
 	a.callip("handlerPre");
-
-	a.add(RSP, 0x20);
 
 	// store rax (next function ptr) in the shadow space for a bit
 	a.mov(m[RBP - 0x10], RAX);
@@ -203,7 +226,70 @@ std::vector<uint8_t> X64HandlerGenerator::handlerBytes(uint64_t address) {
 
 	a.updateLabels();
 
-	return std::move(a.m_buffer);
+	auto codeSize = a.m_buffer.size();
+
+	#ifdef TULIP_HOOK_WINDOWS
+
+	// UNWIND_INFO structure & RUNTIME_FUNCTION structure
+
+	{
+		auto const offsetBegin = address & 0xffff;
+		auto const offsetEnd = (address + a.m_buffer.size()) & 0xffff;
+
+		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("handler-push")) & 0xffff;
+		auto const allocOffset = reinterpret_cast<uint64_t>(a.getLabel("handler-alloc-small")) & 0xffff;
+		auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
+		auto const hasConvention = conventionOffset != 0;
+		auto const prologSize = static_cast<uint8_t>(hasConvention ? conventionOffset : allocOffset);
+
+
+		// RUNTIME_FUNCTION
+
+		a.write32(offsetBegin); // BeginAddress
+		a.write32(offsetEnd); // EndAddress
+		a.write32(offsetEnd + 0xc); // UnwindData
+
+		// UNWIND_INFO
+
+		a.write8(
+			0x1 | // Version : 3
+			0x10 // Flags : 5
+		); 
+		a.write8(prologSize); // SizeOfProlog
+		a.write8(hasConvention ? 3 : 2); // CountOfUnwindCodes
+		a.write8(
+			0x0 | // FrameRegister : 4
+			0x0  // FrameOffset : 4
+		);
+		// UNWIND_CODE[]
+
+		a.write8(pushOffset); // CodeOffset
+		a.write8(
+			0x50 | // UnwindOp : 4
+			0x0  // OpInfo : 4
+		);
+
+		a.write8(allocOffset); // CodeOffset
+		a.write8(
+			(((0x40 >> 3) - 1) << 4) | // UnwindOp : 4
+			0x2  // OpInfo : 4
+		);
+
+		if (hasConvention) {
+			auto padded = getPaddedStackParamSize(m_metadata.m_abstract);
+			a.write8(conventionOffset); // CodeOffset
+			a.write8(
+				(((padded >> 3) - 1) << 4) | // UnwindOp : 4
+				0x2  // OpInfo : 4
+			);
+		}
+	}
+
+	#endif
+
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_handler, a.m_buffer.data(), a.m_buffer.size()));
+
+	return Ok(FunctionData{m_handler, codeSize});
 }
 
 std::vector<uint8_t> X64HandlerGenerator::intervenerBytes(uint64_t address) {
@@ -371,10 +457,22 @@ fail:
 	return X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
 }
 
-std::vector<uint8_t> X64WrapperGenerator::wrapperBytes(uint64_t address) {
+Result<FunctionData> X64WrapperGenerator::generateWrapper() {
+	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
+		return Ok(m_address);
+	}
+	
+	// this is silly, butt
+	auto codeSize = this->wrapperBytes(0).size();
+	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
+
+	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
+	auto address = reinterpret_cast<uint64_t>(area);
+	
 	X64Assembler a(address);
 	using enum X64Register;
 
+	a.label("wrapper-push");
 	a.push(RBP);
 	a.mov(RBP, RSP);
 
@@ -398,7 +496,61 @@ std::vector<uint8_t> X64WrapperGenerator::wrapperBytes(uint64_t address) {
 
 	a.updateLabels();
 
-	return std::move(a.m_buffer);
+	auto codeSize2 = a.m_buffer.size();
+
+#ifdef TULIP_HOOK_WINDOWS
+
+	{
+		auto const offsetBegin = address & 0xffff;
+		auto const offsetEnd = (address + a.m_buffer.size()) & 0xffff;
+
+		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("wrapper-push")) & 0xffff;
+		auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
+		auto const hasConvention = conventionOffset != 0;
+		auto const prologSize = static_cast<uint8_t>(hasConvention ? conventionOffset : pushOffset);
+
+
+		// RUNTIME_FUNCTION
+
+		a.write32(offsetBegin); // BeginAddress
+		a.write32(offsetEnd); // EndAddress
+		a.write32(offsetEnd + 0xc); // UnwindData
+
+		// UNWIND_INFO
+
+		a.write8(
+			0x1 | // Version : 3
+			0x10 // Flags : 5
+		); 
+		a.write8(prologSize); // SizeOfProlog
+		a.write8(hasConvention ? 2 : 1); // CountOfUnwindCodes
+		a.write8(
+			0x0 | // FrameRegister : 4
+			0x0  // FrameOffset : 4
+		);
+		// UNWIND_CODE[]
+
+		a.write8(pushOffset); // CodeOffset
+		a.write8(
+			0x50 | // UnwindOp : 4
+			0x0  // OpInfo : 4
+		);
+
+		if (hasConvention) {
+			auto padded = getPaddedStackParamSize(m_metadata.m_abstract);
+			a.write8(conventionOffset); // CodeOffset
+			a.write8(
+				(((padded >> 3) - 1) << 4) | // UnwindOp : 4
+				0x2  // OpInfo : 4
+			);
+		}
+	}
+
+#endif
+
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(area, a.m_buffer.data(), a.m_buffer.size()));
+
+	return Ok(FunctionData{area, codeSize2});
 }
 
 // std::vector<uint8_t> X64WrapperGenerator::reverseWrapperBytes(uint64_t address) {
@@ -420,11 +572,12 @@ std::vector<uint8_t> X64WrapperGenerator::wrapperBytes(uint64_t address) {
 // 	return std::move(a.m_buffer);
 // }
 
-Result<> X64HandlerGenerator::generateTrampoline(uint64_t target) {
+Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 	X64Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
 	using enum X64Register;
 
 	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
+		a.label("trampoline-push");
 		a.push(RBP);
 		a.mov(RBP, RSP);
 		m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
@@ -457,11 +610,65 @@ Result<> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 	a.updateLabels();
 
 	auto codeSize = a.m_buffer.size();
-	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
+
+	
+#ifdef TULIP_HOOK_WINDOWS
+
+	{
+		auto const address = reinterpret_cast<uint64_t>(m_trampoline);
+		auto const offsetBegin = address & 0xffff;
+		auto const offsetEnd = (address + a.m_buffer.size()) & 0xffff;
+
+		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("trampoline-push")) & 0xffff;
+		auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
+		auto const hasConvention = conventionOffset != 0;
+		auto const prologSize = static_cast<uint8_t>(hasConvention ? conventionOffset : pushOffset);
+
+
+		// RUNTIME_FUNCTION
+
+		a.write32(offsetBegin); // BeginAddress
+		a.write32(offsetEnd); // EndAddress
+		a.write32(offsetEnd + 0xc); // UnwindData
+
+		// UNWIND_INFO
+
+		a.write8(
+			0x1 | // Version : 3
+			0x10 // Flags : 5
+		); 
+		a.write8(prologSize); // SizeOfProlog
+		a.write8(hasConvention ? 2 : 1); // CountOfUnwindCodes
+		a.write8(
+			0x0 | // FrameRegister : 4
+			0x0  // FrameOffset : 4
+		);
+		// UNWIND_CODE[]
+
+		a.write8(pushOffset); // CodeOffset
+		a.write8(
+			0x50 | // UnwindOp : 4
+			0x0  // OpInfo : 4
+		);
+
+		if (hasConvention) {
+			auto padded = getPaddedStackParamSize(m_metadata.m_abstract);
+			a.write8(conventionOffset); // CodeOffset
+			a.write8(
+				(((padded >> 3) - 1) << 4) | // UnwindOp : 4
+				0x2  // OpInfo : 4
+			);
+		}
+	}
+
+#endif
+
+	// auto codeSize = a.m_buffer.size();
+	// auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
 	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
 
-	return Ok();
+	return Ok(FunctionData{m_trampoline, codeSize});
 }
 
 Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <FunctionData.hpp>
 #include <HandlerData.hpp>
 #include <TulipResult.hpp>
 #include <WrapperData.hpp>
@@ -21,7 +22,7 @@ namespace tulip::hook {
 
 		virtual ~HandlerGenerator() = default;
 
-		virtual Result<> generateHandler();
+		virtual Result<FunctionData> generateHandler();
 		virtual Result<std::vector<uint8_t>> generateIntervener();
 
 		struct RelocateReturn {
@@ -29,7 +30,7 @@ namespace tulip::hook {
 			int64_t m_originalOffset;
 		};
 
-		virtual Result<> generateTrampoline(uint64_t target);
+		virtual Result<FunctionData> generateTrampoline(uint64_t target);
 
 		virtual std::vector<uint8_t> handlerBytes(uint64_t address);
 		virtual std::vector<uint8_t> intervenerBytes(uint64_t address);
@@ -46,8 +47,8 @@ namespace tulip::hook {
 
 		WrapperGenerator(void* address, WrapperMetadata const& metadata);
 
-		virtual Result<void*> generateWrapper();
-		virtual Result<void*> generateReverseWrapper();
+		virtual Result<FunctionData> generateWrapper();
+		virtual Result<FunctionData> generateReverseWrapper();
 
 		virtual std::vector<uint8_t> wrapperBytes(uint64_t address);
 		virtual std::vector<uint8_t> reverseWrapperBytes(uint64_t address);

@@ -48,6 +48,7 @@ void Windows64Convention::generateIntoDefault(BaseAssembler& a_, AbstractFunctio
     size_t stackParamSize = getStackParamSize(function);
     auto const paddedSize = (stackParamSize % 16) ? stackParamSize + 8 : stackParamSize;
     // + 0x20 for the shadow space before the first arg
+    a.label("convention-alloc-small");
     a.sub(RSP, paddedSize + 0x20);
     if (stackParamSize > 0) {
         // theres stack args, so we need to copy them over

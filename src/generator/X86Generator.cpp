@@ -132,7 +132,7 @@ std::vector<uint8_t> X86WrapperGenerator::wrapperBytes(uint64_t address) {
 // 	return std::move(a.m_buffer);
 // }
 
-Result<void*> X86WrapperGenerator::generateWrapper() {
+Result<FunctionData> X86WrapperGenerator::generateWrapper() {
 	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
 		return Ok(m_address);
 	}
@@ -146,7 +146,7 @@ Result<void*> X86WrapperGenerator::generateWrapper() {
 
 	TULIP_HOOK_UNWRAP(Target::get().writeMemory(area, code.data(), codeSize));
 
-	return Ok(area);
+	return Ok(FunctionData{area, codeSize});
 }
 
 // Result<void*> X86WrapperGenerator::generateReverseWrapper() {
@@ -166,7 +166,7 @@ Result<void*> X86WrapperGenerator::generateWrapper() {
 // 	return Ok(area);
 // }
 
-Result<> X86HandlerGenerator::generateTrampoline(uint64_t target) {
+Result<FunctionData> X86HandlerGenerator::generateTrampoline(uint64_t target) {
 	X86Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
 	RegMem32 m;
 	using enum X86Register;
@@ -191,7 +191,7 @@ Result<> X86HandlerGenerator::generateTrampoline(uint64_t target) {
 
 	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
 
-	return Ok();
+	return Ok(FunctionData{m_trampoline, codeSize});
 }
 
 Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target) {

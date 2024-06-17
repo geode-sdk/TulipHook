@@ -79,4 +79,11 @@ void BaseAssembler::label(std::string const& name) {
 	m_labels[name] = this->currentAddress();
 }
 
+void* BaseAssembler::getLabel(std::string const& name) const {
+	if (m_labels.find(name) == m_labels.end()) {
+		return nullptr;
+	}
+	return reinterpret_cast<void*>(m_labels.at(name));
+}
+
 void BaseAssembler::updateLabels() {}

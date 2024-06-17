@@ -17,13 +17,13 @@ WrapperGenerator::WrapperGenerator(void* address, WrapperMetadata const& metadat
 	m_address(address),
 	m_metadata(metadata) {}
 
-Result<> HandlerGenerator::generateHandler() {
+Result<FunctionData> HandlerGenerator::generateHandler() {
 	auto address = reinterpret_cast<uint64_t>(m_handler);
 	auto encode = this->handlerBytes(address);
 
 	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_handler, encode.data(), encode.size()));
 
-	return Ok();
+	return Ok(FunctionData{m_handler, encode.size()});
 }
 
 Result<std::vector<uint8_t>> HandlerGenerator::generateIntervener() {
@@ -33,7 +33,7 @@ Result<std::vector<uint8_t>> HandlerGenerator::generateIntervener() {
 	return Ok(std::move(encode));
 }
 
-Result<> HandlerGenerator::generateTrampoline(uint64_t target) {
+Result<FunctionData> HandlerGenerator::generateTrampoline(uint64_t target) {
 	TULIP_HOOK_UNWRAP_INTO(auto offsets, this->relocatedBytes(reinterpret_cast<uint64_t>(m_trampoline), target));
 
 	auto address = reinterpret_cast<uint64_t>(m_trampoline) + offsets.m_relocatedBytes.size();
@@ -45,7 +45,7 @@ Result<> HandlerGenerator::generateTrampoline(uint64_t target) {
 
 	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, merge.data(), merge.size()));
 
-	return Ok();
+	return Ok(FunctionData{m_trampoline, merge.size()});
 }
 
 std::vector<uint8_t> HandlerGenerator::handlerBytes(uint64_t address) {
@@ -61,12 +61,12 @@ Result<HandlerGenerator::RelocateReturn> HandlerGenerator::relocatedBytes(uint64
 	return Ok(HandlerGenerator::RelocateReturn());
 }
 
-Result<void*> WrapperGenerator::generateWrapper() {
-	return Ok(m_address); // only windows needs the wrapper
+Result<FunctionData> WrapperGenerator::generateWrapper() {
+	return Ok(FunctionData{m_address, 0}); // only windows needs the wrapper
 }
 
-Result<void*> WrapperGenerator::generateReverseWrapper() {
-	return Ok(m_address); // only windows needs the wrapper
+Result<FunctionData> WrapperGenerator::generateReverseWrapper() {
+	return Ok(FunctionData{m_address, 0}); // only windows needs the wrapper
 }
 
 std::vector<uint8_t> WrapperGenerator::wrapperBytes(uint64_t address) {
