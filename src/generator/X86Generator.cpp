@@ -134,7 +134,7 @@ std::vector<uint8_t> X86WrapperGenerator::wrapperBytes(uint64_t address) {
 
 Result<FunctionData> X86WrapperGenerator::generateWrapper() {
 	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
-		return Ok(m_address);
+		return Ok(FunctionData{m_address, 0});
 	}
 	
 	// this is silly, butt
