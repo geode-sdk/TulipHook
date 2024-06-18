@@ -255,7 +255,7 @@ Result<FunctionData> X64HandlerGenerator::generateHandler() {
 		a.write8(
 			0x1 | // Version : 3
 			0x0 // Flags : 5
-		); 
+		);
 		a.write8(prologSize); // SizeOfProlog
 		a.write8(3); // CountOfUnwindCodes
 		a.write8(
@@ -461,14 +461,14 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
 		return Ok(FunctionData{m_address, 0});
 	}
-	
+
 	// this is silly, butt
 	auto codeSize = this->wrapperBytes(0).size();
 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
 	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
 	auto address = reinterpret_cast<uint64_t>(area);
-	
+
 	X64Assembler a(address);
 	using enum X64Register;
 
@@ -491,6 +491,8 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 	}
 
 	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
+
+	a.add(RSP, 0xc0);
 
 	a.pop(RBP);
 	a.ret();
@@ -527,7 +529,7 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 		a.write8(
 			0x1 | // Version : 3
 			0x0 // Flags : 5
-		); 
+		);
 		a.write8(prologSize); // SizeOfProlog
 		a.write8(3); // CountOfUnwindCodes
 		a.write8(
@@ -625,7 +627,7 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 
 	a.align16();
 
-	
+
 #ifdef TULIP_HOOK_WINDOWS
 
 	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
@@ -650,7 +652,7 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 		a.write8(
 			0x1 | // Version : 3
 			0x0 // Flags : 5
-		); 
+		);
 		a.write8(prologSize); // SizeOfProlog
 		a.write8(3); // CountOfUnwindCodes
 		a.write8(
