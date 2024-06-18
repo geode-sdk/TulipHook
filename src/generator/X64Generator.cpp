@@ -164,9 +164,9 @@ Result<FunctionData> X64HandlerGenerator::generateHandler() {
 	constexpr auto FIRST_PARAM = RDI;
 #endif
 
-	for (size_t i = 0; i < 8; ++i) {
-		a.nop();
-	}
+	// for (size_t i = 0; i < 8; ++i) {
+	// 	a.nop();
+	// }
 
 	a.push(RBP);
 	a.label("handler-push");
@@ -240,8 +240,8 @@ Result<FunctionData> X64HandlerGenerator::generateHandler() {
 
 		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("handler-push")) & 0xffff;
 		auto const allocOffset = reinterpret_cast<uint64_t>(a.getLabel("handler-alloc-mid")) & 0xffff;
-		auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
-		auto const prologSize = conventionOffset;
+		// auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
+		auto const prologSize = allocOffset;
 
 
 		// RUNTIME_FUNCTION
@@ -257,19 +257,19 @@ Result<FunctionData> X64HandlerGenerator::generateHandler() {
 			0x0 // Flags : 5
 		); 
 		a.write8(prologSize); // SizeOfProlog
-		a.write8(4); // CountOfUnwindCodes
+		a.write8(3); // CountOfUnwindCodes
 		a.write8(
 			0x0 | // FrameRegister : 4
 			0x0  // FrameOffset : 4
 		);
 		// UNWIND_CODE[]
 
-		auto padded = 0x20 + getPaddedStackParamSize(m_metadata.m_abstract);
-		a.write8(conventionOffset); // CodeOffset
-		a.write8(
-			(((padded >> 3) - 1) << 4) | // UnwindOp : 4
-			0x2  // OpInfo : 4
-		);
+		// auto padded = 0x20 + getPaddedStackParamSize(m_metadata.m_abstract);
+		// a.write8(conventionOffset); // CodeOffset
+		// a.write8(
+		// 	(((padded >> 3) - 1) << 4) | // UnwindOp : 4
+		// 	0x2  // OpInfo : 4
+		// );
 
 		a.write8(allocOffset); // CodeOffset
 		a.write8(
@@ -476,6 +476,10 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 	a.label("wrapper-push");
 	a.mov(RBP, RSP);
 
+	// shadow space
+	a.sub(RSP, 0xc0);
+	a.label("wrapper-alloc-mid");
+
 	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
 
 	auto difference = a.currentAddress() - reinterpret_cast<int64_t>(m_address) + 5;
@@ -507,8 +511,9 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 		auto const offsetEnd = (address + a.m_buffer.size()) & 0xffff;
 
 		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("wrapper-push")) & 0xffff;
-		auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
-		auto const prologSize = conventionOffset;
+		auto const allocOffset = reinterpret_cast<uint64_t>(a.getLabel("wrapper-alloc-mid")) & 0xffff;
+		// auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
+		auto const prologSize = allocOffset;
 
 
 		// RUNTIME_FUNCTION
@@ -524,26 +529,25 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 			0x0 // Flags : 5
 		); 
 		a.write8(prologSize); // SizeOfProlog
-		a.write8(2); // CountOfUnwindCodes
+		a.write8(3); // CountOfUnwindCodes
 		a.write8(
 			0x0 | // FrameRegister : 4
 			0x0  // FrameOffset : 4
 		);
 		// UNWIND_CODE[]
 
-		auto padded = 0x20 + getPaddedStackParamSize(m_metadata.m_abstract);
-		a.write8(conventionOffset); // CodeOffset
+		a.write8(allocOffset); // CodeOffset
 		a.write8(
-			(((padded >> 3) - 1) << 4) | // UnwindOp : 4
-			0x2  // OpInfo : 4
+			0x0 | // UnwindOp : 4
+			0x1  // OpInfo : 4
 		);
+		a.write16(0xc0 >> 3); // UWOP_ALLOC_LARGE continuation
 
 		a.write8(pushOffset); // CodeOffset
 		a.write8(
 			0x50 | // UnwindOp : 4
 			0x0  // OpInfo : 4
 		);
-
 	}
 
 #endif
@@ -580,11 +584,19 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 		a.push(RBP);
 		a.label("trampoline-push");
 		a.mov(RBP, RSP);
+
+		// shadow space
+		a.sub(RSP, 0xc0);
+		a.label("trampoline-alloc-mid");
+
 		m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
 
 		a.call("relocated");
 
 		m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
+
+		a.add(RSP, 0xc0);
+
 		a.pop(RBP);
 		a.ret();
 	}
@@ -622,8 +634,9 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 		auto const offsetEnd = (address + a.m_buffer.size()) & 0xffff;
 
 		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("trampoline-push")) & 0xffff;
-		auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
-		auto const prologSize = conventionOffset;
+		auto const allocOffset = reinterpret_cast<uint64_t>(a.getLabel("trampoline-alloc-mid")) & 0xffff;
+		// auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
+		auto const prologSize = allocOffset;
 
 
 		// RUNTIME_FUNCTION
@@ -639,19 +652,19 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 			0x0 // Flags : 5
 		); 
 		a.write8(prologSize); // SizeOfProlog
-		a.write8(2); // CountOfUnwindCodes
+		a.write8(3); // CountOfUnwindCodes
 		a.write8(
 			0x0 | // FrameRegister : 4
 			0x0  // FrameOffset : 4
 		);
 		// UNWIND_CODE[]
 
-		auto padded = 0x20 + getPaddedStackParamSize(m_metadata.m_abstract);
-		a.write8(conventionOffset); // CodeOffset
+		a.write8(allocOffset); // CodeOffset
 		a.write8(
-			(((padded >> 3) - 1) << 4) | // UnwindOp : 4
-			0x2  // OpInfo : 4
+			0x0 | // UnwindOp : 4
+			0x1  // OpInfo : 4
 		);
+		a.write16(0xc0 >> 3); // UWOP_ALLOC_LARGE continuation
 
 		a.write8(pushOffset); // CodeOffset
 		a.write8(

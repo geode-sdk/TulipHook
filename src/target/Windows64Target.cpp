@@ -18,6 +18,44 @@ Target& Target::get() {
 	return ret;
 }
 
+PVOID CustomFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase) {
+	for (auto& [handle, handler] : Pool::get().m_handlers) {
+		auto handlerBegin = reinterpret_cast<uintptr_t>(handler->m_handler);
+		auto handlerEnd = handlerBegin + handler->m_handlerSize;
+
+		auto tramplineBegin = reinterpret_cast<uintptr_t>(handler->m_trampoline);
+		auto tramplineEnd = tramplineBegin + handler->m_trampolineSize;
+
+		if (AddrBase >= handlerBegin && AddrBase < handlerEnd) {
+			// std::stringstream ss;
+			// ss << "Control PC: " << std::hex << AddrBase << " Handler Begin: " << handlerBegin << " Handler End: " << handlerEnd;
+			// MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
+			return reinterpret_cast<PVOID>(handlerEnd);
+		}
+
+		if (AddrBase >= tramplineBegin && AddrBase < tramplineEnd) {
+			// std::stringstream ss;
+			// ss << "Control PC: " << std::hex << AddrBase << " Trampline Begin: " << tramplineBegin << " Trampline End: " << tramplineEnd;
+			// MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
+			return reinterpret_cast<PVOID>(tramplineEnd);
+		}
+	}
+
+	for (auto& [handle, wrapper] : Wrapper::get().m_wrappers) {
+		auto wrapperBegin = reinterpret_cast<uintptr_t>(wrapper.m_address);
+		auto wrapperEnd = wrapperBegin + wrapper.m_size;
+
+		if (AddrBase >= wrapperBegin && AddrBase < wrapperEnd) {
+			// std::stringstream ss;
+			// ss << "Control PC: " << std::hex << AddrBase << " Wrapper Begin: " << wrapperBegin << " Wrapper End: " << wrapperEnd;
+			// MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
+			return reinterpret_cast<PVOID>(wrapperEnd);
+		}
+	}
+
+	return nullptr;
+}
+
 Result<> Windows64Target::allocatePage() {
 	m_allocatedPage = VirtualAlloc(nullptr, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READ);
 

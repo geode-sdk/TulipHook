@@ -36,8 +36,8 @@ void Windows64Convention::generateDefaultCleanup(BaseAssembler& a_, AbstractFunc
     auto& a = static_cast<X64Assembler&>(a_);
     using enum X64Register;
 
-    size_t paddedSize = getPaddedStackParamSize(function);
-    a.add(RSP, paddedSize + 0x20);
+    // size_t paddedSize = getPaddedStackParamSize(function);
+    // a.add(RSP, paddedSize + 0x20);
 }
 
 void Windows64Convention::generateIntoDefault(BaseAssembler& a_, AbstractFunction const& function) {
@@ -48,8 +48,8 @@ void Windows64Convention::generateIntoDefault(BaseAssembler& a_, AbstractFunctio
     size_t stackParamSize = getStackParamSize(function);
     auto const paddedSize = (stackParamSize % 16) ? stackParamSize + 8 : stackParamSize;
     // + 0x20 for the shadow space before the first arg
-    a.sub(RSP, paddedSize + 0x20);
-    a.label("convention-alloc-small");
+    // a.sub(RSP, paddedSize + 0x20);
+    // a.label("convention-alloc-small");
     if (stackParamSize > 0) {
         // theres stack args, so we need to copy them over
 
