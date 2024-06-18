@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <stddef.h>
 
 namespace tulip::hook {
 	struct FunctionData {
