@@ -125,7 +125,7 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
     return std::move(a.m_buffer);
 }
 
-Result<> ArmV8HandlerGenerator::generateTrampoline(uint64_t target) {
+Result<FunctionData> ArmV8HandlerGenerator::generateTrampoline(uint64_t target) {
 	auto origin = new CodeMemBlock(reinterpret_cast<uint64_t>(m_address), target);
 	auto relocated = new CodeMemBlock();
 	auto originBuffer = m_address;
@@ -148,5 +148,5 @@ Result<> ArmV8HandlerGenerator::generateTrampoline(uint64_t target) {
 	if (relocated->size == 0) {
 		return Err("Failed to relocate original function");
 	}
-	return Ok();
+	return Ok(FunctionData{m_trampoline, relocated->size});
 }

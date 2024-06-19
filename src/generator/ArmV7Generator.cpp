@@ -105,7 +105,7 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-Result<> ArmV7HandlerGenerator::generateTrampoline(uint64_t target) {
+Result<FunctionData> ArmV7HandlerGenerator::generateTrampoline(uint64_t target) {
 	auto origin = new CodeMemBlock((uint64_t)Target::get().getRealPtr(m_address), target);
 	auto relocated = new CodeMemBlock();
 	// idk about arm thumb stuff help me
@@ -129,5 +129,5 @@ Result<> ArmV7HandlerGenerator::generateTrampoline(uint64_t target) {
 	if (relocated->size == 0) {
 		return Err("Failed to relocate original function");
 	}
-	return Ok();
+	return Ok(FunctionData{m_trampoline, relocated->size});
 }

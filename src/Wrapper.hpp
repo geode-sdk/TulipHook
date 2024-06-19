@@ -1,5 +1,6 @@
 #pragma once
 
+#include <FunctionData.hpp>
 #include <TulipResult.hpp>
 #include <WrapperData.hpp>
 #include <memory>
@@ -10,8 +11,8 @@ namespace tulip::hook {
 
 	class Wrapper {
 	public:
-		std::unordered_map<void*, void*> m_wrappers;
-		std::unordered_map<void*, void*> m_reverseWrappers;
+		std::unordered_map<void*, FunctionData> m_wrappers;
+		std::unordered_map<void*, FunctionData> m_reverseWrappers;
 
 		static Wrapper& get();
 

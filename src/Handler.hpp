@@ -64,9 +64,5 @@ namespace tulip::hook {
 
 		Result<> interveneFunction();
 		Result<> restoreFunction();
-
-		void generateHandler();
-		void generateIntervener();
-		void generateTrampoline();
 	};
 }

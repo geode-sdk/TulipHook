@@ -36,7 +36,8 @@ Result<> Handler::init() {
 	auto generator =
 		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
 
-	TULIP_HOOK_UNWRAP(generator->generateHandler());
+	TULIP_HOOK_UNWRAP_INTO(auto handler, generator->generateHandler());
+	m_handlerSize = handler.m_size;
 
 	TULIP_HOOK_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener());
 
@@ -45,7 +46,8 @@ Result<> Handler::init() {
 	auto address = reinterpret_cast<uint8_t*>(Target::get().getRealPtr(m_address));
 	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
 
-	TULIP_HOOK_UNWRAP(generator->generateTrampoline(target));
+	TULIP_HOOK_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(target));
+	m_trampolineSize = trampoline.m_size;
 
 	this->addOriginal();
 

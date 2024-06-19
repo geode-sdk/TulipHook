@@ -3,6 +3,7 @@
 #include "AbstractFunction.hpp"
 #include "AbstractType.hpp"
 #include "CallingConvention.hpp"
+#include "FunctionData.hpp"
 #include "HandlerData.hpp"
 #include "HookData.hpp"
 #include "Platform.hpp"

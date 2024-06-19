@@ -16,7 +16,7 @@ Result<void*> Wrapper::createWrapper(void* address, WrapperMetadata const& metad
 		m_wrappers[address] = wrapped;
 	}
 
-	return Ok(m_wrappers[address]);
+	return Ok(m_wrappers[address].m_address);
 }
 
 Result<void*> Wrapper::createReverseWrapper(void* address, WrapperMetadata const& metadata) {
@@ -26,5 +26,5 @@ Result<void*> Wrapper::createReverseWrapper(void* address, WrapperMetadata const
 		m_reverseWrappers[address] = wrapped;
 	}
 
-	return Ok(m_reverseWrappers[address]);
+	return Ok(m_reverseWrappers[address].m_address);
 }

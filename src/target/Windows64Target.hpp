@@ -14,6 +14,7 @@ namespace tulip::hook {
 
 		Result<csh> openCapstone() override;
 
+		Result<> allocatePage() override;
 		std::unique_ptr<HandlerGenerator> getHandlerGenerator(
 			void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
 		) override;
