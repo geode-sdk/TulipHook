@@ -35,7 +35,11 @@ namespace tulip::hook {
 	public:
 		using X86WrapperGenerator::X86WrapperGenerator;
 
-		// std::vector<uint8_t> wrapperBytes(uint64_t address) override;
+		std::vector<uint8_t> wrapperBytes(uint64_t address) override;
+
+#ifdef TULIP_HOOK_WINDOWS
+		std::vector<uint8_t> unwindInfoBytes(uint64_t address);
+#endif
 
 		Result<FunctionData> generateWrapper() override;
 		// std::vector<uint8_t> reverseWrapperBytes(uint64_t address) override;

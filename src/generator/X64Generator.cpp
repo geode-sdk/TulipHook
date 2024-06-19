@@ -457,18 +457,7 @@ fail:
 	return X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
 }
 
-Result<FunctionData> X64WrapperGenerator::generateWrapper() {
-	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
-		return Ok(FunctionData{m_address, 0});
-	}
-
-	// this is silly, butt
-	auto codeSize = this->wrapperBytes(0).size();
-	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
-
-	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
-	auto address = reinterpret_cast<uint64_t>(area);
-
+std::vector<uint8_t> X64WrapperGenerator::wrapperBytes(uint64_t address) {
 	X64Assembler a(address);
 	using enum X64Register;
 
@@ -504,9 +493,12 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 
 	a.align16();
 
-	auto codeSize2 = a.m_buffer.size();
+	return std::move(a.m_buffer);
+}
 
 #ifdef TULIP_HOOK_WINDOWS
+std::vector<uint8_t> X64WrapperGenerator::unwindInfoBytes(uint64_t address) {
+	X64Assembler a(address);
 
 	{
 		auto const offsetBegin = address & 0xffff;
@@ -519,6 +511,8 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 
 
 		// RUNTIME_FUNCTION
+
+		a.label("wrapper-unwind-info");
 
 		a.write32(offsetBegin); // BeginAddress
 		a.write32(offsetEnd); // EndAddress
@@ -552,11 +546,41 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 		);
 	}
 
+	return std::move(a.m_buffer);
+}
 #endif
 
-	TULIP_HOOK_UNWRAP(Target::get().writeMemory(area, a.m_buffer.data(), a.m_buffer.size()));
+Result<FunctionData> X64WrapperGenerator::generateWrapper() {
+	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
+		return Ok(FunctionData{m_address, 0});
+	}
 
-	return Ok(FunctionData{area, codeSize2});
+	// this is silly, butt
+	auto codeSize = this->wrapperBytes(0).size();
+
+#ifdef TULIP_HOOK_WINDOWS
+	auto unwindInfoSize = this->unwindInfoBytes(0).size();
+	auto totalSize = codeSize + unwindInfoSize;
+#else
+	auto totalSize = codeSize;
+#endif
+
+	auto areaSize = (totalSize + (0x20 - totalSize) % 0x20);
+
+	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
+	auto address = reinterpret_cast<uint64_t>(area);
+
+	auto code = this->wrapperBytes(address);
+	codeSize = code.size();
+
+#ifdef TULIP_HOOK_WINDOWS
+	auto unwindInfo = this->unwindInfoBytes(address + codeSize);
+	code.insert(code.end(), unwindInfo.begin(), unwindInfo.end());
+#endif
+
+	TULIP_HOOK_UNWRAP(Target::get().writeMemory(area, code.data(), code.size()));
+
+	return Ok(FunctionData{area, codeSize});
 }
 
 // std::vector<uint8_t> X64WrapperGenerator::reverseWrapperBytes(uint64_t address) {
