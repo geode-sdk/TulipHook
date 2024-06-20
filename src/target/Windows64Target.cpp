@@ -18,7 +18,7 @@ Target& Target::get() {
 	return ret;
 }
 
-PVOID CustomFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase) {
+PVOID __declspec(dllexport) GeodeFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase) {
 	for (auto& [handle, handler] : Pool::get().m_handlers) {
 		auto handlerBegin = reinterpret_cast<uintptr_t>(handler->m_handler);
 		auto handlerEnd = handlerBegin + handler->m_handlerSize;
