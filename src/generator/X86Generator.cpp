@@ -197,6 +197,8 @@ Result<FunctionData> X86HandlerGenerator::generateTrampoline(uint64_t target) {
 Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target) {
 	// memcpy(m_trampoline, m_address, 32);
 
+	m_modifiedBytesSize = target;
+
 	TULIP_HOOK_UNWRAP_INTO(auto cs, Target::get().openCapstone());
 
 	cs_option(cs, CS_OPT_DETAIL, CS_OPT_ON);
@@ -215,11 +217,21 @@ Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocatedBytes(
 	auto trampolineAddress = baseAddress;
 	std::array<uint8_t, 0x80> buffer;
 
+	m_shortBranchRelocations.clear();
 	while (cs_disasm_iter(cs, &code, &size, &address, insn)) {
 		if (insn->address >= targetAddress) {
 			break;
 		}
 		auto bufferOffset = trampolineAddress - baseAddress;
+
+		auto it = m_shortBranchRelocations.find(originalAddress);
+		if (it != m_shortBranchRelocations.end()) {
+			auto relByte = it->second;
+			auto srcOffset = reinterpret_cast<uint8_t*>(relByte) - buffer.data();
+			// why the -1? idk
+			*relByte = bufferOffset - srcOffset - 1;
+			m_shortBranchRelocations.erase(it);
+		}
 
 		TULIP_HOOK_UNWRAP(this->relocateInstruction(insn, buffer.data() + bufferOffset, trampolineAddress, originalAddress));
 	}
@@ -259,7 +271,7 @@ Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint8_t* buffer
 	// branches, jumps, calls
 	if (detail->x86.encoding.imm_offset != 0 && relativeGroup) {
 		intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) -
-		static_cast<intptr_t>(trampolineAddress) + static_cast<intptr_t>(originalAddress);
+		static_cast<intptr_t>(insn->address) + static_cast<intptr_t>(originalAddress);
 
 		return this->relocateBranchInstruction(insn, buffer, trampolineAddress, originalAddress, jmpTargetAddr);
 	}

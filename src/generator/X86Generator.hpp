@@ -8,6 +8,10 @@
 namespace tulip::hook {
 
 	class X86HandlerGenerator : public HandlerGenerator {
+	protected:
+		uint64_t m_modifiedBytesSize = 0;
+		// this is only relevant for 64-bit relocation, pointer is to the buffer so dont keep this around
+		std::unordered_map<int64_t, int8_t*> m_shortBranchRelocations;
 	public:
 		using HandlerGenerator::HandlerGenerator;
 

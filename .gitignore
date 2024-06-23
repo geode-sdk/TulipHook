@@ -30,3 +30,6 @@ build
 
 balls.asm
 balls2.asm
+
+# clangd
+.cache/

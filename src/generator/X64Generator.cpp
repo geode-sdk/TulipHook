@@ -5,6 +5,7 @@
 #include "../target/PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
+#include <iostream>
 
 using namespace tulip::hook;
 
@@ -756,6 +757,22 @@ Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* 
 		std::memcpy(buffer, bytes.data(), bytes.size());
 
 		trampolineAddress += bytes.size();
+		originalAddress += size;
+	}
+	else if (targetAddress - reinterpret_cast<int64_t>(m_address) < m_modifiedBytesSize) {
+		// conditional branch that jmps to code we relocated, so we need to keep track of where it jumps to
+		// relocation is later done in X86HandlerGenerator::relocatedBytes
+		std::memcpy(buffer, insn->bytes, size);
+		if (size == 2) {
+			auto* relativeByte = reinterpret_cast<int8_t*>(buffer + 1);
+			*relativeByte = -1;
+			m_shortBranchRelocations[targetAddress] = relativeByte;
+		} else {
+			// what
+			std::cerr << "Unhandled short branch relocation of " << insn->mnemonic << " with size=" << size << std::endl;
+		}
+
+		trampolineAddress += size;
 		originalAddress += size;
 	}
 	else {
