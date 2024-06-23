@@ -4,6 +4,7 @@
 
 #include <Platform.hpp>
 #include <capstone/capstone.h>
+#include <unordered_map>
 
 namespace tulip::hook {
 
