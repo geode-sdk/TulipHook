@@ -1,7 +1,6 @@
 #include "Windows32Target.hpp"
 
 #include <Platform.hpp>
-#include <stdexcept>
 
 using namespace tulip::hook;
 
@@ -53,9 +52,18 @@ Result<> Windows32Target::protectMemory(void* address, size_t size, uint32_t pro
 }
 
 Result<> Windows32Target::rawWriteMemory(void* destination, void const* source, size_t size) {
-	if (!WriteProcessMemory(GetCurrentProcess(), destination, source, size, nullptr)) {
-		return Err("Unable to write to memory");
+	DWORD oldProtection;
+
+	// protect memory to be writable
+	if (!VirtualProtect(destination, size, this->getWritableProtection(), &oldProtection)) {
+		return Err("Unable to protect memory");
 	}
+
+	std::memcpy(destination, source, size);
+
+	// restore old protection
+	VirtualProtect(destination, size, oldProtection, &oldProtection);
+
 	return Ok();
 }
 
