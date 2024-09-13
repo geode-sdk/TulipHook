@@ -321,6 +321,7 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 	auto const address = insn->address;
 	auto const size = insn->size;
 	auto const difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
+	auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
 
 	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
 		return X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
@@ -352,88 +353,27 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 	auto& operand0 = detail->x86.operands[0];
 	auto& operand1 = detail->x86.operands[1];
 
-	if (id == X86_INS_LEA && operand1.type == X86_OP_MEM) {
-		X64Register reg;
-		setReg(operand0.reg, reg);
+	X64Assembler a(trampolineAddress);
+	RegMem64 m;
+	using enum X64Register;
 
-		X64Assembler a(trampolineAddress);
-		RegMem64 m;
-		using enum X64Register;
-
-		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
-
-		a.mov(reg, "absolute-pointer");
-		a.jmp("skip-pointer");
-
-		a.label("absolute-pointer");
-		a.write64(absolute);
-
-		a.label("skip-pointer");
-
-		a.updateLabels();
-
-		auto bytes = std::move(a.m_buffer);
-		std::memcpy(buffer, bytes.data(), bytes.size());
-
-		trampolineAddress += bytes.size();
-		originalAddress += size;
-		return Ok();
-	}
-	else if (id == X86_INS_JMP && operand0.type == X86_OP_MEM) {
-		X64Assembler a(trampolineAddress);
-		RegMem64 m;
-		using enum X64Register;
-
-		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
-
+	if (id == X86_INS_JMP && operand0.type == X86_OP_MEM) {
 		a.jmpip("absolute-pointer");
 
 		a.label("absolute-pointer");
 		// it's bad but umm better than the alternative of double indirection
 		a.write64(*reinterpret_cast<uint64_t*>(absolute));
-
-		a.updateLabels();
-
-		auto bytes = std::move(a.m_buffer);
-		std::memcpy(buffer, bytes.data(), bytes.size());
-
-		trampolineAddress += bytes.size();
-		originalAddress += size;
-		return Ok();
 	}
 	else if (id == X86_INS_CALL && operand0.type == X86_OP_MEM) {
-		X64Assembler a(trampolineAddress);
-		RegMem64 m;
-		using enum X64Register;
-
-		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
-
 		a.callip("absolute-pointer");
 		a.jmp("skip-pointer");
 
 		a.label("absolute-pointer");
 		// it's bad but umm better than the alternative of double indirection
 		a.write64(*reinterpret_cast<uint64_t*>(absolute));
-
-		a.label("skip-pointer");
-
-		a.updateLabels();
-
-		auto bytes = std::move(a.m_buffer);
-		std::memcpy(buffer, bytes.data(), bytes.size());
-
-		trampolineAddress += bytes.size();
-		originalAddress += size;
-		return Ok();
 	}
 	else if (detail->x86.encoding.modrm_offset > 0 && ((detail->x86.modrm & 0b11000111) == 5)) {
-		// Trying to catch XMM instructions
-		X64Assembler a(trampolineAddress);
-		RegMem64 m;
-		using enum X64Register;
-
-		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
-
+		// Trying to catch via modrm instructions
 		a.mov(RAX, "absolute-pointer");
 		for (size_t i = 0; i < size; ++i) {
 			if (i == detail->x86.encoding.modrm_offset) {
@@ -449,20 +389,21 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 
 		a.label("absolute-pointer");
 		a.write64(absolute);
-
-		a.label("skip-pointer");
-
-		a.updateLabels();
-
-		auto bytes = std::move(a.m_buffer);
-		std::memcpy(buffer, bytes.data(), bytes.size());
-
-		trampolineAddress += bytes.size();
-		originalAddress += size;
-		return Ok();
 	}
-fail:
-	return X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
+	else {
+		return Err("Could not relocate rip instruction");
+	}
+
+	a.label("skip-pointer");
+
+	a.updateLabels();
+
+	auto bytes = std::move(a.m_buffer);
+	std::memcpy(buffer, bytes.data(), bytes.size());
+
+	trampolineAddress += bytes.size();
+	originalAddress += size;
+	return Ok();
 }
 
 std::vector<uint8_t> X64WrapperGenerator::wrapperBytes(uint64_t address) {
