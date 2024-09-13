@@ -352,7 +352,7 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 	auto& operand0 = detail->x86.operands[0];
 	auto& operand1 = detail->x86.operands[1];
 
-	if (id == X86_INS_MOV && operand1.type == X86_OP_MEM) {
+	if (id == X86_INS_LEA && operand1.type == X86_OP_MEM) {
 		X64Register reg;
 		setReg(operand0.reg, reg);
 
@@ -363,75 +363,6 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
 
 		a.mov(reg, "absolute-pointer");
-		a.mov(reg, m[reg]);
-		a.jmp("skip-pointer");
-
-		a.label("absolute-pointer");
-		a.write64(absolute);
-
-		a.label("skip-pointer");
-
-		a.updateLabels();
-
-		auto bytes = std::move(a.m_buffer);
-		std::memcpy(buffer, bytes.data(), bytes.size());
-
-		trampolineAddress += bytes.size();
-		originalAddress += size;
-		return Ok();
-	}
-	else if (id == X86_INS_LEA && operand1.type == X86_OP_MEM) {
-		X64Register reg;
-		setReg(operand0.reg, reg);
-
-		X64Assembler a(trampolineAddress);
-		RegMem64 m;
-		using enum X64Register;
-
-		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
-
-		a.mov(reg, "absolute-pointer");
-		a.jmp("skip-pointer");
-
-		a.label("absolute-pointer");
-		a.write64(absolute);
-
-		a.label("skip-pointer");
-
-		a.updateLabels();
-
-		auto bytes = std::move(a.m_buffer);
-		std::memcpy(buffer, bytes.data(), bytes.size());
-
-		trampolineAddress += bytes.size();
-		originalAddress += size;
-		return Ok();
-	}
-	else if (id == X86_INS_CMP && (operand0.type == X86_OP_MEM || operand1.type == X86_OP_MEM)) {
-		X64Assembler a(trampolineAddress);
-		RegMem64 m;
-		using enum X64Register;
-
-		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
-
-		a.mov(RAX, "absolute-pointer");
-		a.mov(RAX, m[RAX]);
-		if (operand1.type == X86_OP_REG) {
-			X64Register reg;
-			setReg(operand1.reg, reg);
-			a.cmp(RAX, reg);
-		}
-		else if (operand1.type == X86_OP_IMM) {
-			a.cmp(RAX, operand1.imm);
-		}
-		else if (operand0.type == X86_OP_REG) {
-			X64Register reg;
-			setReg(operand0.reg, reg);
-			a.cmp(reg, RAX);
-		}
-		else {
-			return Err("Unknown operand when relocating cmp instruction");
-		}
 		a.jmp("skip-pointer");
 
 		a.label("absolute-pointer");
@@ -507,8 +438,9 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		a.mov(RAX, m[RAX]);
 		for (size_t i = 0; i < size; ++i) {
 			if (i == detail->x86.encoding.modrm_offset) {
-				// remove the modrm displacement to make it rax
+				// remove the modrm displacement [rip + 0x##] to make it [rax]
 				a.write8(insn->bytes[i] & 0b00111000);
+				i += 4;
 			}
 			else {
 				a.write8(insn->bytes[i]);
