@@ -407,6 +407,47 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		originalAddress += size;
 		return Ok();
 	}
+	else if (id == X86_INS_CMP && (operand0.type == X86_OP_MEM || operand1.type == X86_OP_MEM)) {
+		X64Assembler a(trampolineAddress);
+		RegMem64 m;
+		using enum X64Register;
+
+		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
+
+		a.mov(RAX, "absolute-pointer");
+		a.mov(RAX, m[RAX]);
+		if (operand1.type == X86_OP_REG) {
+			X64Register reg;
+			setReg(operand1.reg, reg);
+			a.cmp(RAX, reg);
+		}
+		else if (operand1.type == X86_OP_IMM) {
+			a.cmp(RAX, operand1.imm);
+		}
+		else if (operand0.type == X86_OP_REG) {
+			X64Register reg;
+			setReg(operand0.reg, reg);
+			a.cmp(reg, RAX);
+		}
+		else {
+			return Err("Unknown operand when relocating cmp instruction");
+		}
+		a.jmp("skip-pointer");
+
+		a.label("absolute-pointer");
+		a.write64(absolute);
+
+		a.label("skip-pointer");
+
+		a.updateLabels();
+
+		auto bytes = std::move(a.m_buffer);
+		std::memcpy(buffer, bytes.data(), bytes.size());
+
+		trampolineAddress += bytes.size();
+		originalAddress += size;
+		return Ok();
+	}
 	else if (id == X86_INS_JMP && operand0.type == X86_OP_MEM) {
 		X64Assembler a(trampolineAddress);
 		RegMem64 m;
@@ -442,6 +483,41 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		a.label("absolute-pointer");
 		// it's bad but umm better than the alternative of double indirection
 		a.write64(*reinterpret_cast<uint64_t*>(absolute));
+
+		a.label("skip-pointer");
+
+		a.updateLabels();
+
+		auto bytes = std::move(a.m_buffer);
+		std::memcpy(buffer, bytes.data(), bytes.size());
+
+		trampolineAddress += bytes.size();
+		originalAddress += size;
+		return Ok();
+	}
+	else if (detail->x86.encoding.modrm_offset > 0 && (detail->x86.modrm | 0b11000111 == 5)) {
+		// Trying to catch XMM instructions
+		X64Assembler a(trampolineAddress);
+		RegMem64 m;
+		using enum X64Register;
+
+		auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
+
+		a.mov(RAX, "absolute-pointer");
+		a.mov(RAX, m[RAX]);
+		for (size_t i = 0; i < size; ++i) {
+			if (i == detail->x86.encoding.modrm_offset) {
+				// remove the modrm displacement to make it rax
+				a.write8(insn->bytes[i] & 0b00111000);
+			}
+			else {
+				a.write8(insn->bytes[i]);
+			}
+		}
+		a.jmp("skip-pointer");
+
+		a.label("absolute-pointer");
+		a.write64(absolute);
 
 		a.label("skip-pointer");
 

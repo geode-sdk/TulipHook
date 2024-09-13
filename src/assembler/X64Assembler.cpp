@@ -205,6 +205,15 @@ void X64Assembler::xchg(X64Register reg, X64Register reg2) {
 	X86Assembler::xchg(x86reg(reg), x86reg(reg2));
 }
 
+void X64Assembler::cmp(X64Register reg, X64Register reg2) {
+	rex(this, reg, reg2, true);
+	X86Assembler::cmp(x86reg(reg), x86reg(reg2));
+}
+void X64Assembler::cmp(X64Register reg, int32_t imm) {
+	rex(this, reg, RAX, true);
+	X86Assembler::cmp(x86reg(reg), imm);
+}
+
 void X64Assembler::align16() {
 	auto align = 16 - (this->currentAddress() % 16);
 	for (auto i = 0; i < align; i++) {

@@ -127,5 +127,8 @@ namespace tulip::hook {
 		void shl(X86Register reg, uint8_t value);
 
 		void xchg(X86Register reg, X86Register reg2);
+
+		void cmp(X86Register reg, X86Register reg2);
+		void cmp(X86Register reg, int32_t imm);
 	};
 }

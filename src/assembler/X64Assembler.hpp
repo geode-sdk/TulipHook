@@ -106,6 +106,9 @@ namespace tulip::hook {
 
 		void xchg(X64Register reg, X64Register reg2);
 
+		void cmp(X64Register reg, X64Register reg2);
+		void cmp(X64Register reg, int32_t imm);
+
 		void align16();
 	};
 }

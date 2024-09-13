@@ -264,3 +264,20 @@ void X86Assembler::xchg(X86Register reg, X86Register reg2) {
 	this->write8(0x87);
 	this->encodeModRM(reg, regIdx(reg2));
 }
+
+void X86Assembler::cmp(X86Register reg, X86Register reg2) {
+	this->write8(0x39);
+	this->encodeModRM(reg, regIdx(reg2));
+}
+void X86Assembler::cmp(X86Register reg, int32_t value) {
+	if (value >= -0x80 && value <= 0x7f) {
+		this->write8(0x83);
+		this->write8(0xf8 | regIdx(reg));
+		this->write8(value);
+	}
+	else {
+		this->write8(0x81);
+		this->write8(0xf8 | regIdx(reg));
+		this->write32(value);
+	}
+}
