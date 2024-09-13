@@ -6,6 +6,8 @@
 
 #include <CallingConvention.hpp>
 #include <iostream>
+#include <iomanip>
+#include <optional>
 
 using namespace tulip::hook;
 
@@ -327,29 +329,6 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		return X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
 	}
 
-	auto setReg = [&](auto set, auto& reg) {
-		switch (set) {
-			using enum X64Register;
-			case X86_REG_RAX: reg = RAX; break;
-			case X86_REG_RCX: reg = RCX; break;
-			case X86_REG_RDX: reg = RDX; break;
-			case X86_REG_RBX: reg = RBX; break;
-			case X86_REG_RSP: reg = RSP; break;
-			case X86_REG_RBP: reg = RBP; break;
-			case X86_REG_RSI: reg = RSI; break;
-			case X86_REG_RDI: reg = RDI; break;
-			case X86_REG_R8: reg = R8; break;
-			case X86_REG_R9: reg = R9; break;
-			case X86_REG_R10: reg = R10; break;
-			case X86_REG_R11: reg = R11; break;
-			case X86_REG_R12: reg = R12; break;
-			case X86_REG_R13: reg = R13; break;
-			case X86_REG_R14: reg = R14; break;
-			case X86_REG_R15: reg = R15; break;
-			default: break;
-		};
-	};
-
 	auto& operand0 = detail->x86.operands[0];
 	auto& operand1 = detail->x86.operands[1];
 
@@ -373,17 +352,28 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		a.write64(*reinterpret_cast<uint64_t*>(absolute));
 	}
 	else if (detail->x86.encoding.modrm_offset > 0 && ((detail->x86.modrm & 0b11000111) == 5)) {
+		bool shouldPush = !(operand0.type == X86_OP_REG && operand0.reg == X86_REG_RAX);
+
 		// Trying to catch via modrm instructions
+		if (shouldPush) {
+			a.push(RAX);
+		}
 		a.mov(RAX, "absolute-pointer");
 		for (size_t i = 0; i < size; ++i) {
+			if (i == detail->x86.encoding.disp_offset) {
+				i += detail->x86.encoding.disp_size - 1;
+				continue;
+			}
 			if (i == detail->x86.encoding.modrm_offset) {
 				// remove the modrm displacement [rip + 0x##] to make it [rax]
 				a.write8(insn->bytes[i] & 0b00111000);
-				i += 4;
 			}
 			else {
 				a.write8(insn->bytes[i]);
 			}
+		}
+		if (shouldPush) {
+			a.pop(RAX);
 		}
 		a.jmp("skip-pointer");
 
