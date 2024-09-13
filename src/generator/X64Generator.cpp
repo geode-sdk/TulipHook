@@ -426,7 +426,7 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		originalAddress += size;
 		return Ok();
 	}
-	else if (detail->x86.encoding.modrm_offset > 0 && (detail->x86.modrm | 0b11000111 == 5)) {
+	else if (detail->x86.encoding.modrm_offset > 0 && ((detail->x86.modrm | 0b11000111) == 5)) {
 		// Trying to catch XMM instructions
 		X64Assembler a(trampolineAddress);
 		RegMem64 m;
