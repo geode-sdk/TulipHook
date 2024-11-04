@@ -20,7 +20,7 @@ if(PROJECT_IS_TOP_LEVEL AND NOT TULIP_DONT_BUILD_TESTS)
 	add_subdirectory(test)
 endif()
 
-CPMAddPackage("gh:geode-sdk/result@1.0.1")
+CPMAddPackage("gh:geode-sdk/result@1.1.0")
 
 add_library(TulipHookInclude INTERFACE)
 target_include_directories(TulipHookInclude INTERFACE
