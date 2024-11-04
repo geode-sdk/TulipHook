@@ -45,7 +45,7 @@ int main() {
 		std::cout << "creating the handler failed" << std::endl;
 		return 1;
 	}
-	auto handle = *handleResult;
+	auto handle = handleResult.unwrap();
 
 	auto h_metadata = tulip::hook::HookMetadata {
 		.m_priority = 2

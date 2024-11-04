@@ -14,44 +14,44 @@ Handler::Handler(void* address, HandlerMetadata const& metadata) :
 	m_address(address),
 	m_metadata(metadata) {}
 
-Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata const& metadata) {
+geode::Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata const& metadata) {
 	auto ret = std::make_unique<Handler>(address, metadata);
 
 	ret->m_content = new (std::nothrow) HandlerContent();
 	if (!ret->m_content) {
-		return Err("Failed to allocate HandlerContent");
+		return geode::Err("Failed to allocate HandlerContent");
 	}
 
-	TULIP_HOOK_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x300));
-	TULIP_HOOK_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x100));
+	GEODE_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x300));
+	GEODE_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x100));
 
-	return Ok(std::move(ret));
+	return geode::Ok(std::move(ret));
 }
 
 Handler::~Handler() {}
 
-Result<> Handler::init() {
+geode::Result<> Handler::init() {
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
 
 	auto generator =
 		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
 
-	TULIP_HOOK_UNWRAP_INTO(auto handler, generator->generateHandler());
+	GEODE_UNWRAP_INTO(auto handler, generator->generateHandler());
 	m_handlerSize = handler.m_size;
 
-	TULIP_HOOK_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener());
+	GEODE_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener());
 
 	auto target = m_modifiedBytes.size();
 
 	auto address = reinterpret_cast<uint8_t*>(Target::get().getRealPtr(m_address));
 	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
 
-	TULIP_HOOK_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(target));
+	GEODE_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(target));
 	m_trampolineSize = trampoline.m_size;
 
 	this->addOriginal();
 
-	return Ok();
+	return geode::Ok();
 }
 
 void Handler::addOriginal() {
@@ -106,7 +106,7 @@ void Handler::reorderFunctions() {
 	});
 }
 
-Result<> Handler::interveneFunction() {
+geode::Result<> Handler::interveneFunction() {
 	return Target::get().writeMemory(
 		Target::get().getRealPtr(m_address),
 		static_cast<void*>(m_modifiedBytes.data()),
@@ -114,7 +114,7 @@ Result<> Handler::interveneFunction() {
 	);
 }
 
-Result<> Handler::restoreFunction() {
+geode::Result<> Handler::restoreFunction() {
 	return Target::get().writeMemory(
 		Target::get().getRealPtr(m_address),
 		static_cast<void*>(m_originalBytes.data()),

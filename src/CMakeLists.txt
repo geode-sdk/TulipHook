@@ -84,7 +84,7 @@ if (TULIP_HOOK_LINK_CAPSTONE)
 	target_include_directories(${PROJECT_NAME} PRIVATE ${capstone_SOURCE_DIR}/include)
 endif()
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Result)
+target_link_libraries(${PROJECT_NAME} PUBLIC GeodeResult)
 target_compile_definitions(${PROJECT_NAME} PRIVATE -DTULIP_HOOK_EXPORTING=1)
 
 target_include_directories(${PROJECT_NAME} PRIVATE

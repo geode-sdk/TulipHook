@@ -105,7 +105,7 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-Result<FunctionData> ArmV7HandlerGenerator::generateTrampoline(uint64_t target) {
+geode::Result<FunctionData> ArmV7HandlerGenerator::generateTrampoline(uint64_t target) {
 	auto origin = new CodeMemBlock((uint64_t)Target::get().getRealPtr(m_address), target);
 	auto relocated = new CodeMemBlock();
 	// idk about arm thumb stuff help me
@@ -123,11 +123,11 @@ Result<FunctionData> ArmV7HandlerGenerator::generateTrampoline(uint64_t target) 
 	});
 
 	if (!error.empty()) {
-		return Err(std::move(error));
+		return geode::Err(std::move(error));
 	}
 
 	if (relocated->size == 0) {
-		return Err("Failed to relocate original function");
+		return geode::Err("Failed to relocate original function");
 	}
-	return Ok(FunctionData{m_trampoline, relocated->size});
+	return geode::Ok(FunctionData{m_trampoline, relocated->size});
 }

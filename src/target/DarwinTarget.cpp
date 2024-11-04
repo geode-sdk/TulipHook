@@ -12,14 +12,14 @@ using namespace tulip::hook;
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/task.h>
 
-Result<> DarwinTarget::allocatePage() {
+geode::Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;
 	vm_address_t ret;
 
 	status = vm_allocate(mach_task_self(), &ret, static_cast<vm_size_t>(PAGE_MAX_SIZE), VM_FLAGS_ANYWHERE);
 
 	if (status != KERN_SUCCESS) {
-		return Err("Couldn't allocate page");
+		return geode::Err("Couldn't allocate page");
 	}
 
 	m_allocatedPage = reinterpret_cast<void*>(ret);
@@ -29,7 +29,7 @@ Result<> DarwinTarget::allocatePage() {
 	return this->protectMemory(m_allocatedPage, PAGE_MAX_SIZE, VM_PROT_READ | VM_PROT_EXECUTE);
 }
 
-Result<uint32_t> DarwinTarget::getProtection(void* address) {
+geode::Result<uint32_t> DarwinTarget::getProtection(void* address) {
 	kern_return_t status;
 	vm_size_t vmsize;
 	vm_address_t vmaddress = reinterpret_cast<vm_address_t>(address);
@@ -48,24 +48,24 @@ Result<uint32_t> DarwinTarget::getProtection(void* address) {
 	);
 
 	if (status != KERN_SUCCESS) {
-		return Err("Couldn't get protection");
+		return geode::Err("Couldn't get protection");
 	}
 
-	return Ok(info.protection);
+	return geode::Ok(info.protection);
 }
 
-Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protection) {
+geode::Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protection) {
 	kern_return_t status;
 
 	status = vm_protect(mach_task_self(), reinterpret_cast<vm_address_t>(address), size, false, protection);
 
 	if (status != KERN_SUCCESS) {
-		return Err("Couldn't protect memory");
+		return geode::Err("Couldn't protect memory");
 	}
-	return Ok();
+	return geode::Ok();
 }
 
-Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
+geode::Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	kern_return_t status;
 
 	status = vm_write(
@@ -75,13 +75,13 @@ Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, siz
 		static_cast<mach_msg_type_number_t>(size)
 	);
 	if (status != KERN_SUCCESS) {
-		return Err("Couldn't write memory, status: " + std::to_string(status));
+		return geode::Err("Couldn't write memory, status: " + std::to_string(status));
 	}
-	return Ok();
+	return geode::Ok();
 }
 
-Result<> DarwinTarget::writeMemory(void* destination, void const* source, size_t size) {
-	TULIP_HOOK_UNWRAP_INTO(auto oldProtection, this->getProtection(destination));
+geode::Result<> DarwinTarget::writeMemory(void* destination, void const* source, size_t size) {
+	GEODE_UNWRAP_INTO(auto oldProtection, this->getProtection(destination));
 
 	// with no wx pages, we run into the risk of accidentally marking our code as rw
 	// (this causes a crash in the result destructor, which is not very good)
@@ -93,9 +93,9 @@ Result<> DarwinTarget::writeMemory(void* destination, void const* source, size_t
 	// permissions restored, it's safe to do result stuff now
 	if (r1.isErr() || r2.isErr() || r3.isErr()) {
 		// return the first error
-		return Err(r1.errorOr(r2.errorOr(r3.unwrapErr())));
+		return geode::Err(r1.errorOr(r2.errorOr(r3.unwrapErr())));
 	}
-	return Ok();
+	return geode::Ok();
 }
 
 uint32_t DarwinTarget::getWritableProtection() {

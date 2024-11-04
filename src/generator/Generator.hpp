@@ -2,7 +2,7 @@
 
 #include <FunctionData.hpp>
 #include <HandlerData.hpp>
-#include <TulipResult.hpp>
+#include <Geode/Result.hpp>
 #include <WrapperData.hpp>
 #include <memory>
 
@@ -22,20 +22,20 @@ namespace tulip::hook {
 
 		virtual ~HandlerGenerator() = default;
 
-		virtual Result<FunctionData> generateHandler();
-		virtual Result<std::vector<uint8_t>> generateIntervener();
+		virtual geode::Result<FunctionData> generateHandler();
+		virtual geode::Result<std::vector<uint8_t>> generateIntervener();
 
 		struct RelocateReturn {
 			std::vector<uint8_t> m_relocatedBytes;
 			int64_t m_originalOffset;
 		};
 
-		virtual Result<FunctionData> generateTrampoline(uint64_t target);
+		virtual geode::Result<FunctionData> generateTrampoline(uint64_t target);
 
 		virtual std::vector<uint8_t> handlerBytes(uint64_t address);
 		virtual std::vector<uint8_t> intervenerBytes(uint64_t address);
 		virtual std::vector<uint8_t> trampolineBytes(uint64_t address, size_t offset);
-		virtual Result<RelocateReturn> relocatedBytes(uint64_t base, uint64_t target);
+		virtual geode::Result<RelocateReturn> relocatedBytes(uint64_t base, uint64_t target);
 	};
 
 	class WrapperGenerator {
@@ -47,8 +47,8 @@ namespace tulip::hook {
 
 		WrapperGenerator(void* address, WrapperMetadata const& metadata);
 
-		virtual Result<FunctionData> generateWrapper();
-		virtual Result<FunctionData> generateReverseWrapper();
+		virtual geode::Result<FunctionData> generateWrapper();
+		virtual geode::Result<FunctionData> generateReverseWrapper();
 
 		virtual std::vector<uint8_t> wrapperBytes(uint64_t address);
 		virtual std::vector<uint8_t> reverseWrapperBytes(uint64_t address);

@@ -16,12 +16,12 @@ namespace tulip::hook {
 		// std::vector<uint8_t> handlerBytes(uint64_t address) override;
 		std::vector<uint8_t> intervenerBytes(uint64_t address) override;
 
-		Result<FunctionData> generateHandler() override;
+		geode::Result<FunctionData> generateHandler() override;
 
-		Result<FunctionData> generateTrampoline(uint64_t target) override;
+		geode::Result<FunctionData> generateTrampoline(uint64_t target) override;
 
-		Result<> relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) override;
-		Result<> relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) override;
+		geode::Result<> relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) override;
+		geode::Result<> relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) override;
 
 	private:
 		size_t preserveRegisters(X64Assembler& a);
@@ -41,7 +41,7 @@ namespace tulip::hook {
 		std::vector<uint8_t> unwindInfoBytes(uint64_t address);
 #endif
 
-		Result<FunctionData> generateWrapper() override;
+		geode::Result<FunctionData> generateWrapper() override;
 		// std::vector<uint8_t> reverseWrapperBytes(uint64_t address) override;
 	};
 }

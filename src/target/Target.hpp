@@ -1,7 +1,7 @@
 #pragma once
 
 #include <HandlerData.hpp>
-#include <TulipResult.hpp>
+#include <Geode/Result.hpp>
 #include <WrapperData.hpp>
 #include <memory>
 
@@ -29,18 +29,18 @@ namespace tulip::hook {
 
 		virtual ~Target() = default;
 
-		Result<void*> allocateArea(size_t size);
+		geode::Result<void*> allocateArea(size_t size);
 
-		virtual Result<> writeMemory(void* destination, void const* source, size_t size);
+		virtual geode::Result<> writeMemory(void* destination, void const* source, size_t size);
 
-		virtual Result<csh> openCapstone() = 0;
+		virtual geode::Result<csh> openCapstone() = 0;
 		void closeCapstone();
 		csh getCapstone();
 
-		virtual Result<> allocatePage() = 0;
-		virtual Result<uint32_t> getProtection(void* address) = 0;
-		virtual Result<> protectMemory(void* address, size_t size, uint32_t protection) = 0;
-		virtual Result<> rawWriteMemory(void* destination, void const* source, size_t size) = 0;
+		virtual geode::Result<> allocatePage() = 0;
+		virtual geode::Result<uint32_t> getProtection(void* address) = 0;
+		virtual geode::Result<> protectMemory(void* address, size_t size, uint32_t protection) = 0;
+		virtual geode::Result<> rawWriteMemory(void* destination, void const* source, size_t size) = 0;
 		virtual uint32_t getWritableProtection() = 0;
 
 		virtual std::unique_ptr<HandlerGenerator> getHandlerGenerator(

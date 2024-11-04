@@ -56,11 +56,11 @@ PVOID __declspec(dllexport) GeodeFunctionTableAccess64(HANDLE hProcess, DWORD64 
 	return nullptr;
 }
 
-Result<> Windows64Target::allocatePage() {
+geode::Result<> Windows64Target::allocatePage() {
 	m_allocatedPage = VirtualAlloc(nullptr, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READ);
 
 	if (!m_allocatedPage) {
-		return Err("Unable to allocate memory: " + std::to_string(GetLastError()));
+		return geode::Err("Unable to allocate memory: " + std::to_string(GetLastError()));
 	}
 
 	m_currentOffset = 0;
@@ -111,18 +111,18 @@ Result<> Windows64Target::allocatePage() {
 		nullptr
 	);
 
-	return Ok();
+	return geode::Ok();
 }
 
-Result<csh> Windows64Target::openCapstone() {
+geode::Result<csh> Windows64Target::openCapstone() {
 	cs_err status;
 
 	status = cs_open(CS_ARCH_X86, CS_MODE_64, &m_capstone);
 	if (status != CS_ERR_OK) {
-		return Err("Couldn't open capstone");
+		return geode::Err("Couldn't open capstone");
 	}
 
-	return Ok(m_capstone);
+	return geode::Ok(m_capstone);
 }
 
 std::unique_ptr<HandlerGenerator> Windows64Target::getHandlerGenerator(

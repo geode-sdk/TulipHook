@@ -12,9 +12,9 @@ namespace tulip::hook {
 	public:
 		using Windows32Target::Windows32Target;
 
-		Result<csh> openCapstone() override;
+		geode::Result<csh> openCapstone() override;
 
-		Result<> allocatePage() override;
+		geode::Result<> allocatePage() override;
 		std::unique_ptr<HandlerGenerator> getHandlerGenerator(
 			void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
 		) override;
