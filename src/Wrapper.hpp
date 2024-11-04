@@ -1,7 +1,7 @@
 #pragma once
 
 #include <FunctionData.hpp>
-#include <TulipResult.hpp>
+#include <Geode/Result.hpp>
 #include <WrapperData.hpp>
 #include <memory>
 #include <unordered_map>
@@ -16,7 +16,7 @@ namespace tulip::hook {
 
 		static Wrapper& get();
 
-		Result<void*> createWrapper(void* address, WrapperMetadata const& metadata);
-		Result<void*> createReverseWrapper(void* address, WrapperMetadata const& metadata);
+		geode::Result<void*> createWrapper(void* address, WrapperMetadata const& metadata);
+		geode::Result<void*> createReverseWrapper(void* address, WrapperMetadata const& metadata);
 	};
 }

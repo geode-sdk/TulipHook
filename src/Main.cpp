@@ -8,11 +8,11 @@
 
 using namespace tulip::hook;
 
-Result<HandlerHandle> tulip::hook::createHandler(void* address, HandlerMetadata const& metadata) noexcept {
+geode::Result<HandlerHandle> tulip::hook::createHandler(void* address, HandlerMetadata const& metadata) noexcept {
 	return Pool::get().createHandler(address, metadata);
 }
 
-Result<> tulip::hook::removeHandler(HandlerHandle const& handler) noexcept {
+geode::Result<> tulip::hook::removeHandler(HandlerHandle const& handler) noexcept {
 	return Pool::get().removeHandler(handler);
 }
 
@@ -30,19 +30,19 @@ void tulip::hook::updateHookMetadata(
 	return Pool::get().getHandler(handler).updateHookMetadata(hook, metadata);
 }
 
-Result<> tulip::hook::writeMemory(void* destination, void const* source, size_t size) noexcept {
+geode::Result<> tulip::hook::writeMemory(void* destination, void const* source, size_t size) noexcept {
 	return Target::get().writeMemory(destination, source, size);
 }
 
-Result<void*> tulip::hook::followJumps(void* address) noexcept {
+geode::Result<void*> tulip::hook::followJumps(void* address) noexcept {
 	return Misc::followJumps(address);
 }
 
-Result<void*> tulip::hook::createWrapper(void* address, WrapperMetadata const& metadata) noexcept {
+geode::Result<void*> tulip::hook::createWrapper(void* address, WrapperMetadata const& metadata) noexcept {
 	return Wrapper::get().createWrapper(address, metadata);
 }
 
-Result<void*> tulip::hook::createReverseWrapper(void* address, WrapperMetadata const& metadata) noexcept {
+geode::Result<void*> tulip::hook::createReverseWrapper(void* address, WrapperMetadata const& metadata) noexcept {
 	return Wrapper::get().createReverseWrapper(address, metadata);
 }
 

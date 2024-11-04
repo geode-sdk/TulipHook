@@ -11,15 +11,15 @@ Target& Target::get() {
 	return ret;
 }
 
-Result<csh> MacosM1Target::openCapstone() {
+geode::Result<csh> MacosM1Target::openCapstone() {
 	// cs_err status;
 
 	// status = cs_open(CS_ARCH_X86, CS_MODE_64, &m_capstone);
 	// if (status != CS_ERR_OK) {
-		return Err("Couldn't open capstone");
+		return geode::Err("Couldn't open capstone");
 	// }
 
-	// return Ok(m_capstone);
+	// return geode::Ok(m_capstone);
 }
 
 std::unique_ptr<HandlerGenerator> MacosM1Target::getHandlerGenerator(

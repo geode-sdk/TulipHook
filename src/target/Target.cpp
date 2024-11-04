@@ -2,9 +2,9 @@
 
 using namespace tulip::hook;
 
-Result<void*> Target::allocateArea(size_t size) {
+geode::Result<void*> Target::allocateArea(size_t size) {
 	if (m_remainingOffset < size) {
-		TULIP_HOOK_UNWRAP(this->allocatePage());
+		GEODE_UNWRAP(this->allocatePage());
 	}
 
 	auto ret = reinterpret_cast<size_t>(m_allocatedPage) + m_currentOffset;
@@ -12,13 +12,13 @@ Result<void*> Target::allocateArea(size_t size) {
 	m_remainingOffset -= size;
 	m_currentOffset += size;
 
-	return Ok(reinterpret_cast<void*>(ret));
+	return geode::Ok(reinterpret_cast<void*>(ret));
 }
 
-Result<> Target::writeMemory(void* destination, void const* source, size_t size) {
-	TULIP_HOOK_UNWRAP(this->rawWriteMemory(destination, source, size));
+geode::Result<> Target::writeMemory(void* destination, void const* source, size_t size) {
+	GEODE_UNWRAP(this->rawWriteMemory(destination, source, size));
 
-	return Ok();
+	return geode::Ok();
 }
 
 void Target::closeCapstone() {

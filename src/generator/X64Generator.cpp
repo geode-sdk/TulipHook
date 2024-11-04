@@ -159,7 +159,7 @@ namespace {
 }
 #endif
 
-Result<FunctionData> X64HandlerGenerator::generateHandler() {
+geode::Result<FunctionData> X64HandlerGenerator::generateHandler() {
 	auto address = reinterpret_cast<uint64_t>(m_handler);
 	X64Assembler a(address);
 	RegMem64 m;
@@ -294,9 +294,9 @@ Result<FunctionData> X64HandlerGenerator::generateHandler() {
 
 	#endif
 
-	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_handler, a.m_buffer.data(), a.m_buffer.size()));
+	GEODE_UNWRAP(Target::get().writeMemory(m_handler, a.m_buffer.data(), a.m_buffer.size()));
 
-	return Ok(FunctionData{m_handler, codeSize});
+	return geode::Ok(FunctionData{m_handler, codeSize});
 }
 
 std::vector<uint8_t> X64HandlerGenerator::intervenerBytes(uint64_t address) {
@@ -321,7 +321,7 @@ std::vector<uint8_t> X64HandlerGenerator::intervenerBytes(uint64_t address) {
 }
 
 
-Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
+geode::Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -385,7 +385,7 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		a.write64(absolute);
 	}
 	else {
-		return Err("Could not relocate rip instruction");
+		return geode::Err("Could not relocate rip instruction");
 	}
 
 	a.label("skip-pointer");
@@ -397,7 +397,7 @@ Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 
 	trampolineAddress += bytes.size();
 	originalAddress += size;
-	return Ok();
+	return geode::Ok();
 }
 
 std::vector<uint8_t> X64WrapperGenerator::wrapperBytes(uint64_t address) {
@@ -493,9 +493,9 @@ std::vector<uint8_t> X64WrapperGenerator::unwindInfoBytes(uint64_t address) {
 }
 #endif
 
-Result<FunctionData> X64WrapperGenerator::generateWrapper() {
+geode::Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
-		return Ok(FunctionData{m_address, 0});
+		return geode::Ok(FunctionData{m_address, 0});
 	}
 
 	// this is silly, butt
@@ -510,7 +510,7 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 
 	auto areaSize = (totalSize + (0x20 - totalSize) % 0x20);
 
-	TULIP_HOOK_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
+	GEODE_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
 	auto address = reinterpret_cast<uint64_t>(area);
 
 	auto code = this->wrapperBytes(address);
@@ -521,9 +521,9 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 	code.insert(code.end(), unwindInfo.begin(), unwindInfo.end());
 #endif
 
-	TULIP_HOOK_UNWRAP(Target::get().writeMemory(area, code.data(), code.size()));
+	GEODE_UNWRAP(Target::get().writeMemory(area, code.data(), code.size()));
 
-	return Ok(FunctionData{area, codeSize});
+	return geode::Ok(FunctionData{area, codeSize});
 }
 
 // std::vector<uint8_t> X64WrapperGenerator::reverseWrapperBytes(uint64_t address) {
@@ -545,7 +545,7 @@ Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 // 	return std::move(a.m_buffer);
 // }
 
-Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
+geode::Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 	X64Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
 	using enum X64Register;
 
@@ -574,7 +574,7 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 
 	a.label("relocated");
 
-	TULIP_HOOK_UNWRAP_INTO(auto code, this->relocatedBytes(a.currentAddress(), target));
+	GEODE_UNWRAP_INTO(auto code, this->relocatedBytes(a.currentAddress(), target));
 
 	a.m_buffer.insert(a.m_buffer.end(), code.m_relocatedBytes.begin(), code.m_relocatedBytes.end());
 
@@ -647,12 +647,12 @@ Result<FunctionData> X64HandlerGenerator::generateTrampoline(uint64_t target) {
 	// auto codeSize = a.m_buffer.size();
 	// auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
-	TULIP_HOOK_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
+	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
 
-	return Ok(FunctionData{m_trampoline, codeSizeFake});
+	return geode::Ok(FunctionData{m_trampoline, codeSizeFake});
 }
 
-Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) {
+geode::Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -750,5 +750,5 @@ Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* 
 		trampolineAddress += bytes.size();
 		originalAddress += size;
 	}
-	return Ok();
+	return geode::Ok();
 }

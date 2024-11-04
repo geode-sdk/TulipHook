@@ -9,29 +9,29 @@ using namespace tulip::hook;
 
 #include <sys/mman.h>
 
-Result<> PosixTarget::allocatePage() {
+geode::Result<> PosixTarget::allocatePage() {
 	auto const protection = PROT_READ | PROT_WRITE | PROT_EXEC;
 	auto const flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
 	auto ret = mmap(nullptr, 0x4000, protection, flags, -1, 0);
 	if (ret == MAP_FAILED) {
-		return Err("Couldn't allocate page");
+		return geode::Err("Couldn't allocate page");
 	}
 
 	m_allocatedPage = reinterpret_cast<void*>(ret);
 	m_currentOffset = 0;
 	m_remainingOffset = 0x4000;
 
-	return Ok();
+	return geode::Ok();
 }
 
-Result<uint32_t> PosixTarget::getProtection(void* address) {
+geode::Result<uint32_t> PosixTarget::getProtection(void* address) {
 	// why
 	// just why does posix not have get protection
-	return Ok(this->getWritableProtection());
+	return geode::Ok(this->getWritableProtection());
 }
 
-Result<> PosixTarget::protectMemory(void* address, size_t size, uint32_t protection) {
+geode::Result<> PosixTarget::protectMemory(void* address, size_t size, uint32_t protection) {
 	auto const pageSize = PAGE_SIZE;
 	auto const pageMask = pageSize - 1;
 
@@ -44,21 +44,21 @@ Result<> PosixTarget::protectMemory(void* address, size_t size, uint32_t protect
 	auto status = mprotect(reinterpret_cast<void*>(alignedPtr), alignedSize, protection);
 
 	if (status != 0) {
-		return Err("Couldn't protect memory");
+		return geode::Err("Couldn't protect memory");
 	}
-	return Ok();
+	return geode::Ok();
 }
 
-Result<> PosixTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
+geode::Result<> PosixTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	auto res = this->protectMemory(destination, size, this->getWritableProtection());
 
 	if (!res) {
-		return Err("Couldn't protect memory");
+		return geode::Err("Couldn't protect memory");
 	}
 
 	memcpy(destination, source, size);
 
-	return Ok();
+	return geode::Ok();
 }
 
 uint32_t PosixTarget::getWritableProtection() {

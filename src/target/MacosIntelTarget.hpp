@@ -12,7 +12,7 @@ namespace tulip::hook {
 	public:
 		using DarwinTarget::DarwinTarget;
 
-		Result<csh> openCapstone() override;
+		geode::Result<csh> openCapstone() override;
 
 		std::unique_ptr<HandlerGenerator> getHandlerGenerator(
 			void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata

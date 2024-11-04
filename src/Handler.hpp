@@ -3,7 +3,7 @@
 #include <HandlerData.hpp>
 #include <HookData.hpp>
 #include <Platform.hpp>
-#include <TulipResult.hpp>
+#include <Geode/Result.hpp>
 #include <array>
 #include <memory>
 #include <unordered_map>
@@ -37,10 +37,10 @@ namespace tulip::hook {
 		std::vector<uint8_t> m_originalBytes;
 		std::vector<uint8_t> m_modifiedBytes;
 
-		static Result<std::unique_ptr<Handler>> create(void* address, HandlerMetadata const& metadata);
+		static geode::Result<std::unique_ptr<Handler>> create(void* address, HandlerMetadata const& metadata);
 		~Handler();
 
-		Result<> init();
+		geode::Result<> init();
 
 		HookHandle createHook(void* address, HookMetadata m_metadata);
 		void removeHook(HookHandle const& hook);
@@ -62,7 +62,7 @@ namespace tulip::hook {
 		static void* popData();
 		static void pushData(void* data);
 
-		Result<> interveneFunction();
-		Result<> restoreFunction();
+		geode::Result<> interveneFunction();
+		geode::Result<> restoreFunction();
 	};
 }
