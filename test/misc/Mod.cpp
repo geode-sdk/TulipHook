@@ -156,7 +156,7 @@ void makeHookAndWrapper(void* target, T* func, U** orig) {
 		std::cout << "unable to create handler: " << handleResult.unwrapErr() << "\n";
 		exit(1);
 	}
-	auto handle = *handleResult;
+	auto handle = handleResult.unwrap();
 
 	auto h_metadata = HookMetadata {
 		.m_priority = 2
