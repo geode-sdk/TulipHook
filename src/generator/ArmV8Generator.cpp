@@ -137,7 +137,7 @@ geode::Result<FunctionData> ArmV8HandlerGenerator::generateTrampoline(uint64_t t
 	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
 		auto res = Target::get().writeMemory(dest, src, size);
 		if (!res) {
-			error = res.error();
+			error = res.unwrapErr();
 		}
 	});
 
