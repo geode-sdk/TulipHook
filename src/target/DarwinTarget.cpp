@@ -87,13 +87,13 @@ geode::Result<> DarwinTarget::writeMemory(void* destination, void const* source,
 	// (this causes a crash in the result destructor, which is not very good)
 
 	auto r1 = this->protectMemory(destination, size, this->getWritableProtection());
-	auto r2 = r1.isOk() ? this->rawWriteMemory(destination, source, size) : r1;
-	auto r3 = r1.isOk() ? this->protectMemory(destination, size, oldProtection) : r1;
+	auto r2 = r1.and_(this->rawWriteMemory(destination, source, size));
+	auto r3 = r2.and_(this->protectMemory(destination, size, oldProtection));
 
 	// permissions restored, it's safe to do result stuff now
-	if (r1.isErr() || r2.isErr() || r3.isErr()) {
+	if (r3.isErr()) {
 		// return the first error
-		return geode::Err(r1.errorOr(r2.errorOr(r3.unwrapErr())));
+		return geode::Err(r3.unwrapErr());
 	}
 	return geode::Ok();
 }
