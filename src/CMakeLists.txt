@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(TulipHook LANGUAGES CXX C)
+project(TulipHook LANGUAGES CXX C VERSION 2.4.2)
 
 file(GLOB TULIP_HOOK_BASE_SOURCES
 	*.cpp
