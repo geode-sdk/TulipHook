@@ -103,7 +103,7 @@ size_t X64HandlerGenerator::preserveReturnRegisters(X64Assembler& a) {
 	// a.sub(RSP, PRESERVE_SIZE);
 
 	a.movaps(m[RSP + 0x20], XMM0);
-	a.mov(m[RSP + 0x30], RAX);
+	a.mov(m[RSP + 0x90], RAX);
 #else
 	constexpr auto PRESERVE_SIZE = 0x40;
 	// a.sub(RSP, PRESERVE_SIZE);
@@ -119,10 +119,17 @@ void X64HandlerGenerator::restoreReturnRegisters(X64Assembler& a, size_t size) {
 	using enum X64Register;
 	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
-	a.mov(RAX, m[RSP + 0x30]);
 	a.movaps(XMM0, m[RSP + 0x20]);
+	a.movaps(XMM1, m[RSP + 0x30]);
+	a.movaps(XMM2, m[RSP + 0x40]);
+	a.movaps(XMM3, m[RSP + 0x50]);
+	a.mov(RCX, m[RSP + 0x60]);
+	a.mov(RDX, m[RSP + 0x68]);
+	a.mov(R8, m[RSP + 0x70]);
+	a.mov(R9, m[RSP + 0x78]);
 	a.mov(R10, m[RSP + 0x80]);
 	a.mov(R11, m[RSP + 0x88]);
+	a.mov(RAX, m[RSP + 0x90]);
 
 	// a.add(RSP, size);
 #else
