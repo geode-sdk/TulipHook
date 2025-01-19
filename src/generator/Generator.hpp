@@ -27,12 +27,12 @@ namespace tulip::hook {
 
 		struct RelocateReturn {
 			std::vector<uint8_t> m_relocatedBytes;
-			int64_t m_originalOffset;
+			size_t m_originalOffset;
 		};
 
 		struct TrampolineReturn {
 			FunctionData m_trampoline;
-			int64_t m_originalOffset;
+			size_t m_originalOffset;
 		};
 
 		virtual geode::Result<TrampolineReturn> generateTrampoline(uint64_t target);

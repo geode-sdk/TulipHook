@@ -247,7 +247,7 @@ geode::Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocate
 	auto bufferOffset = trampolineAddress - baseAddress;
 	return geode::Ok(RelocateReturn{
 		.m_relocatedBytes = std::vector<uint8_t>(buffer.begin(), buffer.begin() + bufferOffset),
-		.m_originalOffset = static_cast<int64_t>(originalAddress - reinterpret_cast<uint64_t>(m_address)),
+		.m_originalOffset = static_cast<size_t>(originalAddress - reinterpret_cast<uint64_t>(m_address)),
 	});
 }
 
