@@ -39,15 +39,17 @@ geode::Result<> Handler::init() {
 	GEODE_UNWRAP_INTO(auto handler, generator->generateHandler());
 	m_handlerSize = handler.m_size;
 
-	GEODE_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener());
+	GEODE_UNWRAP_INTO(auto minIntervener, generator->generateIntervener(0));
+
+	GEODE_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(minIntervener.size()));
+	m_trampolineSize = trampoline.m_trampoline.m_size;
+
+	GEODE_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener(trampoline.m_originalOffset));
 
 	auto target = m_modifiedBytes.size();
 
 	auto address = reinterpret_cast<uint8_t*>(Target::get().getRealPtr(m_address));
 	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
-
-	GEODE_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(target));
-	m_trampolineSize = trampoline.m_size;
 
 	this->addOriginal();
 

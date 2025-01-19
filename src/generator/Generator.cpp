@@ -26,14 +26,14 @@ geode::Result<FunctionData> HandlerGenerator::generateHandler() {
 	return geode::Ok(FunctionData{m_handler, encode.size()});
 }
 
-geode::Result<std::vector<uint8_t>> HandlerGenerator::generateIntervener() {
+geode::Result<std::vector<uint8_t>> HandlerGenerator::generateIntervener(int64_t size) {
 	auto address = reinterpret_cast<uint64_t>(m_address);
-	auto encode = this->intervenerBytes(address);
+	auto encode = this->intervenerBytes(address, size);
 
 	return geode::Ok(std::move(encode));
 }
 
-geode::Result<FunctionData> HandlerGenerator::generateTrampoline(uint64_t target) {
+geode::Result<HandlerGenerator::TrampolineReturn> HandlerGenerator::generateTrampoline(uint64_t target) {
 	GEODE_UNWRAP_INTO(auto offsets, this->relocatedBytes(reinterpret_cast<uint64_t>(m_trampoline), target));
 
 	auto address = reinterpret_cast<uint64_t>(m_trampoline) + offsets.m_relocatedBytes.size();
@@ -45,13 +45,13 @@ geode::Result<FunctionData> HandlerGenerator::generateTrampoline(uint64_t target
 
 	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, merge.data(), merge.size()));
 
-	return geode::Ok(FunctionData{m_trampoline, merge.size()});
+	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, merge.size()}, offsets.m_originalOffset});
 }
 
 std::vector<uint8_t> HandlerGenerator::handlerBytes(uint64_t address) {
 	return std::vector<uint8_t>();
 }
-std::vector<uint8_t> HandlerGenerator::intervenerBytes(uint64_t address) {
+std::vector<uint8_t> HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
 	return std::vector<uint8_t>();
 }
 std::vector<uint8_t> HandlerGenerator::trampolineBytes(uint64_t address, size_t offset) {

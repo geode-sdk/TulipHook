@@ -87,7 +87,7 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
+std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
 
@@ -125,7 +125,7 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address) {
     return std::move(a.m_buffer);
 }
 
-geode::Result<FunctionData> ArmV8HandlerGenerator::generateTrampoline(uint64_t target) {
+geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generateTrampoline(uint64_t target) {
 	auto origin = new CodeMemBlock(reinterpret_cast<uint64_t>(m_address), target);
 	auto relocated = new CodeMemBlock();
 	auto originBuffer = m_address;
@@ -148,5 +148,5 @@ geode::Result<FunctionData> ArmV8HandlerGenerator::generateTrampoline(uint64_t t
 	if (relocated->size == 0) {
 		return geode::Err("Failed to relocate original function");
 	}
-	return geode::Ok(FunctionData{m_trampoline, relocated->size});
+	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, relocated->size}, relocated->size});
 }

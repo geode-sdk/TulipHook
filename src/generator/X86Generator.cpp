@@ -100,10 +100,14 @@ std::vector<uint8_t> X86HandlerGenerator::handlerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> X86HandlerGenerator::intervenerBytes(uint64_t address) {
+std::vector<uint8_t> X86HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
 	X86Assembler a(address);
 
 	a.jmp(reinterpret_cast<uintptr_t>(m_handler));
+
+	while (a.m_buffer.size() < size) {
+		a.nop();
+	}
 
 	return std::move(a.m_buffer);
 }
@@ -166,7 +170,7 @@ geode::Result<FunctionData> X86WrapperGenerator::generateWrapper() {
 // 	return geode::Ok(area);
 // }
 
-geode::Result<FunctionData> X86HandlerGenerator::generateTrampoline(uint64_t target) {
+geode::Result<HandlerGenerator::TrampolineReturn> X86HandlerGenerator::generateTrampoline(uint64_t target) {
 	X86Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
 	RegMem32 m;
 	using enum X86Register;
@@ -191,7 +195,7 @@ geode::Result<FunctionData> X86HandlerGenerator::generateTrampoline(uint64_t tar
 
 	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
 
-	return geode::Ok(FunctionData{m_trampoline, codeSize});
+	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, codeSize}, code.m_originalOffset});
 }
 
 geode::Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target) {

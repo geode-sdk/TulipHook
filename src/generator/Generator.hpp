@@ -23,17 +23,22 @@ namespace tulip::hook {
 		virtual ~HandlerGenerator() = default;
 
 		virtual geode::Result<FunctionData> generateHandler();
-		virtual geode::Result<std::vector<uint8_t>> generateIntervener();
+		virtual geode::Result<std::vector<uint8_t>> generateIntervener(int64_t size);
 
 		struct RelocateReturn {
 			std::vector<uint8_t> m_relocatedBytes;
 			int64_t m_originalOffset;
 		};
 
-		virtual geode::Result<FunctionData> generateTrampoline(uint64_t target);
+		struct TrampolineReturn {
+			FunctionData m_trampoline;
+			int64_t m_originalOffset;
+		};
+
+		virtual geode::Result<TrampolineReturn> generateTrampoline(uint64_t target);
 
 		virtual std::vector<uint8_t> handlerBytes(uint64_t address);
-		virtual std::vector<uint8_t> intervenerBytes(uint64_t address);
+		virtual std::vector<uint8_t> intervenerBytes(uint64_t address, size_t size);
 		virtual std::vector<uint8_t> trampolineBytes(uint64_t address, size_t offset);
 		virtual geode::Result<RelocateReturn> relocatedBytes(uint64_t base, uint64_t target);
 	};
