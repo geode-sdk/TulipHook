@@ -19,7 +19,17 @@ TEST(X64AssemblerTest, Jmp) {
 	a.jmp(0xb00b5);
 	a.jmp(RCX);
 	a.jmp(R8);
-	EXPECT_EQ(a.buffer(), "\xE9\x8D\xFF\x0A\x00\xFF\xE1\x41\xFF\xE0"_bytes);
+	a.jmp(0x123);
+	EXPECT_EQ(a.buffer(), "\xE9\x8D\xFF\x0A\x00\xFF\xE1\x41\xFF\xE0\xEB\xF4"_bytes);
+}
+
+TEST(X64AssemblerTest, Jmp8) {
+	X64Assembler a(0x123);
+	a.jmp8("label");
+	a.write32(0x80085);
+	a.label("label");
+	a.updateLabels();
+	EXPECT_EQ(a.buffer(), "\xEB\x04\x85\x00\x08\x00"_bytes);
 }
 
 TEST(X64AssemblerTest, Call) {

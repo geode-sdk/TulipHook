@@ -51,7 +51,8 @@ X64Assembler::~X64Assembler() {}
 
 void X64Assembler::updateLabels() {
 	for (auto const& update : m_labelUpdates) {
-		this->rewrite32(update.m_address, m_labels[update.m_name] - update.m_address - 4);
+		if (update.m_size == 4) this->rewrite32(update.m_address, m_labels[update.m_name] - update.m_address - 4);
+		else if (update.m_size == 1) this->rewrite8(update.m_address, m_labels[update.m_name] - update.m_address - 1);
 	}
 	// absolute is not absolute in 64 bit
 	for (auto const& update : m_absoluteLabelUpdates) {

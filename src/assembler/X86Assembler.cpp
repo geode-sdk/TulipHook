@@ -15,6 +15,11 @@ X86Assembler::X86Assembler(int64_t baseAddress) :
 
 X86Assembler::~X86Assembler() {}
 
+void X86Assembler::label8(std::string const& name) {
+	m_labelUpdates.push_back({this->currentAddress(), name, 1});
+	this->write8(0);
+}
+
 void X86Assembler::label32(std::string const& name) {
 	m_labelUpdates.push_back({this->currentAddress(), name, 4});
 	this->write32(0);
@@ -27,7 +32,8 @@ void X86Assembler::abslabel32(std::string const& name) {
 
 void X86Assembler::updateLabels() {
 	for (auto const& update : m_labelUpdates) {
-		this->rewrite32(update.m_address, m_labels[update.m_name] - update.m_address - 4);
+		if (update.m_size == 4) this->rewrite32(update.m_address, m_labels[update.m_name] - update.m_address - 4);
+		else if (update.m_size == 1) this->rewrite8(update.m_address, m_labels[update.m_name] - update.m_address - 1);
 	}
 	for (auto const& update : m_absoluteLabelUpdates) {
 		this->rewrite32(update.m_address, m_labels[update.m_name]);
@@ -127,15 +133,26 @@ void X86Assembler::jmp(X86Register reg) {
 }
 
 void X86Assembler::jmp(int64_t address) {
-	this->write8(0xE9);
-	// typical formula is target - addr - 5,
-	// but add + 1 because we just wrote one byte
-	this->write32(address - this->currentAddress() - 5 + 1);
+	auto const difference = address - this->currentAddress();
+	if (difference - 2 >= -0x80 && difference - 2 <= 0x7f) {
+		this->write8(0xEB);
+		this->write8(difference - 2);
+	}
+	else {
+		// typical formula is target - addr - 5,
+		this->write8(0xE9);
+		this->write32(difference - 5);
+	}
 }
 
 void X86Assembler::jmp(std::string const& label) {
 	this->write8(0xE9);
 	this->label32(label);
+}
+
+void X86Assembler::jmp8(std::string const& label) {
+	this->write8(0xEB);
+	this->label8(label);
 }
 
 void X86Assembler::call(int64_t address) {

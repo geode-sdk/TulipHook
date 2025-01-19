@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <stack>
+#include <iostream>
 
 using namespace tulip::hook;
 

@@ -31,7 +31,7 @@ jobs:
 
         - name: 'macOS'
           id: mac
-          os: macos-12
+          os: macos-13
           build_tests: true
           extra_flags: "-DCMAKE_BUILD_TYPE=Debug"
           out_paths: './build/src/libTulipHook.a'

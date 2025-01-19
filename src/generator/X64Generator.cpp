@@ -360,7 +360,7 @@ geode::Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8
 	}
 	else if (id == X86_INS_CALL && operand0.type == X86_OP_MEM) {
 		a.callip("absolute-pointer");
-		a.jmp("skip-pointer");
+		a.jmp8("skip-pointer");
 
 		a.label("absolute-pointer");
 		// it's bad but umm better than the alternative of double indirection
@@ -390,7 +390,7 @@ geode::Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8
 		if (shouldPush) {
 			a.pop(RAX);
 		}
-		a.jmp("skip-pointer");
+		a.jmp8("skip-pointer");
 
 		a.label("absolute-pointer");
 		a.write64(absolute);
@@ -596,9 +596,10 @@ geode::Result<HandlerGenerator::TrampolineReturn> X64HandlerGenerator::generateT
 	}
 	else {
 		a.jmpip("handler");
-
+		a.jmp8("skip-pointer");
 		a.label("handler");
 		a.write64(reinterpret_cast<uint64_t>(m_address) + code.m_originalOffset);
+		a.label("skip-pointer");
 	}
 
 	a.updateLabels();
@@ -697,7 +698,7 @@ geode::Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, ui
 		using enum X64Register;
 
 		a.callip("absolute-pointer");
-		a.jmp("skip-pointer");
+		a.jmp8("skip-pointer");
 
 		a.label("absolute-pointer");
 		a.write64(targetAddress);
@@ -743,7 +744,7 @@ geode::Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, ui
 		}
 		a.label32("jmp-on-branch");
 
-		a.jmp("skip-branch");
+		a.jmp8("skip-branch");
 
 		a.label("jmp-on-branch");
 

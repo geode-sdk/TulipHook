@@ -76,6 +76,7 @@ namespace tulip::hook {
 		X86Assembler(X86Assembler&&) = delete;
 		~X86Assembler();
 
+		void label8(std::string const& name);
 		void label32(std::string const& name);
 		void abslabel32(std::string const& name);
 		void updateLabels() override;
@@ -96,6 +97,7 @@ namespace tulip::hook {
 		void jmp(X86Register reg);
 		void jmp(int64_t address);
 		void jmp(std::string const& label);
+		void jmp8(std::string const& label);
 
 		void call(X86Register reg);
 		void call(int64_t value);
