@@ -79,6 +79,9 @@ HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
 }
 
 void Handler::removeHook(HookHandle const& hook) {
+	if (m_hooks.count(hook) == 0) {
+		return;
+	}
 	auto address = m_hooks[hook]->m_address;
 
 	m_hooks.erase(hook);
@@ -98,6 +101,9 @@ void Handler::clearHooks() {
 }
 
 void Handler::updateHookMetadata(HookHandle const& hook, HookMetadata const& metadata) {
+	if (m_hooks.count(hook) == 0) {
+		return;
+	}
 	m_hooks.at(hook)->m_metadata = metadata;
 	this->reorderFunctions();
 }
