@@ -8,6 +8,7 @@ using namespace tulip::hook;
 #if defined(TULIP_HOOK_POSIX)
 
 #include <sys/mman.h>
+#include <unistd.h>
 
 geode::Result<> PosixTarget::allocatePage() {
 	auto const protection = PROT_READ | PROT_WRITE | PROT_EXEC;
@@ -32,7 +33,7 @@ geode::Result<uint32_t> PosixTarget::getProtection(void* address) {
 }
 
 geode::Result<> PosixTarget::protectMemory(void* address, size_t size, uint32_t protection) {
-	auto const pageSize = PAGE_SIZE;
+	auto const pageSize = getpagesize();
 	auto const pageMask = pageSize - 1;
 
 	auto const ptr = reinterpret_cast<uintptr_t>(address);
