@@ -7,53 +7,15 @@ using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
 
-#include <Windows.h>
 #include "../Pool.hpp"
 #include "../Handler.hpp"
 #include "../Wrapper.hpp"
+#include <Windows.h>
 #include <sstream>
 
 Target& Target::get() {
 	static Windows64Target ret;
 	return ret;
-}
-
-PVOID __declspec(dllexport) GeodeFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase) {
-	for (auto& [handle, handler] : Pool::get().m_handlers) {
-		auto handlerBegin = reinterpret_cast<uintptr_t>(handler->m_handler);
-		auto handlerEnd = handlerBegin + handler->m_handlerSize;
-
-		auto tramplineBegin = reinterpret_cast<uintptr_t>(handler->m_trampoline);
-		auto tramplineEnd = tramplineBegin + handler->m_trampolineSize;
-
-		if (AddrBase >= handlerBegin && AddrBase < handlerEnd) {
-			// std::stringstream ss;
-			// ss << "Control PC: " << std::hex << AddrBase << " Handler Begin: " << handlerBegin << " Handler End: " << handlerEnd;
-			// MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
-			return reinterpret_cast<PVOID>(handlerEnd);
-		}
-
-		if (AddrBase >= tramplineBegin && AddrBase < tramplineEnd) {
-			// std::stringstream ss;
-			// ss << "Control PC: " << std::hex << AddrBase << " Trampline Begin: " << tramplineBegin << " Trampline End: " << tramplineEnd;
-			// MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
-			return reinterpret_cast<PVOID>(tramplineEnd);
-		}
-	}
-
-	for (auto& [handle, wrapper] : Wrapper::get().m_wrappers) {
-		auto wrapperBegin = reinterpret_cast<uintptr_t>(wrapper.m_address);
-		auto wrapperEnd = wrapperBegin + wrapper.m_size;
-
-		if (AddrBase >= wrapperBegin && AddrBase < wrapperEnd) {
-			// std::stringstream ss;
-			// ss << "Control PC: " << std::hex << AddrBase << " Wrapper Begin: " << wrapperBegin << " Wrapper End: " << wrapperEnd;
-			// MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
-			return reinterpret_cast<PVOID>(wrapperEnd);
-		}
-	}
-
-	return nullptr;
 }
 
 geode::Result<> Windows64Target::allocatePage() {
