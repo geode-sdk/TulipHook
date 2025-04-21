@@ -18,6 +18,10 @@ namespace tulip::hook {
 		uint32_t getWritableProtection() override;
 
 		geode::Result<> writeMemory(void* destination, void const* source, size_t size) override;
+
+	private:
+		void internalProtectMemory(void* address, size_t size, uint32_t protection, int& errorCode);
+		void internalWriteMemory(void* destination, void const* source, size_t size, int& errorCode);
 	};
 }
 

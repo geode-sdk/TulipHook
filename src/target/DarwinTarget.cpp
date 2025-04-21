@@ -54,13 +54,30 @@ geode::Result<uint32_t> DarwinTarget::getProtection(void* address) {
 	return geode::Ok(info.protection);
 }
 
+void DarwinTarget::internalProtectMemory(void* address, size_t size, uint32_t protection, int& errorCode) {
+	errorCode = vm_protect(
+		mach_task_self(),
+		reinterpret_cast<vm_address_t>(address),
+		size,
+		false,
+		protection
+	);
+}
+void DarwinTarget::internalWriteMemory(void* destination, void const* source, size_t size, int& errorCode) {
+	errorCode = vm_write(
+		mach_task_self(),
+		reinterpret_cast<vm_address_t>(destination),
+		reinterpret_cast<vm_offset_t>(source),
+		static_cast<mach_msg_type_number_t>(size)
+	);
+}
+
 geode::Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protection) {
 	kern_return_t status;
 
-	status = vm_protect(mach_task_self(), reinterpret_cast<vm_address_t>(address), size, false, protection);
-
+	this->internalProtectMemory(address, size, protection, status);
 	if (status != KERN_SUCCESS) {
-		return geode::Err("Couldn't protect memory");
+		return geode::Err("Couldn't protect memory: " + std::to_string(status));
 	}
 	return geode::Ok();
 }
@@ -68,14 +85,9 @@ geode::Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t
 geode::Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	kern_return_t status;
 
-	status = vm_write(
-		mach_task_self(),
-		reinterpret_cast<vm_address_t>(destination),
-		reinterpret_cast<vm_offset_t>(source),
-		static_cast<mach_msg_type_number_t>(size)
-	);
+	this->internalWriteMemory(destination, source, size, status);
 	if (status != KERN_SUCCESS) {
-		return geode::Err("Couldn't write memory, status: " + std::to_string(status));
+		return geode::Err("Couldn't write memory: " + std::to_string(status));
 	}
 	return geode::Ok();
 }
@@ -85,16 +97,24 @@ geode::Result<> DarwinTarget::writeMemory(void* destination, void const* source,
 
 	// with no wx pages, we run into the risk of accidentally marking our code as rw
 	// (this causes a crash in the result destructor, which is not very good)
+	// should be fixed now i think
 
-	auto r1 = this->protectMemory(destination, size, this->getWritableProtection());
-	auto r2 = r1.and_(this->rawWriteMemory(destination, source, size));
-	auto r3 = r2.and_(this->protectMemory(destination, size, oldProtection));
-
-	// permissions restored, it's safe to do result stuff now
-	if (r3.isErr()) {
-		// return the first error
-		return geode::Err(r3.unwrapErr());
+	kern_return_t s1, s2, s3;
+	this->internalProtectMemory(destination, size, this->getWritableProtection(), s1);
+	if (s1 != KERN_SUCCESS) {
+		return geode::Err("Couldn't protect memory to rwc: " + std::to_string(s1));
 	}
+
+	this->internalWriteMemory(destination, source, size, s2);
+	if (s2 != KERN_SUCCESS) {
+		return geode::Err("Couldn't write memory: " + std::to_string(s2));
+	}
+
+	this->internalProtectMemory(destination, size, oldProtection, s3);
+	if (s3 != KERN_SUCCESS) {
+		return geode::Err("Couldn't protect memory back: " + std::to_string(s3));
+	}
+
 	return geode::Ok();
 }
 
