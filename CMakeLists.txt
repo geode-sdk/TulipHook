@@ -5,7 +5,7 @@ cmake_policy(SET CMP0141 NEW)
 
 project(TulipHookRoot LANGUAGES CXX C)
 
-include(cmake/CPM.cmake)
+include(cmake/get_cpm.cmake)
 
 option(TULIP_LINK_SOURCE "Link to TulipHook source files, including external libs" OFF)
 
@@ -21,7 +21,7 @@ if(PROJECT_IS_TOP_LEVEL AND NOT TULIP_DONT_BUILD_TESTS)
 endif()
 
 if (NOT TARGET GeodeResult)
-	CPMAddPackage("gh:geode-sdk/result@1.3.0")
+	CPMAddPackage("gh:geode-sdk/result@1.3.2")
 endif()
 
 add_library(TulipHookInclude INTERFACE)
