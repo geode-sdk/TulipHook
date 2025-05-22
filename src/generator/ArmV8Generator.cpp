@@ -108,10 +108,10 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, si
 	}
 	// Delta is too big -> use branch with register.
 	else {
-		// Align to 8 bytes for ldr.
-		if (address & 7) {
-			a.nop();
-		}
+		// // Align to 8 bytes for ldr.
+		// if (address & 7) {
+		// 	a.nop();
+		// }
 
 		a.ldr(X16, "handler");
 		a.br(X16);
