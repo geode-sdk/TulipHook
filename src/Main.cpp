@@ -70,3 +70,7 @@ std::shared_ptr<CallingConvention> tulip::hook::createConvention(TulipConvention
 #endif
 	}
 }
+
+geode::Result<> tulip::hook::disableRuntimeIntervening(void* commonHandlerSpace) noexcept {
+	return Pool::get().disableRuntimeIntervening(commonHandlerSpace);
+}

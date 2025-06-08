@@ -1,6 +1,7 @@
 #include "Pool.hpp"
 
 #include "Handler.hpp"
+#include "Target.hpp"
 
 using namespace tulip::hook;
 
@@ -34,4 +35,39 @@ geode::Result<> Pool::removeHandler(HandlerHandle const& handle) {
 
 Handler& Pool::getHandler(HandlerHandle const& handle) {
 	return *m_handlers.at(handle);
+}
+
+void* Pool::getCommonHandler(void* originalFunction, size_t uniqueIndex) {
+	if (m_handlerList.size() <= uniqueIndex || m_handlerList[uniqueIndex] == nullptr) {
+		m_handlerList.resize(uniqueIndex + 1, nullptr);
+
+		for (auto& [handle, handler] : m_handlers) {
+			if (handler->m_address == originalFunction) {
+				m_handlerList[uniqueIndex] = handler.get();
+				break;
+			}
+		}
+	}
+	return m_handlerList[uniqueIndex]->m_handler;
+}
+
+void* Pool::getCommonHandlerStatic(void* originalFunction, size_t uniqueIndex) {
+	return Pool::get().getCommonHandler(originalFunction, uniqueIndex);
+}
+
+geode::Result<> Pool::disableRuntimeIntervening(void* commonHandlerSpace) {
+	if (m_runtimeInterveningDisabled) {
+		return geode::Ok();
+	}
+
+	if (!commonHandlerSpace) {
+		return geode::Err("Common handler space is null");
+	}
+
+	auto* const handler = &Pool::getCommonHandlerStatic;
+	GEODE_UNWRAP(Target::get().rawWriteMemory(commonHandlerSpace, handler, sizeof(handler)));
+
+	m_runtimeInterveningDisabled = true;
+	
+	return geode::Ok();
 }

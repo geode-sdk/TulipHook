@@ -11,6 +11,11 @@ namespace tulip::hook {
 	class Pool {
 	public:
 		std::unordered_map<HandlerHandle, std::unique_ptr<Handler>> m_handlers;
+		std::vector<Handler*> m_handlerList;
+		bool m_runtimeInterveningDisabled = false;
+
+		static void* getCommonHandlerStatic(void* originalFunction, size_t uniqueIndex);
+		void* getCommonHandler(void* originalFunction, size_t uniqueIndex);
 
 		static Pool& get();
 
@@ -18,5 +23,7 @@ namespace tulip::hook {
 		geode::Result<> removeHandler(HandlerHandle const& handler);
 
 		Handler& getHandler(HandlerHandle const& handler);
+
+		geode::Result<> disableRuntimeIntervening(void* commonHandlerSpace);
 	};
 }

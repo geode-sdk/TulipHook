@@ -53,8 +53,6 @@ namespace tulip::hook {
 
 		void updateHookMetadata(HookHandle const& hook, HookMetadata const& metadata);
 
-		static bool TULIP_HOOK_DEFAULT_CONV symbolResolver(char const* symbol, uint64_t* value);
-
 		static void incrementIndex(HandlerContent* content);
 		static void decrementIndex();
 		static void* getNextFunction(HandlerContent* content);

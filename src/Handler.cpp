@@ -116,6 +116,9 @@ void Handler::reorderFunctions() {
 }
 
 geode::Result<> Handler::interveneFunction() {
+	if (Pool::get().m_runtimeInterveningDisabled) {
+		return geode::Err("Runtime intervening is disabled");
+	}
 	return Target::get().writeMemory(
 		Target::get().getRealPtr(m_address),
 		static_cast<void*>(m_modifiedBytes.data()),
@@ -124,6 +127,9 @@ geode::Result<> Handler::interveneFunction() {
 }
 
 geode::Result<> Handler::restoreFunction() {
+	if (Pool::get().m_runtimeInterveningDisabled) {
+		return geode::Err("Runtime intervening is disabled");
+	}
 	return Target::get().writeMemory(
 		Target::get().getRealPtr(m_address),
 		static_cast<void*>(m_originalBytes.data()),
