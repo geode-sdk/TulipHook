@@ -110,7 +110,7 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address, si
 	return std::move(a.m_buffer);
 }
 
-geode::Result<RelocateReturn> ArmV7HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target, void* originalBuffer) {
+geode::Result<RelocateReturn> ArmV7HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target, void const* originalBuffer) {
 	auto origin = new CodeMemBlock((uint64_t)Target::get().getRealPtr(m_address), target);
 
 	std::array<uint8_t, 512> relocatedBuffer;

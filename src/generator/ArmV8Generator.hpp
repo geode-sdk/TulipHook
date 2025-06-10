@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Armv7Generator.hpp"
+#include "ArmV7Generator.hpp"
 
 #include <Platform.hpp>
 

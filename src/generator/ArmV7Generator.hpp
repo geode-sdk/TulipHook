@@ -12,7 +12,7 @@ namespace tulip::hook {
 
 		HandlerReturn handlerBytes(uint64_t address) override;
 		std::vector<uint8_t> intervenerBytes(uint64_t address, size_t size) override;
-		geode::Result<RelocateReturn> relocatedBytes(uint64_t base, uint64_t target, void* originalBuffer) override;
+		geode::Result<RelocateReturn> relocatedBytes(uint64_t base, uint64_t target, void const* originalBuffer) override;
 	};
 
 	class ArmV7WrapperGenerator : public WrapperGenerator {
