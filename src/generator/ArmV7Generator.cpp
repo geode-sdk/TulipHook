@@ -118,7 +118,7 @@ geode::Result<HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocated
 
 	static thread_local std::string error;
 	error = "";
-	GenRelocateCodeAndBranch(origin, relocatedBuffer.data(), origin, relocated, +[](void* dest, void const* src, size_t size) {
+	GenRelocateCodeAndBranch(originalBuffer, relocatedBuffer.data(), origin, relocated, +[](void* dest, void const* src, size_t size) {
 		std::memcpy(dest, src, size);
 	});
 
@@ -132,5 +132,16 @@ geode::Result<HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocated
 	return geode::Ok(RelocateReturn{
 		.m_relocatedBytes = std::vector<uint8_t>(relocatedBuffer.data(), relocatedBuffer.data() + relocatedBuffer.size()),
 		.m_originalOffset = relocated->size
+	});
+}
+
+geode::Result<HandlerGenerator::TrampolineReturn> ArmV7HandlerGenerator::trampolineBytes(uint64_t target, void const* originalBuffer) {
+	GEODE_UNWRAP_INTO(auto reloc, this->relocatedBytes(reinterpret_cast<uint64_t>(m_trampoline), target, originalBuffer));
+
+	auto const codeSize = reloc.m_relocatedBytes.size();
+	return geode::Ok(TrampolineReturn{
+		.m_trampolineBytes = std::move(reloc.m_relocatedBytes),
+		.m_codeSize = codeSize,
+		.m_originalOffset = reloc.m_originalOffset
 	});
 }
