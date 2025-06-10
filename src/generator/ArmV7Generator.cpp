@@ -118,7 +118,7 @@ geode::Result<HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocated
 
 	static thread_local std::string error;
 	error = "";
-	GenRelocateCodeAndBranch(originalBuffer, relocatedBuffer.data(), origin, relocated, +[](void* dest, void const* src, size_t size) {
+	GenRelocateCodeAndBranch(const_cast<void*>(originalBuffer), relocatedBuffer.data(), origin, relocated, +[](void* dest, void const* src, size_t size) {
 		std::memcpy(dest, src, size);
 	});
 
