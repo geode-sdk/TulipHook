@@ -53,6 +53,21 @@
 			#define TULIP_HOOK_DLL
 		#endif
 
+	#elif TARGET_OS_IPHONE
+
+		#define TULIP_HOOK_IOS 1
+
+		#define TULIP_HOOK_DEFAULT_CONV
+		
+		#define TULIP_HOOK_ARMV8 1
+		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
+
+		#ifdef TULIP_HOOK_EXPORTING
+			#define TULIP_HOOK_DLL    __attribute__((visibility("default")))
+		#else
+			#define TULIP_HOOK_DLL
+		#endif
+
 	#endif
 
 #endif
