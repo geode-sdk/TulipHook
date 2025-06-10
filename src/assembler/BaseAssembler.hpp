@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <tulip/Platform.hpp>
 
 namespace tulip::hook {
 
@@ -13,7 +14,7 @@ namespace tulip::hook {
 		uint8_t m_size;
 	};
 
-	class BaseAssembler {
+	class TULIP_HOOK_DLL BaseAssembler {
 	public:
 		int64_t m_baseAddress;
 		std::vector<uint8_t> m_buffer;

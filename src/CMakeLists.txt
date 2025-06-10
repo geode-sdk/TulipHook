@@ -57,10 +57,20 @@ else()
 	message(FATAL_ERROR "Unsupported platform.")
 endif()
 
-add_library(${PROJECT_NAME} STATIC
-	${TULIP_HOOK_BASE_SOURCES}
-	${TULIP_HOOK_PLATFORM_SOURCES}
-)
+if (TULIP_BUILD_DYNAMIC)
+	add_library(${PROJECT_NAME} SHARED
+		${TULIP_HOOK_BASE_SOURCES}
+		${TULIP_HOOK_PLATFORM_SOURCES}
+	)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC -DTULIP_HOOK_DYNAMIC=1)
+else()
+	add_library(${PROJECT_NAME} STATIC
+		${TULIP_HOOK_BASE_SOURCES}
+		${TULIP_HOOK_PLATFORM_SOURCES}
+	)
+endif()
+
+
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 

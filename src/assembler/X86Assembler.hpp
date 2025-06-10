@@ -66,7 +66,7 @@ namespace tulip::hook {
 			m_type(Type::ModRM) {}
 	};
 
-	class X86Assembler : public BaseAssembler {
+	class TULIP_HOOK_DLL X86Assembler : public BaseAssembler {
 	protected:
 		void encodeModRM(X86Operand op, uint8_t digit);
 

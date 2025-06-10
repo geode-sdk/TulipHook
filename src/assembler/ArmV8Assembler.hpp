@@ -81,7 +81,7 @@ namespace tulip::hook {
 
 	using ArmV8RegisterArray = std::vector<ArmV8Register>;
 
-	class ArmV8Assembler : public BaseAssembler {
+	class TULIP_HOOK_DLL ArmV8Assembler : public BaseAssembler {
 	public:
 		ArmV8Assembler(int64_t baseAddress);
 		ArmV8Assembler(ArmV8Assembler const&) = delete;
