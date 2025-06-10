@@ -34,6 +34,7 @@ elseif(APPLE)
 		convention/MacosIntelConvention.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
+		generator/ArmV7Generator.cpp
 		generator/ArmV8Generator.cpp
 		target/DarwinTarget.cpp
 		target/MacosIntelTarget.cpp
