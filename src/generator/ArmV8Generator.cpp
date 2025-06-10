@@ -24,7 +24,7 @@ namespace {
 	}
 }
 
-HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
+HandlerGenerator::HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
 

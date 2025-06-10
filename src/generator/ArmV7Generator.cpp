@@ -25,7 +25,7 @@ namespace {
 	}
 }
 
-HandlerReturn ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
+HandlerGenerator::HandlerReturn ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
 	ArmV7Assembler a((uint64_t)Target::get().getRealPtr((void*)address));
 	using enum ArmV7Register;
 
@@ -110,7 +110,7 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address, si
 	return std::move(a.m_buffer);
 }
 
-geode::Result<RelocateReturn> ArmV7HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target, void const* originalBuffer) {
+geode::Result<HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target, void const* originalBuffer) {
 	auto origin = new CodeMemBlock((uint64_t)Target::get().getRealPtr(m_address), target);
 
 	std::array<uint8_t, 512> relocatedBuffer;
