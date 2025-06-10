@@ -57,9 +57,11 @@ namespace tulip::hook {
 		size_t codeSize;
 		// the offset of the original bytes in the trampoline, the offset from the beginning the trampoline jumps to
 		size_t originalOffset;
+		// an error message if the generation failed
+		std::string errorMessage;
 	};
 
-	TULIP_HOOK_DLL geode::Result<GenerateTrampolineReturn> generateTrampoline(
+	TULIP_HOOK_DLL GenerateTrampolineReturn generateTrampoline(
 		void* address, void* trampoline, void const* originalBuffer, size_t targetSize, HandlerMetadata const& metadata = HandlerMetadata{}
 	) noexcept;
 

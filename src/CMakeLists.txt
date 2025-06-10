@@ -30,6 +30,7 @@ elseif(APPLE)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
 		assembler/X86Assembler.cpp
 		assembler/X64Assembler.cpp
+		assembler/ArmV7Assembler.cpp
 		assembler/ArmV8Assembler.cpp
 		convention/MacosIntelConvention.cpp
 		generator/X86Generator.cpp

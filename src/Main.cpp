@@ -75,15 +75,20 @@ geode::Result<> tulip::hook::disableRuntimeIntervening(void* commonHandlerSpace)
 	return Pool::get().disableRuntimeIntervening(commonHandlerSpace);
 }
 
-geode::Result<GenerateTrampolineReturn> tulip::hook::generateTrampoline(
+GenerateTrampolineReturn tulip::hook::generateTrampoline(
 	void* address, void* trampoline, void const* originalBuffer, size_t targetSize, HandlerMetadata const& metadata
 ) noexcept {
 	auto generator = Target::get().getHandlerGenerator(address, trampoline, nullptr, nullptr, metadata);
-	GEODE_UNWRAP_INTO(auto encode, generator->trampolineBytes(targetSize, originalBuffer));
-
-	return geode::Ok(GenerateTrampolineReturn{
-		.trampolineBytes = std::move(encode.m_trampolineBytes),
-		.codeSize = encode.m_codeSize,
-		.originalOffset = encode.m_originalOffset
-	});
+	if (GEODE_UNWRAP_EITHER(encode, err, generator->trampolineBytes(targetSize, originalBuffer))) {
+		return GenerateTrampolineReturn{
+			.trampolineBytes = std::move(encode.m_trampolineBytes),
+			.codeSize = encode.m_codeSize,
+			.originalOffset = encode.m_originalOffset
+		};
+	}
+	else {
+		return GenerateTrampolineReturn{
+			.errorMessage = err
+		};
+	}
 }
