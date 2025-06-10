@@ -34,7 +34,7 @@ geode::Result<std::vector<uint8_t>> HandlerGenerator::generateIntervener(int64_t
 }
 
 geode::Result<HandlerGenerator::GeneratedTrampolineReturn> HandlerGenerator::generateTrampoline(uint64_t target) {
-	GEODE_UNWRAP_INTO(auto encode, this->trampolineBytes(reinterpret_cast<uint64_t>(m_trampoline), m_address));
+	GEODE_UNWRAP_INTO(auto encode, this->trampolineBytes(target, m_address));
 
 	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, encode.m_trampolineBytes.data(), encode.m_trampolineBytes.size()));
 
