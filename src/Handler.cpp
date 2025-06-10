@@ -43,7 +43,7 @@ geode::Result<> Handler::init() {
 	GEODE_UNWRAP_INTO(auto minIntervener, generator->generateIntervener(0));
 
 	GEODE_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(minIntervener.size()));
-	m_trampolineSize = trampoline.m_trampoline.m_size;
+	m_trampolineSize = trampoline.m_codeSize;
 
 	GEODE_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener(trampoline.m_originalOffset));
 

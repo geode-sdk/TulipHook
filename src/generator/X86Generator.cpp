@@ -24,7 +24,7 @@ namespace {
 RegMem32 m;
 using enum X86Register;
 
-std::vector<uint8_t> X86HandlerGenerator::handlerBytes(uint64_t address) {
+HandlerGenerator::HandlerReturn X86HandlerGenerator::handlerBytes(uint64_t address) {
 	X86Assembler a(address);
 
 	// idk what this is for
@@ -97,7 +97,12 @@ std::vector<uint8_t> X86HandlerGenerator::handlerBytes(uint64_t address) {
 
 	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
 
-	return std::move(a.m_buffer);
+	auto codeSize = a.m_buffer.size();
+
+	return HandlerReturn{
+		.m_handlerBytes = std::move(a.m_buffer),
+		.m_codeSize = codeSize
+	};
 }
 
 std::vector<uint8_t> X86HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
@@ -170,7 +175,7 @@ geode::Result<FunctionData> X86WrapperGenerator::generateWrapper() {
 // 	return geode::Ok(area);
 // }
 
-geode::Result<HandlerGenerator::TrampolineReturn> X86HandlerGenerator::generateTrampoline(uint64_t target) {
+geode::Result<HandlerGenerator::TrampolineReturn> X86HandlerGenerator::trampolineBytes(uint64_t target, void const* originalBuffer) {
 	X86Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
 	RegMem32 m;
 	using enum X86Register;
@@ -181,7 +186,7 @@ geode::Result<HandlerGenerator::TrampolineReturn> X86HandlerGenerator::generateT
 
 	a.label("relocated");
 
-	GEODE_UNWRAP_INTO(auto code, this->relocatedBytes(a.currentAddress(), target));
+	GEODE_UNWRAP_INTO(auto code, this->relocatedBytes(a.currentAddress(), target, originalBuffer));
 
 	a.m_buffer.insert(a.m_buffer.end(), code.m_relocatedBytes.begin(), code.m_relocatedBytes.end());
 
@@ -192,13 +197,14 @@ geode::Result<HandlerGenerator::TrampolineReturn> X86HandlerGenerator::generateT
 	auto codeSize = a.m_buffer.size();
 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
-
-	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
-
-	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, codeSize}, code.m_originalOffset});
+	return geode::Ok(TrampolineReturn{
+		.m_trampolineBytes = std::move(a.m_buffer),
+		.m_codeSize = codeSize,
+		.m_originalOffset = code.m_originalOffset
+	});
 }
 
-geode::Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target) {
+geode::Result<HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target, void const* originalBuffer) {
 	// memcpy(m_trampoline, m_address, 32);
 
 	m_modifiedBytesSize = target;
@@ -210,7 +216,7 @@ geode::Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocate
 	auto insn = cs_malloc(cs);
 
 	uint64_t address = baseAddress;
-	uint8_t const* code = reinterpret_cast<uint8_t const*>(m_address);
+	uint8_t const* code = reinterpret_cast<uint8_t const*>(originalBuffer);
 	size_t size = 32;
 
 	auto difference = baseAddress - reinterpret_cast<uint64_t>(m_address);

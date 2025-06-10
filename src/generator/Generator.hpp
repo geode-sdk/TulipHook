@@ -31,16 +31,27 @@ namespace tulip::hook {
 		};
 
 		struct TrampolineReturn {
-			FunctionData m_trampoline;
+			std::vector<uint8_t> m_trampolineBytes;
+			size_t m_codeSize;
 			size_t m_originalOffset;
 		};
 
-		virtual geode::Result<TrampolineReturn> generateTrampoline(uint64_t target);
+		struct HandlerReturn {
+			std::vector<uint8_t> m_handlerBytes;
+			size_t m_codeSize;
+		};
 
-		virtual std::vector<uint8_t> handlerBytes(uint64_t address);
+		struct GeneratedTrampolineReturn {
+			size_t m_codeSize;
+			size_t m_originalOffset;
+		};
+
+		virtual geode::Result<GeneratedTrampolineReturn> generateTrampoline(uint64_t target);
+
+		virtual HandlerReturn handlerBytes(uint64_t address);
 		virtual std::vector<uint8_t> intervenerBytes(uint64_t address, size_t size);
-		virtual std::vector<uint8_t> trampolineBytes(uint64_t address, size_t offset);
-		virtual geode::Result<RelocateReturn> relocatedBytes(uint64_t base, uint64_t target);
+		virtual geode::Result<TrampolineReturn> trampolineBytes(uint64_t target, void const* originalBuffer);
+		virtual geode::Result<RelocateReturn> relocatedBytes(uint64_t base, uint64_t target, void const* originalBuffer);
 	};
 
 	class WrapperGenerator {

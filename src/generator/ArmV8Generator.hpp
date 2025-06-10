@@ -1,23 +1,21 @@
 #pragma once
 
-#include "Generator.hpp"
+#include "Armv7Generator.hpp"
 
 #include <Platform.hpp>
 
 namespace tulip::hook {
 
-	class ArmV8HandlerGenerator : public HandlerGenerator {
+	class ArmV8HandlerGenerator : public ArmV7HandlerGenerator {
 	public:
-		using HandlerGenerator::HandlerGenerator;
+		using ArmV7HandlerGenerator::ArmV7HandlerGenerator;
 
-		geode::Result<TrampolineReturn> generateTrampoline(uint64_t target) override;
-
-		std::vector<uint8_t> handlerBytes(uint64_t address) override;
+		HandlerReturn handlerBytes(uint64_t address) override;
 		std::vector<uint8_t> intervenerBytes(uint64_t address, size_t size) override;
 	};
 
-	class ArmV8WrapperGenerator : public WrapperGenerator {
+	class ArmV8WrapperGenerator : public ArmV7WrapperGenerator {
 	public:
-		using WrapperGenerator::WrapperGenerator;
+		using ArmV7WrapperGenerator::ArmV7WrapperGenerator;
 	};
 }

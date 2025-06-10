@@ -16,9 +16,9 @@ namespace tulip::hook {
 		// std::vector<uint8_t> handlerBytes(uint64_t address) override;
 		std::vector<uint8_t> intervenerBytes(uint64_t address, size_t size) override;
 
-		geode::Result<FunctionData> generateHandler() override;
+		HandlerReturn handlerBytes(uint64_t address) override;
 
-		geode::Result<TrampolineReturn> generateTrampoline(uint64_t target) override;
+		geode::Result<TrampolineReturn> trampolineBytes(uint64_t target, void const* originalBuffer) override;
 
 		geode::Result<> relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) override;
 		geode::Result<> relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) override;

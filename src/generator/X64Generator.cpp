@@ -166,8 +166,7 @@ namespace {
 }
 #endif
 
-geode::Result<FunctionData> X64HandlerGenerator::generateHandler() {
-	auto address = reinterpret_cast<uint64_t>(m_handler);
+HandlerGenerator::HandlerReturn X64HandlerGenerator::handlerBytes(uint64_t address) {
 	X64Assembler a(address);
 	RegMem64 m;
 	using enum X64Register;
@@ -301,9 +300,10 @@ geode::Result<FunctionData> X64HandlerGenerator::generateHandler() {
 
 	#endif
 
-	GEODE_UNWRAP(Target::get().writeMemory(m_handler, a.m_buffer.data(), a.m_buffer.size()));
-
-	return geode::Ok(FunctionData{m_handler, codeSize});
+	return HandlerReturn{
+		.m_handlerBytes = std::move(a.m_buffer),
+		.m_codeSize = codeSize
+	};
 }
 
 std::vector<uint8_t> X64HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
@@ -556,7 +556,7 @@ geode::Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 // 	return std::move(a.m_buffer);
 // }
 
-geode::Result<HandlerGenerator::TrampolineReturn> X64HandlerGenerator::generateTrampoline(uint64_t target) {
+geode::Result<HandlerGenerator::TrampolineReturn> X64HandlerGenerator::trampolineBytes(uint64_t target, void const* originalBuffer) {
 	X64Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
 	using enum X64Register;
 
@@ -585,7 +585,7 @@ geode::Result<HandlerGenerator::TrampolineReturn> X64HandlerGenerator::generateT
 
 	a.label("relocated");
 
-	GEODE_UNWRAP_INTO(auto code, this->relocatedBytes(a.currentAddress(), target));
+	GEODE_UNWRAP_INTO(auto code, this->relocatedBytes(a.currentAddress(), target, originalBuffer));
 
 	a.m_buffer.insert(a.m_buffer.end(), code.m_relocatedBytes.begin(), code.m_relocatedBytes.end());
 
@@ -659,9 +659,11 @@ geode::Result<HandlerGenerator::TrampolineReturn> X64HandlerGenerator::generateT
 	// auto codeSize = a.m_buffer.size();
 	// auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
-	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
-
-	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, codeSizeFake}, code.m_originalOffset});
+	return geode::Ok(TrampolineReturn{
+		.m_trampolineBytes = std::move(a.m_buffer),
+		.m_codeSize = codeSizeFake,
+		.m_originalOffset = code.m_originalOffset
+	});
 }
 
 geode::Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) {

@@ -25,7 +25,7 @@ namespace {
 	}
 }
 
-std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
+HandlerReturn ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
 	ArmV7Assembler a((uint64_t)Target::get().getRealPtr((void*)address));
 	using enum ArmV7Register;
 
@@ -76,7 +76,12 @@ std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
 
 	a.updateLabels();
 
-	return std::move(a.m_buffer);
+	auto codeSize = a.m_buffer.size();
+
+	return HandlerReturn{
+		.m_handlerBytes = std::move(a.m_buffer),
+		.m_codeSize = codeSize
+	};
 }
 
 std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
@@ -105,29 +110,27 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address, si
 	return std::move(a.m_buffer);
 }
 
-geode::Result<HandlerGenerator::TrampolineReturn> ArmV7HandlerGenerator::generateTrampoline(uint64_t target) {
+geode::Result<RelocateReturn> ArmV7HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target, void* originalBuffer) {
 	auto origin = new CodeMemBlock((uint64_t)Target::get().getRealPtr(m_address), target);
-	auto relocated = new CodeMemBlock();
-	// idk about arm thumb stuff help me
-	auto originBuffer = m_address;
-	auto relocatedBuffer = m_trampoline;
+
+	std::array<uint8_t, 512> relocatedBuffer;
+	auto relocated = new CodeMemBlock(baseAddress, relocatedBuffer.size());
 
 	static thread_local std::string error;
 	error = "";
-
-	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
-		auto res = Target::get().writeMemory(dest, src, size);
-		if (!res) {
-			error = res.unwrapErr();
-		}
+	GenRelocateCodeAndBranch(origin, relocatedBuffer.data(), origin, relocated, +[](void* dest, void const* src, size_t size) {
+		std::memcpy(dest, src, size);
 	});
 
 	if (!error.empty()) {
 		return geode::Err(std::move(error));
 	}
-
 	if (relocated->size == 0) {
 		return geode::Err("Failed to relocate original function");
 	}
-	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, relocated->size}, relocated->size});
+
+	return geode::Ok(RelocateReturn{
+		.m_relocatedBytes = std::vector<uint8_t>(relocatedBuffer.data(), relocatedBuffer.data() + relocatedBuffer.size()),
+		.m_originalOffset = relocated->size
+	});
 }
