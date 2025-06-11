@@ -8,7 +8,7 @@
 
 using namespace tulip::hook;
 
-HandlerGenerator::HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
+HandlerGenerator::HandlerReturn PatchlessArmV8HandlerGenerator::handlerBytes(uint64_t address) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
 
