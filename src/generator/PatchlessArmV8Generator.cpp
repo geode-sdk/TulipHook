@@ -55,7 +55,7 @@ HandlerGenerator::HandlerReturn PatchlessArmV8HandlerGenerator::handlerBytes(uin
     a.blr(X5);
 
     // recover the original return
-    a.mov(X30, X19);
+    a.mov(X16, X19);
 
     // recover the return values
     a.pop({D0, D1});
@@ -65,7 +65,7 @@ HandlerGenerator::HandlerReturn PatchlessArmV8HandlerGenerator::handlerBytes(uin
     a.ldp(X29, X30, SP, 32, PostIndex);
 
     // done!
-    a.br(X30);
+    a.br(X16);
 
     a.label("commonHandlerStorage");
     a.write64(reinterpret_cast<uint64_t>(m_content));
