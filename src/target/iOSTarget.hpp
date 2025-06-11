@@ -5,6 +5,7 @@
 #if defined(TULIP_HOOK_IOS) && defined(TULIP_HOOK_ARMV8)
 
 #include "../generator/ArmV8Generator.hpp"
+#include "../generator/PatchlessArmV8Generator.hpp"
 #include "DarwinTarget.hpp"
 
 namespace tulip::hook {
