@@ -176,16 +176,23 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
 
       int64_t offset = decode_imm26_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
+      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
 
       auto dst_label = RelocLabel::withData(dst_vmaddr);
       _ AppendRelocLabel(dst_label);
 
-      {
+      if (new_offset < -0x2000000 || new_offset > 0x1ffffff) {
         _ Ldr(TMP_REG_0, dst_label);
         if ((inst & UnconditionalBranchMask) == BL) {
           _ blr(TMP_REG_0);
         } else {
           _ br(TMP_REG_0);
+        }
+      } else {
+        if ((inst & UnconditionalBranchMask) == BL) {
+          _ bl(new_offset);
+        } else {
+          _ b(new_offset);
         }
       }
 
@@ -194,11 +201,12 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
 
       int64_t offset = decode_imm19_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
+      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
 
       int rt = decode_rt(inst);
       char opc = bits(inst, 30, 31);
 
-      {
+      if (new_offset < -0x800000 || new_offset > 0x7fffff) {
         _ Mov(TMP_REG_0, dst_vmaddr);
         if (opc == 0b00)
           _ ldr(W(rt), MemOperand(TMP_REG_0, 0));
@@ -208,17 +216,30 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
           UNIMPLEMENTED();
         }
       }
+      else {
+        if (opc == 0b00)
+          _ ldr(W(rt), new_offset);
+        else if (opc == 0b01)
+          _ ldr(X(rt), new_offset);
+        else {
+          UNIMPLEMENTED();
+        }
+      }
     } else if (inst_is_adr(inst)) {
       DEBUG_LOG("%d:relo <adr> at %p", relocated_insn_count++, relo_cur_src_vmaddr(ctx));
 
       int64_t offset = decode_immhi_immlo_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
+      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
 
       int rd = decode_rd(inst);
 
-      {
+      if (new_offset < -0x800000 || new_offset > 0x7fffff) {
         _ Mov(X(rd), dst_vmaddr);
         ;
+      }
+      else {
+        _ Adr(X(rd), new_offset);
       }
     } else if (inst_is_adrp(inst)) {
       DEBUG_LOG("%d:relo <adrp> at %p", relocated_insn_count++, relo_cur_src_vmaddr(ctx));
@@ -226,18 +247,23 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
       int64_t offset = decode_immhi_immlo_zero12_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
       dst_vmaddr = arm64_trunc_page(dst_vmaddr);
+      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
 
       int rd = decode_rd(inst);
 
-      {
+      if (new_offset < -0x40000000 || new_offset > 0x3fffffff) {
         _ Mov(X(rd), dst_vmaddr);
         ;
+      }
+      else {
+        _ Adrp(X(rd), new_offset);
       }
     } else if (inst_is_b_cond(inst)) {
       DEBUG_LOG("%d:relo <b_cond> at %p", relocated_insn_count++, relo_cur_src_vmaddr(ctx));
 
       int64_t offset = decode_imm19_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
+      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
 
       arm64_inst_t branch_instr = inst;
       {
@@ -250,21 +276,29 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
         set_bits(branch_instr, 5, 23, imm19);
       }
 
-      auto dst_label = RelocLabel::withData(dst_vmaddr);
-      _ AppendRelocLabel(dst_label);
+      if (new_offset < -0x80000 || new_offset > 0x7ffff) {
+        auto dst_label = RelocLabel::withData(dst_vmaddr);
+        _ AppendRelocLabel(dst_label);
 
-      {
-        _ Emit(branch_instr);
         {
-          _ Ldr(TMP_REG_0, dst_label);
-          _ br(TMP_REG_0);
+          _ Emit(branch_instr);
+          {
+            _ Ldr(TMP_REG_0, dst_label);
+            _ br(TMP_REG_0);
+          }
         }
+      }
+      else {
+        uint32_t imm19 = new_offset >> 2;
+        set_bits(branch_instr, 5, 23, imm19);
+        _ Emit(branch_instr);
       }
     } else if (inst_is_compare_b(inst)) {
       DEBUG_LOG("%d:relo <compare_b> at %p", relocated_insn_count++, relo_cur_src_vmaddr(ctx));
 
       int64_t offset = decode_imm19_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
+      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
 
       arm64_inst_t branch_instr = inst;
       {
@@ -277,21 +311,29 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
         set_bits(branch_instr, 5, 23, imm19);
       }
 
-      auto dst_label = RelocLabel::withData(dst_vmaddr);
-      _ AppendRelocLabel(dst_label);
+      if (new_offset < -0x80000 || new_offset > 0x7ffff) {
+        auto dst_label = RelocLabel::withData(dst_vmaddr);
+        _ AppendRelocLabel(dst_label);
 
-      {
-        _ Emit(branch_instr);
         {
-          _ Ldr(TMP_REG_0, dst_label);
-          _ br(TMP_REG_0);
+          _ Emit(branch_instr);
+          {
+            _ Ldr(TMP_REG_0, dst_label);
+            _ br(TMP_REG_0);
+          }
         }
+      }
+      else {
+        uint32_t imm19 = new_offset >> 2;
+        set_bits(branch_instr, 5, 23, imm19);
+        _ Emit(branch_instr);
       }
     } else if (inst_is_test_b(inst)) {
       DEBUG_LOG("%d:relo <test_b> at %p", relocated_insn_count++, relo_cur_src_vmaddr(ctx));
 
       int64_t offset = decode_imm14_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
+      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
 
       arm64_inst_t branch_instr = inst;
       {
@@ -304,15 +346,22 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
         set_bits(branch_instr, 5, 18, imm14);
       }
 
-      auto dst_label = RelocLabel::withData(dst_vmaddr);
-      _ AppendRelocLabel(dst_label);
+      if (new_offset < -0x20000 || new_offset > 0x1fffff) {
+        auto dst_label = RelocLabel::withData(dst_vmaddr);
+        _ AppendRelocLabel(dst_label);
 
-      {
-        _ Emit(branch_instr);
         {
-          _ Ldr(TMP_REG_0, dst_label);
-          _ br(TMP_REG_0);
+          _ Emit(branch_instr);
+          {
+            _ Ldr(TMP_REG_0, dst_label);
+            _ br(TMP_REG_0);
+          }
         }
+      }
+      else {
+        uint32_t imm14 = new_offset >> 2;
+        set_bits(branch_instr, 5, 18, imm14);
+        _ Emit(branch_instr);
       }
     } else {
       _ Emit(inst);
