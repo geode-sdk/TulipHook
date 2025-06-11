@@ -71,6 +71,8 @@ geode::Result<> Handler::init(std::vector<uint8_t> const& originalBytes) {
 
 	m_originalBytes = originalBytes;
 
+	GEODE_UNWRAP(Target::get().finalizePage());
+
 	// GEODE_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener(trampoline.m_originalOffset));
 
 	// auto target = m_modifiedBytes.size();
