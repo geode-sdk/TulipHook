@@ -32,6 +32,11 @@ void ArmV8Assembler::mov(ArmV8Register dst, ArmV8Register src) {
     this->write32(0xAA0003E0 | srcShifted | val(dst));
 }
 
+void ArmV8Assembler::mov(ArmV8Register dst, int64_t imm) {
+    const auto immShifted = static_cast<uint32_t>(imm) << 5;
+    this->write32(0xD2800000 | immShifted | val(dst));
+}
+
 void ArmV8Assembler::ldr(ArmV8Register dst, std::string const& label) {
     m_labelUpdates.push_back({this->currentAddress(), label, 4});
 	this->write32((0x58ul << 24) | val(dst));
@@ -107,6 +112,12 @@ void ArmV8Assembler::add(ArmV8Register dst, ArmV8Register src, uint16_t imm) {
     const auto srcShifted = val(src) << 5;
     const auto immShifted = static_cast<uint32_t>(imm) << 10;
     this->write32(0x91000000 | srcShifted | immShifted | val(dst));
+}
+
+void ArmV8Assembler::add(ArmV8Register dst, ArmV8Register src, ArmV8Register src2) {
+    const auto srcShifted = val(src) << 16;
+    const auto src2Shifted = val(src2) << 5;
+    this->write32(0x8B000000 | srcShifted | src2Shifted | val(dst));
 }
 
 void ArmV8Assembler::b(uint32_t imm) {
