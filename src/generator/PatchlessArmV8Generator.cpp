@@ -13,7 +13,11 @@ HandlerGenerator::HandlerReturn PatchlessArmV8HandlerGenerator::handlerBytes(uin
     using enum ArmV8Register;
 
 	a.adr(X14, 0);
-    a.push({X19, X20});
+
+    a.stp(X29, X30, SP, -16, PreIndex);
+    a.mov(X29, SP);
+    a.stp(X19, X20, SP, 16, SignedOffset);
+    
     a.mov(X19, X30);
     a.mov(X20, X14);
 
@@ -57,7 +61,8 @@ HandlerGenerator::HandlerReturn PatchlessArmV8HandlerGenerator::handlerBytes(uin
     a.pop({D0, D1});
     a.pop({X0, X8});
 
-    a.pop({X19, X20});
+    a.ldp(X19, X20, SP, 16, SignedOffset);
+    a.ldp(X29, X30, SP, 32, PostIndex);
 
     // done!
     a.br(X30);
