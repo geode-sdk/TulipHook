@@ -73,6 +73,6 @@ namespace tulip::hook {
 	};
 
 	TULIP_HOOK_DLL GenerateHandlerReturn generateHandler(
-		void* handler, void* commonHandlerSpace
+		void* handler, size_t commonHandlerSpaceOffset
 	) noexcept;
 }

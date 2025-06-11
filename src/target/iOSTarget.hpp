@@ -19,6 +19,10 @@ namespace tulip::hook {
 		) override;
 		std::unique_ptr<WrapperGenerator> getWrapperGenerator(void* address, WrapperMetadata const& metadata) override;
 
+		std::unique_ptr<HandlerGenerator> getPatchlessGenerator(
+			void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
+		) override;
+
 		geode::Result<> allocatePage() override;
 		// geode::Result<> writeMemory(void* destination, void const* source, size_t size) override;
 

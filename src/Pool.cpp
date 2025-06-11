@@ -85,7 +85,6 @@ geode::Result<> Pool::disableRuntimeIntervening(void* commonHandlerSpace) {
 	GEODE_UNWRAP(Target::get().writeMemory(commonHandlerSpace, handler, sizeof(handler)));
 
 	m_runtimeInterveningDisabled = true;
-	m_commonHandlerSpace = commonHandlerSpace;
 	
 	return geode::Ok();
 }

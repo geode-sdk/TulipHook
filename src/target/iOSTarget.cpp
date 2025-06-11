@@ -51,9 +51,15 @@ std::unique_ptr<HandlerGenerator> iOSTarget::getHandlerGenerator(
 	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
 ) {
 	if (Pool::get().m_runtimeInterveningDisabled) {
-		return std::make_unique<PatchlessArmV8HandlerGenerator>(address, trampoline, handler, content, metadata);
+		return this->getPatchlessGenerator(address, trampoline, handler, content, metadata);
 	}
 	return std::make_unique<ArmV8HandlerGenerator>(address, trampoline, handler, content, metadata);
+}
+
+std::unique_ptr<HandlerGenerator> iOSTarget::getPatchlessGenerator(
+	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
+) {
+	return std::make_unique<PatchlessArmV8HandlerGenerator>(address, trampoline, handler, content, metadata);
 }
 
 std::unique_ptr<WrapperGenerator> iOSTarget::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {

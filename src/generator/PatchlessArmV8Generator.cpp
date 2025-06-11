@@ -15,6 +15,7 @@ HandlerGenerator::HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t add
 	a.adr(X14, 0);
     a.push({X19, X20});
     a.mov(X19, X30);
+    a.mov(X20, X14);
 
     a.push({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9});
     a.push({D0, D1, D2, D3, D4, D5, D6, D7});
@@ -28,6 +29,7 @@ HandlerGenerator::HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t add
 
     // call the func
     a.ldr(X5, "commonHandlerStorage");
+    a.add(X5, X20);
     a.ldr(X5, X5);
     a.blr(X5);
     a.mov(X16, X0);
@@ -44,6 +46,7 @@ HandlerGenerator::HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t add
     // call the post handler, decrementing
     a.mov(X4, #1);
     a.ldr(X5, "commonHandlerStorage");
+    a.add(X5, X20);
     a.ldr(X5, X5);
     a.blr(X5);
 

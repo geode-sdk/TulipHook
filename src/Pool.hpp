@@ -13,7 +13,6 @@ namespace tulip::hook {
 		std::unordered_map<HandlerHandle, std::unique_ptr<Handler>> m_handlers;
 		std::vector<Handler*> m_handlerList;
 		bool m_runtimeInterveningDisabled = false;
-		void* m_commonHandlerSpace = nullptr;
 
 		static void getCommonHandlerStatic(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType);
 		void getCommonHandler(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType);

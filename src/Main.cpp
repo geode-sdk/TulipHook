@@ -94,9 +94,9 @@ GenerateTrampolineReturn tulip::hook::generateTrampoline(
 }
 
 GenerateHandlerReturn tulip::hook::generateHandler(
-	void* handler, void* commonHandlerSpace
+	void* handler, size_t commonHandlerSpaceOffset
 ) noexcept {
-	auto generator = Target::get().getHandlerGenerator(handler, nullptr, nullptr, commonHandlerSpace, HandlerMetadata{});
+	auto generator = Target::get().getPatchlessGenerator(handler, nullptr, nullptr, (void*)commonHandlerSpaceOffset, HandlerMetadata{});
 	auto ret = generator->handlerBytes(reinterpret_cast<uint64_t>(handler));
 	return GenerateHandlerReturn{
 		.handlerBytes = std::move(ret.m_handlerBytes),
