@@ -29,6 +29,22 @@ geode::Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMe
 	return geode::Ok(std::move(ret));
 }
 
+geode::Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata2 const& metadata) {
+	auto ret = std::make_unique<Handler>(address, metadata);
+
+	ret->m_content = new (std::nothrow) HandlerContent();
+	if (!ret->m_content) {
+		return geode::Err("Failed to allocate HandlerContent");
+	}
+
+	ret->m_originalBytes = metadata.m_originalBytes;
+
+	GEODE_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x300));
+	GEODE_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x100));
+
+	return geode::Ok(std::move(ret));
+}
+
 Handler::~Handler() {}
 
 geode::Result<> Handler::init() {
@@ -42,7 +58,7 @@ geode::Result<> Handler::init() {
 
 	GEODE_UNWRAP_INTO(auto minIntervener, generator->generateIntervener(0));
 
-	GEODE_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(minIntervener.size()));
+	GEODE_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(minIntervener.size(), m_address));
 	m_trampolineSize = trampoline.m_codeSize;
 
 	GEODE_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener(trampoline.m_originalOffset));
@@ -51,6 +67,32 @@ geode::Result<> Handler::init() {
 
 	auto address = reinterpret_cast<uint8_t*>(Target::get().getRealPtr(m_address));
 	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
+
+	this->addOriginal();
+
+	return geode::Ok();
+}
+
+geode::Result<> Handler::init(std::vector<uint8_t> const& originalBytes) {
+	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
+
+	auto generator =
+		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
+
+	GEODE_UNWRAP_INTO(auto handler, generator->generateHandler());
+	m_handlerSize = handler.m_size;
+
+	GEODE_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(originalBytes.size(), originalBytes.data()));
+	m_trampolineSize = trampoline.m_codeSize;
+
+	m_originalBytes = originalBytes;
+
+	// GEODE_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener(trampoline.m_originalOffset));
+
+	// auto target = m_modifiedBytes.size();
+
+	// auto address = reinterpret_cast<uint8_t*>(Target::get().getRealPtr(m_address));
+	// m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
 
 	this->addOriginal();
 

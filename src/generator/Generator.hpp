@@ -46,7 +46,7 @@ namespace tulip::hook {
 			size_t m_originalOffset;
 		};
 
-		virtual geode::Result<GeneratedTrampolineReturn> generateTrampoline(uint64_t target);
+		virtual geode::Result<GeneratedTrampolineReturn> generateTrampoline(uint64_t target, void const* originalBuffer);
 
 		virtual HandlerReturn handlerBytes(uint64_t address);
 		virtual std::vector<uint8_t> intervenerBytes(uint64_t address, size_t size);

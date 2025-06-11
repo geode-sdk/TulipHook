@@ -15,4 +15,9 @@ namespace tulip::hook {
 
 		AbstractFunction m_abstract;
 	};
+
+	class HandlerMetadata2 : public HandlerMetadata {
+	public:
+		std::vector<uint8_t> m_originalBytes;
+	};
 }

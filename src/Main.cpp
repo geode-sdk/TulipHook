@@ -12,6 +12,10 @@ geode::Result<HandlerHandle> tulip::hook::createHandler(void* address, HandlerMe
 	return Pool::get().createHandler(address, metadata);
 }
 
+geode::Result<HandlerHandle> tulip::hook::createHandler(void* address, HandlerMetadata2 const& metadata) noexcept {
+	return Pool::get().createHandler(address, metadata);
+}
+
 geode::Result<> tulip::hook::removeHandler(HandlerHandle const& handler) noexcept {
 	return Pool::get().removeHandler(handler);
 }

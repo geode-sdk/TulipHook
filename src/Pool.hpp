@@ -20,6 +20,7 @@ namespace tulip::hook {
 		static Pool& get();
 
 		geode::Result<HandlerHandle> createHandler(void* address, HandlerMetadata const& metadata);
+		geode::Result<HandlerHandle> createHandler(void* address, HandlerMetadata2 const& metadata);
 		geode::Result<> removeHandler(HandlerHandle const& handler);
 
 		Handler& getHandler(HandlerHandle const& handler);
