@@ -190,7 +190,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
         }
       } else {
         if ((inst & UnconditionalBranchMask) == BL) {
-          _ bl(new_offset);
+          // _ bl(new_offset);
         } else {
           _ b(new_offset);
         }
@@ -239,7 +239,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
         ;
       }
       else {
-        _ Adr(X(rd), new_offset);
+        _ ldr(X(rd), new_offset);
       }
     } else if (inst_is_adrp(inst)) {
       DEBUG_LOG("%d:relo <adrp> at %p", relocated_insn_count++, relo_cur_src_vmaddr(ctx));
@@ -256,7 +256,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
         ;
       }
       else {
-        _ Adrp(X(rd), new_offset);
+        _ adrp(X(rd), new_offset);
       }
     } else if (inst_is_b_cond(inst)) {
       DEBUG_LOG("%d:relo <b_cond> at %p", relocated_insn_count++, relo_cur_src_vmaddr(ctx));
@@ -380,7 +380,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
     // CodeGen codegen(&turbo_assembler_);
     // codegen.LiteralLdrBranch(ctx->origin->addr + ctx->origin->size);
     // emit a b instruction
-    int64_t offset = (ctx->origin->addr + ctx->origin->size) - relo_cur_dst_vmaddr(ctx);
+    int64_t offset = (ctx->origin->addr + ctx->origin->size) - relo_cur_dst_vmaddr(ctx, turbo_assembler_);
     _ b(offset);
   }
 
