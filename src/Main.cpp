@@ -12,10 +12,6 @@ geode::Result<HandlerHandle> tulip::hook::createHandler(void* address, HandlerMe
 	return Pool::get().createHandler(address, metadata);
 }
 
-geode::Result<HandlerHandle> tulip::hook::createHandler(void* address, HandlerMetadata2 const& metadata) noexcept {
-	return Pool::get().createHandler(address, metadata);
-}
-
 geode::Result<> tulip::hook::removeHandler(HandlerHandle const& handler) noexcept {
 	return Pool::get().removeHandler(handler);
 }
@@ -95,4 +91,15 @@ GenerateTrampolineReturn tulip::hook::generateTrampoline(
 			.errorMessage = err
 		};
 	}
+}
+
+GenerateHandlerReturn tulip::hook::generateHandler(
+	void* handler, void* commonHandlerSpace
+) noexcept {
+	auto generator = Target::get().getHandlerGenerator(handler, nullptr, nullptr, commonHandlerSpace, HandlerMetadata{});
+	auto ret = generator->handlerBytes(reinterpret_cast<uint64_t>(handler));
+	return GenerateHandlerReturn{
+		.handlerBytes = std::move(ret.m_handlerBytes),
+		.codeSize = ret.m_codeSize,
+	};
 }

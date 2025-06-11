@@ -50,6 +50,9 @@ geode::Result<csh> iOSTarget::openCapstone() {
 std::unique_ptr<HandlerGenerator> iOSTarget::getHandlerGenerator(
 	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
 ) {
+	if (Pool::get().m_runtimeInterveningDisabled) {
+		return std::make_unique<PatchlessArmV8HandlerGenerator>(address, trampoline, handler, content, metadata);
+	}
 	return std::make_unique<ArmV8HandlerGenerator>(address, trampoline, handler, content, metadata);
 }
 

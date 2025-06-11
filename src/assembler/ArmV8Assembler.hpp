@@ -94,6 +94,7 @@ namespace tulip::hook {
 
 		void mov(ArmV8Register dst, ArmV8Register src);
 		void ldr(ArmV8Register dst, std::string const& label);
+		void ldr(ArmV8Register dst, ArmV8Register base);
 		void ldp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register regBase, int16_t imm, ArmV8IndexKind kind);
 		void stp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register regBase, int16_t imm, ArmV8IndexKind kind);
 		void adrp(ArmV8Register dst, int64_t imm);

@@ -40,7 +40,6 @@ namespace tulip::hook {
 		static geode::Result<std::unique_ptr<Handler>> create(void* address, HandlerMetadata const& metadata);
 		~Handler();
 
-		geode::Result<> init(std::vector<uint8_t> const& originalBytes);
 		geode::Result<> init();
 
 		HookHandle createHook(void* address, HookMetadata m_metadata);

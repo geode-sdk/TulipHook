@@ -37,6 +37,11 @@ void ArmV8Assembler::ldr(ArmV8Register dst, std::string const& label) {
 	this->write32((0x58ul << 24) | val(dst));
 }
 
+void ArmV8Assembler::ldr(ArmV8Register dst, ArmV8Register base) {
+    const auto baseShifted = val(base) << 5;
+    this->write32(0xF9400000 | baseShifted | val(dst));
+}
+
 void ArmV8Assembler::ldp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register regBase, int16_t imm, ArmV8IndexKind kind) {
     using enum ArmV8IndexKind;
 

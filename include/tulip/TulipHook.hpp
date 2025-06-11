@@ -16,8 +16,6 @@
 namespace tulip::hook {
 	TULIP_HOOK_DLL geode::Result<HandlerHandle> createHandler(void* address, HandlerMetadata const& metadata) noexcept;
 
-	TULIP_HOOK_DLL geode::Result<HandlerHandle> createHandler(void* address, HandlerMetadata2 const& metadata) noexcept;
-
 	TULIP_HOOK_DLL geode::Result<void, std::string> removeHandler(HandlerHandle const& handler) noexcept;
 
 	TULIP_HOOK_DLL HookHandle createHook(HandlerHandle const& handler, void* address, HookMetadata const& metadata) noexcept;
@@ -67,4 +65,14 @@ namespace tulip::hook {
 		void* address, void* trampoline, void const* originalBuffer, size_t targetSize, HandlerMetadata const& metadata = HandlerMetadata{}
 	) noexcept;
 
+	struct GenerateHandlerReturn {
+		// the handler bytes that are generated
+		std::vector<uint8_t> handlerBytes;
+		// the code size of the handler, "usually" equal to the size of the bytes vector
+		size_t codeSize;
+	};
+
+	TULIP_HOOK_DLL GenerateHandlerReturn generateHandler(
+		void* handler, void* commonHandlerSpace
+	) noexcept;
 }

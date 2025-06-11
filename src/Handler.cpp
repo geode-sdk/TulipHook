@@ -57,34 +57,6 @@ geode::Result<> Handler::init() {
 	return geode::Ok();
 }
 
-geode::Result<> Handler::init(std::vector<uint8_t> const& originalBytes) {
-	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
-
-	auto generator =
-		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
-
-	GEODE_UNWRAP_INTO(auto handler, generator->generateHandler());
-	m_handlerSize = handler.m_size;
-
-	GEODE_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(originalBytes.size(), originalBytes.data()));
-	m_trampolineSize = trampoline.m_codeSize;
-
-	m_originalBytes = originalBytes;
-
-	GEODE_UNWRAP(Target::get().finalizePage());
-
-	// GEODE_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener(trampoline.m_originalOffset));
-
-	// auto target = m_modifiedBytes.size();
-
-	// auto address = reinterpret_cast<uint8_t*>(Target::get().getRealPtr(m_address));
-	// m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
-
-	this->addOriginal();
-
-	return geode::Ok();
-}
-
 void Handler::addOriginal() {
 	auto metadata = HookMetadata{
 		.m_priority = INT32_MAX,
