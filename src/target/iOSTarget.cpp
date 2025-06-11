@@ -35,7 +35,7 @@ std::unique_ptr<WrapperGenerator> iOSTarget::getWrapperGenerator(void* address, 
 }
 
 uint32_t iOSTarget::getWritableProtection() {
-	return VM_PROT_READ | VM_PROT_WRITE;
+	return VM_PROT_COPY | VM_PROT_READ | VM_PROT_WRITE;
 }
 
 #endif
