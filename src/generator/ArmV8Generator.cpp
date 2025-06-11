@@ -28,11 +28,10 @@ HandlerGenerator::HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t add
     ArmV8Assembler a(address);
     using enum ArmV8Register;
 
+	// TODO: single push and pop
     // preserve registers
-	a.push({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15});
+	a.push({X0, X1, X2, X3, X4, X5, X6, X7});
 	a.push({D0, D1, D2, D3, D4, D5, D6, D7});
-	// v8-15 are callee saved.
-	a.push({D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31});
 
 	// set the parameters
 	a.ldr(X0, "content");
@@ -44,15 +43,14 @@ HandlerGenerator::HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t add
 	a.mov(X30, X0);
 
 	// recover registers
-	a.pop({D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31});
 	a.pop({D0, D1, D2, D3, D4, D5, D6, D7});
-	a.pop({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15});
+	a.pop({X0, X1, X2, X3, X4, X5, X6, X7});
 
 	// call the func
 	a.blr(X30);
 
 	// preserve the return values
-	a.push({X0, X1, X2, X3, X4, X5, X6, X7});
+	a.push({X0, X8});
 	a.push({D0, D1, D2, D3, D4, D5, D6, D7});
 
 	// call the post handler, decrementing
@@ -64,7 +62,7 @@ HandlerGenerator::HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t add
 
 	// recover the return values
 	a.pop({D0, D1, D2, D3, D4, D5, D6, D7});
-	a.pop({X0, X1, X2, X3, X4, X5, X6, X7});
+	a.pop({X0, X8});
 
 	// done!
 	a.br(X30);
