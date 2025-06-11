@@ -6,7 +6,11 @@ using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_IOS) && defined(TULIP_HOOK_ARMV8)
 
+#include <mach/mach.h>
+#include <mach/mach_init.h> /* mach_task_self()     */
+#include <mach/mach_port.h>
 #include <mach/vm_map.h> /* vm_allocate()        */
+#include <mach/task.h>
 
 Target& Target::get() {
 	static iOSTarget ret;
