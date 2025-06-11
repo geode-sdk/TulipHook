@@ -21,6 +21,10 @@ geode::Result<> Target::writeMemory(void* destination, void const* source, size_
 	return geode::Ok();
 }
 
+geode::Result<> Target::finalizePage() {
+	return geode::Ok();
+}
+
 void Target::closeCapstone() {
 #if defined(TULIP_HOOK_X86) || defined(TULIP_HOOK_X64)
 	cs_close(&m_capstone);
