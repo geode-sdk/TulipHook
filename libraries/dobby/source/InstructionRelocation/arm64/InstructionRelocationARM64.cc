@@ -176,7 +176,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
 
       int64_t offset = decode_imm26_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
-      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
+      int64_t new_offset = dst_vmaddr - relo_cur_dst_vmaddr(ctx, &turbo_assembler_);
 
       auto dst_label = RelocLabel::withData(dst_vmaddr);
       _ AppendRelocLabel(dst_label);
@@ -201,7 +201,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
 
       int64_t offset = decode_imm19_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
-      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
+      int64_t new_offset = dst_vmaddr - relo_cur_dst_vmaddr(ctx, &turbo_assembler_);
 
       int rt = decode_rt(inst);
       char opc = bits(inst, 30, 31);
@@ -230,7 +230,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
 
       int64_t offset = decode_immhi_immlo_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
-      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
+      int64_t new_offset = dst_vmaddr - relo_cur_dst_vmaddr(ctx, &turbo_assembler_);
 
       int rd = decode_rd(inst);
 
@@ -263,7 +263,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
 
       int64_t offset = decode_imm19_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
-      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
+        int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
 
       arm64_inst_t branch_instr = inst;
       {
@@ -298,7 +298,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
 
       int64_t offset = decode_imm19_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
-      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
+      int64_t new_offset = dst_vmaddr - relo_cur_dst_vmaddr(ctx, &turbo_assembler_);
 
       arm64_inst_t branch_instr = inst;
       {
@@ -333,7 +333,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
 
       int64_t offset = decode_imm14_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
-      int64_t new_offset = dst_vmaddr - relo_cur_src_vmaddr(ctx);
+      int64_t new_offset = dst_vmaddr - relo_cur_dst_vmaddr(ctx, &turbo_assembler_);
 
       arm64_inst_t branch_instr = inst;
       {
