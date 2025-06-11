@@ -12,6 +12,8 @@ using namespace tulip::hook;
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/task.h>
 
+#include "../Pool.hpp"
+
 Target& Target::get() {
 	static iOSTarget ret;
 	return ret;
@@ -59,21 +61,24 @@ uint32_t iOSTarget::getWritableProtection() {
 	return VM_PROT_COPY | VM_PROT_READ | VM_PROT_WRITE;
 }
 
-geode::Result<> iOSTarget::writeMemory(void* destination, void const* source, size_t size) {
-	GEODE_UNWRAP(this->rawWriteMemory(destination, source, size).mapErr(
-		[&](auto&& err) {
-			return "Couldn't write memory (iOS): " + std::move(err) + 
-			       " (destination: " + std::to_string(reinterpret_cast<uintptr_t>(destination)) +
-			       ", source: " + std::to_string(reinterpret_cast<uintptr_t>(source)) +
-			       ", size: " + std::to_string(size) + ") - " + 
-				   " m_allocatedPage: " + std::to_string(reinterpret_cast<uintptr_t>(m_allocatedPage)) +
-			       ", m_currentOffset: " + std::to_string(m_currentOffset) + 
-			       ", m_remainingOffset: " + std::to_string(m_remainingOffset);
-		}
-	));
+// geode::Result<> iOSTarget::writeMemory(void* destination, void const* source, size_t size) {
+// 	if (!Pool::get().m_runtimeInterveningDisabled) {
+// 		return DarwinTarget::writeMemory(destination, source, size);
+// 	}
+// 	GEODE_UNWRAP(this->rawWriteMemory(destination, source, size).mapErr(
+// 		[&](auto&& err) {
+// 			return "Couldn't write memory (iOS): " + std::move(err) + 
+// 			       " (destination: " + std::to_string(reinterpret_cast<uintptr_t>(destination)) +
+// 			       ", source: " + std::to_string(reinterpret_cast<uintptr_t>(source)) +
+// 			       ", size: " + std::to_string(size) + ") - " + 
+// 				   " m_allocatedPage: " + std::to_string(reinterpret_cast<uintptr_t>(m_allocatedPage)) +
+// 			       ", m_currentOffset: " + std::to_string(m_currentOffset) + 
+// 			       ", m_remainingOffset: " + std::to_string(m_remainingOffset);
+// 		}
+// 	));
 
-	return geode::Ok();
-}
+// 	return geode::Ok();
+// }
 
 geode::Result<> iOSTarget::finalizePage() {
 	GEODE_UNWRAP(this->protectMemory(m_allocatedPage, PAGE_MAX_SIZE, VM_PROT_READ | VM_PROT_EXECUTE).mapErr(

@@ -20,7 +20,7 @@ namespace tulip::hook {
 		std::unique_ptr<WrapperGenerator> getWrapperGenerator(void* address, WrapperMetadata const& metadata) override;
 
 		geode::Result<> allocatePage() override;
-		geode::Result<> writeMemory(void* destination, void const* source, size_t size) override;
+		// geode::Result<> writeMemory(void* destination, void const* source, size_t size) override;
 
         uint32_t getWritableProtection() override;
 
