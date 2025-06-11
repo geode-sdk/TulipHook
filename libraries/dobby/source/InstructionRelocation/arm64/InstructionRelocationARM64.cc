@@ -369,7 +369,6 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
 
     ctx->buffer_cursor += sizeof(arm64_inst_t);
   }
-#undef _
 
   // update origin
   int new_origin_len = (addr_t)ctx->buffer_cursor - (addr_t)ctx->buffer;
@@ -383,6 +382,8 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
     int64_t offset = (ctx->origin->addr + ctx->origin->size) - relo_cur_dst_vmaddr(ctx, &turbo_assembler_);
     _ b(offset);
   }
+
+#undef _
 
   // Bind all labels
   turbo_assembler_.RelocBind();
