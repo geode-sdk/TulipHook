@@ -114,7 +114,7 @@ geode::Result<HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocated
 	auto origin = new CodeMemBlock((uint64_t)Target::get().getRealPtr(m_address), target);
 
 	std::array<uint8_t, 512> relocatedBuffer;
-	auto relocated = new CodeMemBlock(baseAddress, relocatedBuffer.size());
+	auto relocated = new CodeMemBlock(baseAddress, 0);
 
 	static thread_local std::string error;
 	error = "";
@@ -130,7 +130,7 @@ geode::Result<HandlerGenerator::RelocateReturn> ArmV7HandlerGenerator::relocated
 	}
 
 	return geode::Ok(RelocateReturn{
-		.m_relocatedBytes = std::vector<uint8_t>(relocatedBuffer.data(), relocatedBuffer.data() + relocatedBuffer.size()),
+		.m_relocatedBytes = std::vector<uint8_t>(relocatedBuffer.data(), relocatedBuffer.data() + relocated->size),
 		.m_originalOffset = relocated->size
 	});
 }
