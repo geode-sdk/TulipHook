@@ -377,8 +377,11 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
 
   // TODO: if last instr is unlink branch, ignore it
   if (branch) {
-    CodeGen codegen(&turbo_assembler_);
-    codegen.LiteralLdrBranch(ctx->origin->addr + ctx->origin->size);
+    // CodeGen codegen(&turbo_assembler_);
+    // codegen.LiteralLdrBranch(ctx->origin->addr + ctx->origin->size);
+    // emit a b instruction
+    int64_t offset = relo_cur_src_vmaddr(ctx) - (ctx->origin->addr + ctx->origin->size);
+    _ b(offset);
   }
 
   // Bind all labels
