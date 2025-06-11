@@ -380,7 +380,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
     // CodeGen codegen(&turbo_assembler_);
     // codegen.LiteralLdrBranch(ctx->origin->addr + ctx->origin->size);
     // emit a b instruction
-    int64_t offset = (ctx->origin->addr + ctx->origin->size) - relo_cur_dst_vmaddr(ctx, turbo_assembler_);
+    int64_t offset = (ctx->origin->addr + ctx->origin->size) - relo_cur_dst_vmaddr(ctx, &turbo_assembler_);
     _ b(offset);
   }
 
