@@ -247,7 +247,7 @@ int relo_relocate(relo_ctx_t *ctx, void* relocated_mem, bool branch, void (*writ
       int64_t offset = decode_immhi_immlo_zero12_offset(inst);
       addr_t dst_vmaddr = relo_cur_src_vmaddr(ctx) + offset;
       dst_vmaddr = arm64_trunc_page(dst_vmaddr);
-      int64_t new_offset = dst_vmaddr - (int64_t)relo_cur_src_vmaddr(ctx);
+      int64_t new_offset = dst_vmaddr - (int64_t)relo_cur_dst_vmaddr(ctx, &turbo_assembler_);
 
       int rd = decode_rd(inst);
 
