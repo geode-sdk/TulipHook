@@ -102,17 +102,17 @@ geode::Result<> DarwinTarget::writeMemory(void* destination, void const* source,
 	kern_return_t s1, s2, s3;
 	this->internalProtectMemory(destination, size, this->getWritableProtection(), s1);
 	if (s1 != KERN_SUCCESS) {
-		return geode::Err("Couldn't protect memory to " + std::to_string(this->getWritableProtection()) + ": " + std::to_string(s1));
+		return geode::Err("Couldn't protect memory " + std::to_string(reinterpret_cast<uintptr_t>(destination)) + " to " + std::to_string(this->getWritableProtection()) + ": " + std::to_string(s1));
 	}
 
 	this->internalWriteMemory(destination, source, size, s2);
 	if (s2 != KERN_SUCCESS) {
-		return geode::Err("Couldn't write memory: " + std::to_string(s2));
+		return geode::Err("Couldn't write memory " + std::to_string(reinterpret_cast<uintptr_t>(destination)) + " to " + std::to_string(reinterpret_cast<uintptr_t>(source)) + ": " + std::to_string(s2));
 	}
 
 	this->internalProtectMemory(destination, size, oldProtection, s3);
 	if (s3 != KERN_SUCCESS) {
-		return geode::Err("Couldn't protect memory back: " + std::to_string(s3));
+		return geode::Err("Couldn't protect memory back: " + std::to_string(reinterpret_cast<uintptr_t>(destination)) + " to " + std::to_string(oldProtection) + ": " + std::to_string(s3));
 	}
 
 	return geode::Ok();
