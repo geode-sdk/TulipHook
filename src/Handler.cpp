@@ -29,22 +29,6 @@ geode::Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMe
 	return geode::Ok(std::move(ret));
 }
 
-geode::Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata2 const& metadata) {
-	auto ret = std::make_unique<Handler>(address, metadata);
-
-	ret->m_content = new (std::nothrow) HandlerContent();
-	if (!ret->m_content) {
-		return geode::Err("Failed to allocate HandlerContent");
-	}
-
-	ret->m_originalBytes = metadata.m_originalBytes;
-
-	GEODE_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x300));
-	GEODE_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x100));
-
-	return geode::Ok(std::move(ret));
-}
-
 Handler::~Handler() {}
 
 geode::Result<> Handler::init() {

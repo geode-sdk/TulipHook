@@ -30,7 +30,7 @@ HandlerGenerator::HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t add
 
 	// TODO: single push and pop
     // preserve registers
-	a.push({X0, X1, X2, X3, X4, X5, X6, X7});
+	a.push({X0, X1, X2, X3, X4, X5, X6, X7, X8, X19});
 	a.push({D0, D1, D2, D3, D4, D5, D6, D7});
 
 	// set the parameters
@@ -44,7 +44,7 @@ HandlerGenerator::HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t add
 
 	// recover registers
 	a.pop({D0, D1, D2, D3, D4, D5, D6, D7});
-	a.pop({X0, X1, X2, X3, X4, X5, X6, X7});
+	a.pop({X0, X1, X2, X3, X4, X5, X6, X7, X8, X19});
 
 	// call the func
 	a.blr(X30);
