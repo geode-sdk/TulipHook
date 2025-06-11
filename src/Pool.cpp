@@ -16,10 +16,10 @@ geode::Result<HandlerHandle> Pool::createHandler(void* address, HandlerMetadata 
 	if (m_handlers.find(handle) == m_handlers.end()) {
 		GEODE_UNWRAP_INTO(auto handler, Handler::create(address, metadata));
 		m_handlers.emplace(handle, std::move(handler));
-		GEODE_UNWRAP(m_handlers[handle]->init());
 	}
 
 	if (!m_runtimeInterveningDisabled) {
+		GEODE_UNWRAP(m_handlers[handle]->init());
 		GEODE_UNWRAP(m_handlers[handle]->interveneFunction());
 	}
 	
