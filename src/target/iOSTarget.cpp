@@ -61,7 +61,7 @@ uint32_t iOSTarget::getWritableProtection() {
 
 geode::Result<> iOSTarget::writeMemory(void* destination, void const* source, size_t size) {
 	GEODE_UNWRAP(this->rawWriteMemory(destination, source, size).mapErr(
-		[](auto&& err) {
+		[&](auto&& err) {
 			return "Couldn't write memory (iOS): " + std::move(err) + 
 			       " (destination: " + std::to_string(reinterpret_cast<uintptr_t>(destination)) +
 			       ", source: " + std::to_string(reinterpret_cast<uintptr_t>(source)) +
