@@ -102,7 +102,7 @@ geode::Result<> DarwinTarget::writeMemory(void* destination, void const* source,
 	kern_return_t s1, s2, s3;
 	this->internalProtectMemory(destination, size, this->getWritableProtection(), s1);
 	if (s1 != KERN_SUCCESS) {
-		return geode::Err("Couldn't protect memory to rwc: " + std::to_string(s1));
+		return geode::Err("Couldn't protect memory to " + std::to_string(this->getWritableProtection()) + ": " + std::to_string(s1));
 	}
 
 	this->internalWriteMemory(destination, source, size, s2);

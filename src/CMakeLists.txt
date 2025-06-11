@@ -40,6 +40,7 @@ elseif(APPLE)
 		target/DarwinTarget.cpp
 		target/MacosIntelTarget.cpp
 		target/MacosM1Target.cpp
+		target/iOSTarget.cpp
 	)
 elseif(ANDROID OR UNIX)
 	set(TULIP_HOOK_LINK_DOBBY On)
