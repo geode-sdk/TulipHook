@@ -37,6 +37,7 @@ elseif(APPLE)
 		generator/X64Generator.cpp
 		generator/ArmV7Generator.cpp
 		generator/ArmV8Generator.cpp
+		generator/PatchlessArmV8Generator.cpp
 		target/DarwinTarget.cpp
 		target/MacosIntelTarget.cpp
 		target/MacosM1Target.cpp
