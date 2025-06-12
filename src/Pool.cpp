@@ -2,6 +2,7 @@
 
 #include "Handler.hpp"
 #include "target/Target.hpp"
+#include <platform/DefaultConvention.hpp>
 
 using namespace tulip::hook;
 
@@ -14,14 +15,20 @@ geode::Result<HandlerHandle> Pool::createHandler(void* address, HandlerMetadata 
 	auto handle = reinterpret_cast<HandlerHandle>(address);
 
 	if (m_handlers.find(handle) == m_handlers.end()) {
-		GEODE_UNWRAP_INTO(auto handler, Handler::create(address, metadata));
-		m_handlers.emplace(handle, std::move(handler));
+		if (!m_runtimeInterveningDisabled) {
+			GEODE_UNWRAP_INTO(auto handler, Handler::create(address, metadata));
+			GEODE_UNWRAP(m_handlers[handle]->init());
+			GEODE_UNWRAP(m_handlers[handle]->interveneFunction());
+
+			m_handlers.emplace(handle, std::move(handler));
+		}
+		else {
+			auto handler = Handler::createPatchless(address, metadata);
+			m_handlers.emplace(handle, std::move(handler));
+		}
 	}
 
-	if (!m_runtimeInterveningDisabled) {
-		GEODE_UNWRAP(m_handlers[handle]->init());
-		GEODE_UNWRAP(m_handlers[handle]->interveneFunction());
-	}
+	
 	
 	return geode::Ok(std::move(handle));
 }
@@ -48,12 +55,16 @@ void* Pool::getCommonHandler(void* originalFunction, size_t uniqueIndex, ptrdiff
 	if (m_handlerList.size() <= uniqueIndex || m_handlerList[uniqueIndex] == nullptr) {
 		m_handlerList.resize(uniqueIndex + 1, nullptr);
 
-		for (auto& [handle, handler] : m_handlers) {
-			if (handler->m_address == originalFunction) {
-				m_handlerList[uniqueIndex] = handler.get();
-				break;
-			}
+		auto handle = reinterpret_cast<HandlerHandle>(originalFunction);
+		if (m_handlers.find(handle) == m_handlers.end()) {
+			auto handler = Handler::createPatchless(originalFunction, HandlerMetadata{
+				.m_convention = std::make_shared<DefaultConvention>(),
+				.m_abstract = AbstractFunction::from<void(void)>()
+			});
+			m_handlers.emplace(handle, std::move(handler));
 		}
+		m_handlerList[uniqueIndex] = m_handlers[handle].get();
+
 		auto trampoline = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(commonHandler) + trampolineOffset);
 
 		auto metadata = HookMetadata{
