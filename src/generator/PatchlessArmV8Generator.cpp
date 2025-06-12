@@ -14,15 +14,22 @@ HandlerGenerator::HandlerReturn PatchlessArmV8HandlerGenerator::handlerBytes(uin
 
 	a.adr(X14, 0);
 
-    a.stp(X29, X30, SP, -32, PreIndex);
+    a.stp(X29, X30, SP, -0xc0, ArmV8IndexKind::PreIndex);
     a.mov(X29, SP);
-    a.stp(X19, X20, SP, 16, SignedOffset);
+    a.stp(X19, X20, SP, 0x10, ArmV8IndexKind::SignedOffset);
     
     a.mov(X19, X30);
     a.mov(X20, X14);
 
-    a.push({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9});
-    a.push({D0, D1, D2, D3, D4, D5, D6, D7});
+    a.stp(X0, X1, SP, 0x20, ArmV8IndexKind::SignedOffset);
+    a.stp(X2, X3, SP, 0x30, ArmV8IndexKind::SignedOffset);
+    a.stp(X4, X5, SP, 0x40, ArmV8IndexKind::SignedOffset);
+    a.stp(X6, X7, SP, 0x50, ArmV8IndexKind::SignedOffset);
+    a.stp(X8, X9, SP, 0x60, ArmV8IndexKind::SignedOffset);
+    a.stp(D0, D1, SP, 0x70, ArmV8IndexKind::SignedOffset);
+    a.stp(D2, D3, SP, 0x80, ArmV8IndexKind::SignedOffset);
+    a.stp(D4, D5, SP, 0x90, ArmV8IndexKind::SignedOffset);
+    a.stp(D6, D7, SP, 0xa0, ArmV8IndexKind::SignedOffset);
 
     // set the parameters
     a.mov(X0, X16);
@@ -39,13 +46,20 @@ HandlerGenerator::HandlerReturn PatchlessArmV8HandlerGenerator::handlerBytes(uin
     a.mov(X16, X0);
 
     // recover registers
-    a.pop({D0, D1, D2, D3, D4, D5, D6, D7});
-    a.pop({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9});
+    a.ldp(D6, D7, SP, 0xa0, ArmV8IndexKind::SignedOffset);
+    a.ldp(D4, D5, SP, 0x90, ArmV8IndexKind::SignedOffset);
+    a.ldp(D2, D3, SP, 0x80, ArmV8IndexKind::SignedOffset);
+    a.ldp(D0, D1, SP, 0x70, ArmV8IndexKind::SignedOffset);
+    a.ldp(X8, X9, SP, 0x60, ArmV8IndexKind::SignedOffset);
+    a.ldp(X6, X7, SP, 0x50, ArmV8IndexKind::SignedOffset);
+    a.ldp(X4, X5, SP, 0x40, ArmV8IndexKind::SignedOffset);
+    a.ldp(X2, X3, SP, 0x30, ArmV8IndexKind::SignedOffset);
+    a.ldp(X0, X1, SP, 0x20, ArmV8IndexKind::SignedOffset);
 
     a.blr(X16);
 
-    a.push({X0, X8});
-    a.push({D0, D1});
+    a.stp(X0, X8, SP, 0x20, ArmV8IndexKind::SignedOffset);
+    a.stp(D0, D1, SP, 0x30, ArmV8IndexKind::SignedOffset);
 
     // call the post handler, decrementing
     a.mov(X4, 1);
@@ -58,11 +72,11 @@ HandlerGenerator::HandlerReturn PatchlessArmV8HandlerGenerator::handlerBytes(uin
     a.mov(X16, X19);
 
     // recover the return values
-    a.pop({D0, D1});
-    a.pop({X0, X8});
+    a.ldp(D0, D1, SP, 0x30, ArmV8IndexKind::SignedOffset);
+    a.ldp(X0, X8, SP, 0x20, ArmV8IndexKind::SignedOffset);
 
-    a.ldp(X19, X20, SP, 16, SignedOffset);
-    a.ldp(X29, X30, SP, 32, PostIndex);
+    a.ldp(X19, X20, SP, 0x10, ArmV8IndexKind::SignedOffset);
+    a.ldp(X29, X30, SP, 0xc0, ArmV8IndexKind::PostIndex);
 
     // done!
     a.br(X16);

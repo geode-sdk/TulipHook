@@ -39,10 +39,10 @@ Handler& Pool::getHandler(HandlerHandle const& handle) {
 	return *m_handlers.at(handle);
 }
 
-void Pool::getCommonHandler(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType) {
+void* Pool::getCommonHandler(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType) {
 	if (handlerType == 1) {
 		Handler::decrementIndex();
-		return;
+		return nullptr;
 	}
 
 	if (m_handlerList.size() <= uniqueIndex || m_handlerList[uniqueIndex] == nullptr) {
@@ -65,10 +65,10 @@ void Pool::getCommonHandler(void* originalFunction, size_t uniqueIndex, ptrdiff_
 	auto handler = m_handlerList[uniqueIndex];
 	auto content = handler->m_content;
 	Handler::incrementIndex(content);
-	return;
+	return Handler::getNextFunction(content);
 }
 
-void Pool::getCommonHandlerStatic(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType) {
+void* Pool::getCommonHandlerStatic(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType) {
 	return Pool::get().getCommonHandler(originalFunction, uniqueIndex, trampolineOffset, commonHandler, handlerType);
 }
 
