@@ -28,6 +28,10 @@ static uint32_t val(ArmV8Register reg) {
 }
 
 void ArmV8Assembler::mov(ArmV8Register dst, ArmV8Register src) {
+    if (src == ArmV8Register::SP) {
+        this->write32(0x910003E0 | val(dst));
+        return;
+    }
     const auto srcShifted = val(src) << 16;
     this->write32(0xAA0003E0 | srcShifted | val(dst));
 }
