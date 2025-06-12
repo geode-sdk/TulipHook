@@ -94,14 +94,74 @@ void ArmV7Assembler::ldr(ArmV7Register dst, std::string const& label) {
 	this->rwl(8, 3, vall(dst));
 }
 
-void ArmV7Assembler::ldrpcn() {
-	this->write16(0xf85f);
-	this->write16(0xf000);
+void ArmV7Assembler::ldr(ArmV7Register dst, ArmV7Register src, int32_t offset) {
+	if (src == ArmV7Register::SP) {
+		this->write16(0x9800);
+		this->rwl(8, 3, vall(dst));
+		this->rwl(0, 8, offset >> 2);
+	}
+	else {
+		this->write16(0x6800);
+		this->rwl(0, 3, vall(dst));
+		this->rwl(3, 3, vall(src));
+		this->rwl(6, 7, offset >> 2);
+	}
+}
+void ArmV7Assembler::str(ArmV7Register src, ArmV7Register dst, int32_t offset) {
+	if (dst == ArmV7Register::SP) {
+		this->write16(0x9000);
+		this->rwl(8, 3, vall(src));
+		this->rwl(0, 8, offset >> 2);
+	}
+	else {
+		this->write16(0x6000);
+		this->rwl(0, 3, vall(src));
+		this->rwl(3, 3, vall(dst));
+		this->rwl(6, 7, offset >> 2);
+	}
 }
 
-void ArmV7Assembler::ldrpcn2() {
-	this->write16(0xf004);
-	this->write16(0xe51f);
+void ArmV7Assembler::vldr(ArmV7Register dst, ArmV7Register src, int32_t offset) {
+	this->write16(0xed90);
+	this->rwl(0, 4, val(src));
+	this->write16(0x0b00);
+	this->rwl(0, 8, offset >> 2);
+	this->rwl(12, 4, val(dst));
+}
+
+void ArmV7Assembler::vstr(ArmV7Register src, ArmV7Register dst, int32_t offset) {
+	this->write16(0xed80);
+	this->rwl(0, 4, val(src));
+	this->write16(0x0b00);
+	this->rwl(0, 8, offset >> 2);
+	this->rwl(12, 4, val(dst));
+}
+
+void ArmV7Assembler::ldrw(ArmV7Register dst, ArmV7Register src, int32_t offset) {
+	this->write16(0xf8d0);
+	this->rwl(0, 4, val(dst));
+	this->write16(0x0000);
+	this->rwl(0, 8, offset >> 2);
+	this->rwl(12, 4, val(src));
+}
+
+void ArmV7Assembler::strw(ArmV7Register src, ArmV7Register dst, int32_t offset) {
+	this->write16(0xf8c0);
+	this->rwl(0, 4, val(src));
+	this->write16(0x0000);
+	this->rwl(0, 8, offset >> 2);
+	this->rwl(12, 4, val(dst));
+}
+
+void ArmV7Assembler::ldrArm(ArmV7Register dst, ArmV7Register src, int32_t offset) {
+	this->write16(0x0000);
+	this->rwl(0, 12, offset);
+	this->rwl(12, 4, val(dst));
+	this->write16(0xe510);
+	this->rwl(0, 4, val(src));
+	if (offset < 0) {
+		this->rwl(7, 1, 1);
+	}
 }
 
 void ArmV7Assembler::mov(ArmV7Register dst, ArmV7Register src) {
@@ -109,6 +169,22 @@ void ArmV7Assembler::mov(ArmV7Register dst, ArmV7Register src) {
 	this->rwl(0, 3, vall(dst));
 	this->rwl(3, 4, val(src));
 	this->rwl(7, 1, valh(dst));
+}
+
+void ArmV7Assembler::sub(ArmV7Register dst, ArmV7Register src, int16_t imm) {
+	if (dst == ArmV7Register::SP && src == ArmV7Register::SP) {
+		this->write16(0xb080);
+		this->rwl(0, 7, imm >> 2);
+	}
+	// unimplemented
+}
+
+void ArmV7Assembler::add(ArmV7Register dst, ArmV7Register src, int16_t imm) {
+	if (dst == ArmV7Register::SP && src == ArmV7Register::SP) {
+		this->write16(0xb000);
+		this->rwl(0, 7, imm >> 2);
+	}
+	// unimplemented
 }
 
 void ArmV7Assembler::blx(ArmV7Register dst) {

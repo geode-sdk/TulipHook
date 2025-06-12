@@ -9,64 +9,73 @@
 using namespace tulip::hook;
 
 namespace {
-	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content, void* originalReturn) {
+	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content) {
 		Handler::incrementIndex(content);
 		auto ret = Handler::getNextFunction(content);
-		Handler::pushData(originalReturn);
-
 		return ret;
 	}
 
-	void* TULIP_HOOK_DEFAULT_CONV postHandler() {
-		auto ret = Handler::popData();
+	void TULIP_HOOK_DEFAULT_CONV postHandler() {
 		Handler::decrementIndex();
-		return ret;
+		return;
 	}
 }
 
 std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
+	using enum ArmV8IndexKind;
 
     // preserve registers
-	a.push({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15});
-	a.push({D0, D1, D2, D3, D4, D5, D6, D7});
-	// v8-15 are callee saved.
-	a.push({D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31});
+	a.stp(X29, X30, SP, -0xc0, PreIndex);
+    a.mov(X29, SP);
+
+    a.stp(X0, X1, SP, 0x10, SignedOffset);
+    a.stp(X2, X3, SP, 0x20, SignedOffset);
+    a.stp(X4, X5, SP, 0x30, SignedOffset);
+    a.stp(X6, X7, SP, 0x40, SignedOffset);
+    a.stp(X8, X9, SP, 0x50, SignedOffset);
+    a.stp(D0, D1, SP, 0x60, SignedOffset);
+    a.stp(D2, D3, SP, 0x70, SignedOffset);
+    a.stp(D4, D5, SP, 0x80, SignedOffset);
+    a.stp(D6, D7, SP, 0x90, SignedOffset);
 
 	// set the parameters
 	a.ldr(X0, "content");
-	a.mov(X1, X30);
 
 	// call the pre handler, incrementing
-	a.ldr(X2, "handlerPre");
-	a.blr(X2);
-	a.mov(X30, X0);
+	a.ldr(X1, "handlerPre");
+	a.blr(X1);
+	a.mov(X16, X0);
 
 	// recover registers
-	a.pop({D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31});
-	a.pop({D0, D1, D2, D3, D4, D5, D6, D7});
-	a.pop({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15});
+	a.ldp(D6, D7, SP, 0x90, SignedOffset);
+	a.ldp(D4, D5, SP, 0x80, SignedOffset);
+	a.ldp(D2, D3, SP, 0x70, SignedOffset);
+	a.ldp(D0, D1, SP, 0x60, SignedOffset);
+	a.ldp(X8, X9, SP, 0x50, SignedOffset);
+	a.ldp(X6, X7, SP, 0x40, SignedOffset);
+	a.ldp(X4, X5, SP, 0x30, SignedOffset);
+	a.ldp(X2, X3, SP, 0x20, SignedOffset);
+	a.ldp(X0, X1, SP, 0x10, SignedOffset);
 
 	// call the func
-	a.blr(X30);
+	a.blr(X16);
 
 	// preserve the return values
-	a.push({X0, X1, X2, X3, X4, X5, X6, X7});
-	a.push({D0, D1, D2, D3, D4, D5, D6, D7});
+	a.stp(X0, X8, SP, 0x10, SignedOffset);
+	a.stp(D0, D1, SP, 0x20, SignedOffset);
 
 	// call the post handler, decrementing
 	a.ldr(X0, "handlerPost");
 	a.blr(X0);
 
-	// recover the original return
-	a.mov(X30, X0);
-
 	// recover the return values
-	a.pop({D0, D1, D2, D3, D4, D5, D6, D7});
-	a.pop({X0, X1, X2, X3, X4, X5, X6, X7});
+	a.ldp(D0, D1, SP, 0x20, SignedOffset);
+	a.ldp(X0, X8, SP, 0x10, SignedOffset);
 
 	// done!
+	a.ldp(X29, X30, SP, 0xc0, PostIndex);
 	a.br(X30);
 
 	// Align to 8 bytes for ldr.

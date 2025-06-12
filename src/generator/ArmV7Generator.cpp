@@ -10,18 +10,14 @@
 using namespace tulip::hook;
 
 namespace {
-	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content, void* originalReturn) {
+	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content) {
 		Handler::incrementIndex(content);
 		auto ret = Handler::getNextFunction(content);
-		Handler::pushData(originalReturn);
-
 		return ret;
 	}
 
-	void* TULIP_HOOK_DEFAULT_CONV postHandler() {
-		auto ret = Handler::popData();
+	void TULIP_HOOK_DEFAULT_CONV postHandler() {
 		Handler::decrementIndex();
-		return ret;
 	}
 }
 
@@ -30,40 +26,52 @@ std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
 	using enum ArmV7Register;
 
 	// preserve registers
-	a.push({R0, R1, R2, R3});
-	a.vpush({D0, D1, D2, D3});
+	a.push({R4, LR});
+	a.sub(SP, SP, 0x30);
+
+	a.str(R0, SP, 0x00);
+	a.str(R1, SP, 0x04);
+	a.str(R2, SP, 0x08);
+	a.str(R3, SP, 0x0C);
+	a.vstr(D0, SP, 0x10);
+	a.vstr(D1, SP, 0x18);
+	a.vstr(D2, SP, 0x20);
+	a.vstr(D3, SP, 0x28);
 
 	// set the parameters
 	a.ldr(R0, "content");
-	a.mov(R1, LR);
 
 	// call the pre handler, incrementing
-	a.ldr(R2, "handlerPre");
-	a.blx(R2);
-	a.mov(LR, R0);
+	a.ldr(R1, "handlerPre");
+	a.blx(R1);
+	a.mov(R4, R0);
 
 	// recover registers
-	a.vpop({D0, D1, D2, D3});
-	a.pop({R0, R1, R2, R3});
+	a.vldr(D3, SP, 0x28);
+	a.vldr(D2, SP, 0x20);
+	a.vldr(D1, SP, 0x18);
+	a.vldr(D0, SP, 0x10);
+	a.ldr(R3, SP, 0x0C);
+	a.ldr(R2, SP, 0x08);
+	a.ldr(R1, SP, 0x04);
+	a.ldr(R0, SP, 0x00);
 
 	// call the func
-	a.blx(LR);
+	a.blx(R4);
 
 	// preserve the return values
-	a.push({R0, R1});
+	a.str(R0, SP, 0x00);
 
 	// call the post handler, decrementing
 	a.ldr(R0, "handlerPost");
 	a.blx(R0);
 
-	// recover the original return
-	a.mov(LR, R0);
-
 	// recover the return values
-	a.pop({R0, R1});
+	a.ldr(R0, SP, 0x00);
 
 	// done!
-	a.bx(LR);
+	a.add(SP, SP, 0x30);
+	a.pop({R4, PC});
 
 	a.label("handlerPre");
 	a.write32(reinterpret_cast<uint64_t>(preHandler));
@@ -90,11 +98,11 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address, si
 
 	if (address & 0x1) {
 		// thumb
-		a.ldrpcn();
+		a.ldrw(PC, PC, -4);
 	}
 	else {
 		// arm
-		a.ldrpcn2();
+		a.ldrArm(PC, PC, -4);
 	}
 	
 	// my thumbs will eat me

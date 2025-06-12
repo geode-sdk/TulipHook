@@ -57,14 +57,22 @@ namespace tulip::hook {
 
 		void ldr(ArmV7Register dst, std::string const& label);
 
-		// ldr.w pc, [pc, #-0x4]
-		// i cant bother to do stuff
-		void ldrpcn();
+		void ldr(ArmV7Register dst, ArmV7Register src, int32_t offset);
+		void str(ArmV7Register src, ArmV7Register dst, int32_t offset);
+
+		void vldr(ArmV7Register dst, ArmV7Register src, int32_t offset);
+		void vstr(ArmV7Register src, ArmV7Register dst, int32_t offset);
+
+		void ldrw(ArmV7Register dst, ArmV7Register src, int32_t offset);
+		void strw(ArmV7Register src, ArmV7Register dst, int32_t offset);
 
 		// non thumb version
-		void ldrpcn2();
+		void ldrArm(ArmV7Register dst, ArmV7Register src, int32_t offset);
 
 		void mov(ArmV7Register dst, ArmV7Register src);
+
+		void sub(ArmV7Register dst, ArmV7Register src, int16_t imm);
+		void add(ArmV7Register dst, ArmV7Register src, int16_t imm);
 
 		void blx(ArmV7Register dst);
 		void bx(ArmV7Register src);
