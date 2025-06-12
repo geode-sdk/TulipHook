@@ -14,7 +14,7 @@ HandlerGenerator::HandlerReturn PatchlessArmV8HandlerGenerator::handlerBytes(uin
 
 	a.adr(X14, 0);
 
-    a.stp(X29, X30, SP, -16, PreIndex);
+    a.stp(X29, X30, SP, -32, PreIndex);
     a.mov(X29, SP);
     a.stp(X19, X20, SP, 16, SignedOffset);
     
