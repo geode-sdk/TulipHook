@@ -74,3 +74,32 @@ std::shared_ptr<CallingConvention> tulip::hook::createConvention(TulipConvention
 geode::Result<> tulip::hook::disableRuntimeIntervening(void* commonHandlerSpace) noexcept {
 	return Pool::get().disableRuntimeIntervening(commonHandlerSpace);
 }
+
+GenerateTrampolineReturn tulip::hook::generateTrampoline(
+	void* address, void* trampoline, void const* originalBuffer, size_t targetSize, HandlerMetadata const& metadata
+) noexcept {
+	auto generator = Target::get().getHandlerGenerator(address, trampoline, nullptr, nullptr, metadata);
+	if (GEODE_UNWRAP_EITHER(encode, err, generator->trampolineBytes(targetSize, originalBuffer))) {
+		return GenerateTrampolineReturn{
+			.trampolineBytes = std::move(encode.m_trampolineBytes),
+			.codeSize = encode.m_codeSize,
+			.originalOffset = encode.m_originalOffset
+		};
+	}
+	else {
+		return GenerateTrampolineReturn{
+			.errorMessage = err
+		};
+	}
+}
+
+GenerateHandlerReturn tulip::hook::generateHandler(
+	void* handler, size_t commonHandlerSpaceOffset
+) noexcept {
+	auto generator = Target::get().getPatchlessGenerator(handler, nullptr, nullptr, (void*)commonHandlerSpaceOffset, HandlerMetadata{});
+	auto ret = generator->handlerBytes(reinterpret_cast<uint64_t>(handler));
+	return GenerateHandlerReturn{
+		.handlerBytes = std::move(ret.m_handlerBytes),
+		.codeSize = ret.m_codeSize,
+	};
+}

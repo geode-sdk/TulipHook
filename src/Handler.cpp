@@ -29,6 +29,17 @@ geode::Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMe
 	return geode::Ok(std::move(ret));
 }
 
+std::unique_ptr<Handler> Handler::createPatchless(void* address, HandlerMetadata const& metadata) {
+	auto ret = std::make_unique<Handler>(address, metadata);
+
+	ret->m_content = new (std::nothrow) HandlerContent();
+	if (!ret->m_content) {
+		return nullptr;
+	}
+	
+	return ret;
+}
+
 Handler::~Handler() {}
 
 geode::Result<> Handler::init() {
@@ -42,8 +53,8 @@ geode::Result<> Handler::init() {
 
 	GEODE_UNWRAP_INTO(auto minIntervener, generator->generateIntervener(0));
 
-	GEODE_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(minIntervener.size()));
-	m_trampolineSize = trampoline.m_trampoline.m_size;
+	GEODE_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(minIntervener.size(), m_address));
+	m_trampolineSize = trampoline.m_codeSize;
 
 	GEODE_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener(trampoline.m_originalOffset));
 

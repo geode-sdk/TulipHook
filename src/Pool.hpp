@@ -14,8 +14,8 @@ namespace tulip::hook {
 		std::vector<Handler*> m_handlerList;
 		bool m_runtimeInterveningDisabled = false;
 
-		static void* getCommonHandlerStatic(void* originalFunction, size_t uniqueIndex);
-		void* getCommonHandler(void* originalFunction, size_t uniqueIndex);
+		static void* getCommonHandlerStatic(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType);
+		void* getCommonHandler(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType);
 
 		static Pool& get();
 

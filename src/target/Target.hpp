@@ -43,6 +43,14 @@ namespace tulip::hook {
 		virtual geode::Result<> rawWriteMemory(void* destination, void const* source, size_t size) = 0;
 		virtual uint32_t getWritableProtection() = 0;
 
+		virtual geode::Result<> finalizePage();
+
+		virtual std::unique_ptr<HandlerGenerator> getPatchlessGenerator(
+			void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
+		) {
+			return nullptr;
+		}
+
 		virtual std::unique_ptr<HandlerGenerator> getHandlerGenerator(
 			void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
 		) = 0;

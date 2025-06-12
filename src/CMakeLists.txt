@@ -30,14 +30,18 @@ elseif(APPLE)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
 		assembler/X86Assembler.cpp
 		assembler/X64Assembler.cpp
+		assembler/ArmV7Assembler.cpp
 		assembler/ArmV8Assembler.cpp
 		convention/MacosIntelConvention.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
+		generator/ArmV7Generator.cpp
 		generator/ArmV8Generator.cpp
+		generator/PatchlessArmV8Generator.cpp
 		target/DarwinTarget.cpp
 		target/MacosIntelTarget.cpp
 		target/MacosM1Target.cpp
+		target/iOSTarget.cpp
 	)
 elseif(ANDROID OR UNIX)
 	set(TULIP_HOOK_LINK_DOBBY On)
@@ -55,10 +59,20 @@ else()
 	message(FATAL_ERROR "Unsupported platform.")
 endif()
 
-add_library(${PROJECT_NAME} STATIC
-	${TULIP_HOOK_BASE_SOURCES}
-	${TULIP_HOOK_PLATFORM_SOURCES}
-)
+if (TULIP_BUILD_DYNAMIC)
+	add_library(${PROJECT_NAME} SHARED
+		${TULIP_HOOK_BASE_SOURCES}
+		${TULIP_HOOK_PLATFORM_SOURCES}
+	)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC -DTULIP_HOOK_DYNAMIC=1)
+else()
+	add_library(${PROJECT_NAME} STATIC
+		${TULIP_HOOK_BASE_SOURCES}
+		${TULIP_HOOK_PLATFORM_SOURCES}
+	)
+endif()
+
+
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 

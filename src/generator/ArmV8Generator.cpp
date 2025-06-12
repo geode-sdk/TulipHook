@@ -24,15 +24,14 @@ namespace {
 	}
 }
 
-std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
+HandlerGenerator::HandlerReturn ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
 
+	// TODO: single push and pop
     // preserve registers
-	a.push({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15});
+	a.push({X0, X1, X2, X3, X4, X5, X6, X7, X8, X19});
 	a.push({D0, D1, D2, D3, D4, D5, D6, D7});
-	// v8-15 are callee saved.
-	a.push({D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31});
 
 	// set the parameters
 	a.ldr(X0, "content");
@@ -44,15 +43,14 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 	a.mov(X30, X0);
 
 	// recover registers
-	a.pop({D16, D17, D18, D19, D20, D21, D22, D23, D24, D25, D26, D27, D28, D29, D30, D31});
 	a.pop({D0, D1, D2, D3, D4, D5, D6, D7});
-	a.pop({X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15});
+	a.pop({X0, X1, X2, X3, X4, X5, X6, X7, X8, X19});
 
 	// call the func
 	a.blr(X30);
 
 	// preserve the return values
-	a.push({X0, X1, X2, X3, X4, X5, X6, X7});
+	a.push({X0, X8});
 	a.push({D0, D1, D2, D3, D4, D5, D6, D7});
 
 	// call the post handler, decrementing
@@ -64,7 +62,7 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 
 	// recover the return values
 	a.pop({D0, D1, D2, D3, D4, D5, D6, D7});
-	a.pop({X0, X1, X2, X3, X4, X5, X6, X7});
+	a.pop({X0, X8});
 
 	// done!
 	a.br(X30);
@@ -84,7 +82,12 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 
 	a.updateLabels();
 
-	return std::move(a.m_buffer);
+	auto codeSize = a.m_buffer.size();
+
+	return HandlerReturn{
+		.m_handlerBytes = std::move(a.m_buffer),
+		.m_codeSize = codeSize
+	};
 }
 
 std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
@@ -123,30 +126,4 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, si
 	a.updateLabels();
 
     return std::move(a.m_buffer);
-}
-
-geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generateTrampoline(uint64_t target) {
-	auto origin = new CodeMemBlock(reinterpret_cast<uint64_t>(m_address), target);
-	auto relocated = new CodeMemBlock();
-	auto originBuffer = m_address;
-	auto relocatedBuffer = m_trampoline;
-
-	static thread_local std::string error;
-	error = "";
-
-	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
-		auto res = Target::get().writeMemory(dest, src, size);
-		if (!res) {
-			error = res.unwrapErr();
-		}
-	});
-
-	if (!error.empty()) {
-		return geode::Err(std::move(error));
-	}
-
-	if (relocated->size == 0) {
-		return geode::Err("Failed to relocate original function");
-	}
-	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, relocated->size}, relocated->size});
 }

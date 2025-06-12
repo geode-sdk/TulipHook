@@ -38,6 +38,7 @@ namespace tulip::hook {
 		std::vector<uint8_t> m_modifiedBytes;
 
 		static geode::Result<std::unique_ptr<Handler>> create(void* address, HandlerMetadata const& metadata);
+		static std::unique_ptr<Handler> createPatchless(void* address, HandlerMetadata const& metadata);
 		~Handler();
 
 		geode::Result<> init();

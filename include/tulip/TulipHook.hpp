@@ -49,4 +49,30 @@ namespace tulip::hook {
 	TULIP_HOOK_DLL std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept;
 
 	TULIP_HOOK_DLL geode::Result<void, std::string> disableRuntimeIntervening(void* commonHandlerSpace) noexcept;
+
+	struct GenerateTrampolineReturn {
+		// the trampoline bytes that are generated after reloc
+		std::vector<uint8_t> trampolineBytes;
+		// the code size of the trampoline, "usually" equal to the size of the bytes vector
+		size_t codeSize;
+		// the offset of the original bytes in the trampoline, the offset from the beginning the trampoline jumps to
+		size_t originalOffset;
+		// an error message if the generation failed
+		std::string errorMessage;
+	};
+
+	TULIP_HOOK_DLL GenerateTrampolineReturn generateTrampoline(
+		void* address, void* trampoline, void const* originalBuffer, size_t targetSize, HandlerMetadata const& metadata = HandlerMetadata{}
+	) noexcept;
+
+	struct GenerateHandlerReturn {
+		// the handler bytes that are generated
+		std::vector<uint8_t> handlerBytes;
+		// the code size of the handler, "usually" equal to the size of the bytes vector
+		size_t codeSize;
+	};
+
+	TULIP_HOOK_DLL GenerateHandlerReturn generateHandler(
+		void* handler, size_t commonHandlerSpaceOffset
+	) noexcept;
 }
