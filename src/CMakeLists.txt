@@ -12,6 +12,7 @@ file(GLOB TULIP_HOOK_BASE_SOURCES
 	assembler/ArmV8Assembler.cpp
 	disassembler/BaseDisassembler.cpp
 	disassembler/ArmV8Disassembler.cpp
+	disassembler/ThumbV7Disassembler.cpp
 	convention/CallingConvention.cpp
 	convention/DefaultConvention.cpp
 	generator/Generator.cpp
