@@ -5,7 +5,12 @@ project(TulipHook LANGUAGES CXX C VERSION 2.4.2)
 file(GLOB TULIP_HOOK_BASE_SOURCES
 	*.cpp
 	assembler/BaseAssembler.cpp
+	assembler/X86Assembler.cpp
+	assembler/X64Assembler.cpp
+	assembler/ArmV7Assembler.cpp
+	assembler/ArmV8Assembler.cpp
 	disassembler/BaseDisassembler.cpp
+	disassembler/ArmV8Disassembler.cpp
 	convention/CallingConvention.cpp
 	convention/DefaultConvention.cpp
 	generator/Generator.cpp
@@ -16,8 +21,6 @@ if(WIN32)
 	set(TULIP_HOOK_LINK_DOBBY Off)
 	set(TULIP_HOOK_LINK_CAPSTONE On)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
-		assembler/X86Assembler.cpp
-		assembler/X64Assembler.cpp
 		convention/Windows32Convention.cpp
 		convention/Windows64Convention.cpp
 		generator/X86Generator.cpp
@@ -29,11 +32,7 @@ elseif(APPLE)
 	set(TULIP_HOOK_LINK_DOBBY On)
 	set(TULIP_HOOK_LINK_CAPSTONE On)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
-		assembler/X86Assembler.cpp
-		assembler/X64Assembler.cpp
-		assembler/ArmV8Assembler.cpp
 		convention/MacosIntelConvention.cpp
-		disassembler/ArmV8Disassembler.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		generator/ArmV8Generator.cpp
@@ -45,9 +44,6 @@ elseif(ANDROID OR UNIX)
 	set(TULIP_HOOK_LINK_DOBBY On)
 	set(TULIP_HOOK_LINK_CAPSTONE Off)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
-		assembler/ArmV7Assembler.cpp
-		assembler/ArmV8Assembler.cpp
-		disassembler/ArmV8Disassembler.cpp
 		generator/ArmV7Generator.cpp
 		generator/ArmV8Generator.cpp
 		target/PosixTarget.cpp
