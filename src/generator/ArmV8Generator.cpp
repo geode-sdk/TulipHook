@@ -392,7 +392,7 @@ std::vector<uint8_t> ArmV8Generator::commonHandlerBytes(int64_t handler, ptrdiff
     a.stp(X19, X20, SP, 0x10, SignedOffset);
 
     a.mov(X19, X30);
-    a.mov(X20, X14);
+    a.mov(X20, X13);
 
     a.stp(X0, X1, SP, 0x20, SignedOffset);
     a.stp(X2, X3, SP, 0x30, SignedOffset);
