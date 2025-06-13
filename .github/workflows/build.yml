@@ -60,7 +60,7 @@ jobs:
         - name: 'iOS'
           id: ios-arm
           os: macos-14
-          build_tests: true
+          build_tests: false
           extra_flags: "-DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=iOS"
           out_paths: './build/src/libTulipHook.a'
 
