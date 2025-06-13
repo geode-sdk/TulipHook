@@ -103,6 +103,12 @@ namespace tulip::hook {
 		void blr(ArmV8Register reg);
 		void nop();
 
+		void ldr(ArmV8Register dst, ArmV8Register src, int16_t imm);
+		void ldr(ArmV8Register dst, int32_t literal);
+
+		void tbz(ArmV8Register reg, uint8_t bit, int16_t imm);
+		void tbnz(ArmV8Register reg, uint8_t bit, int16_t imm);
+
 		/* Pseudo instructions */
 
 		void push(ArmV8RegisterArray const& array);

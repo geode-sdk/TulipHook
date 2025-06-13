@@ -129,4 +129,27 @@ void ArmV8Assembler::pop(ArmV8RegisterArray const& array) {
         this->ldp(array[alignedSize - i - 2], array[alignedSize - i - 1], SP, 0x10, PostIndex);
 }
 
+void ArmV8Assembler::ldr(ArmV8Register dst, ArmV8Register src, int16_t imm) {
+    const auto srcShifted = val(src) << 5;
+    const auto offsetShifted = static_cast<uint32_t>(imm >> 2) << 10;
+    const auto simdShifted = is_simd(dst) << 26;
+    this->write32(0xf9400000 | srcShifted | offsetShifted | val(dst) | simdShifted);
+}
+void ArmV8Assembler::ldr(ArmV8Register dst, int32_t literal) {
+    const auto literalShifted = static_cast<uint32_t>(literal >> 2) << 5;
+    const auto simdShifted = is_simd(dst) << 26;
+    this->write32(0x58000000 | literalShifted | val(dst) | simdShifted);
+}
+
+void ArmV8Assembler::tbz(ArmV8Register reg, uint8_t bit, int16_t imm) {
+    const auto literalShifted = static_cast<uint32_t>(imm >> 2) << 5;
+    const auto bitShifted = static_cast<uint32_t>(bit) << 19 | static_cast<uint32_t>(bit >> 5) << 31;
+    this->write32(0x36000000 | literalShifted | bitShifted | val(reg));
+}
+void ArmV8Assembler::tbnz(ArmV8Register reg, uint8_t bit, int16_t imm) {
+    const auto literalShifted = static_cast<uint32_t>(imm >> 2) << 5;
+    const auto bitShifted = static_cast<uint32_t>(bit) << 19 | static_cast<uint32_t>(bit >> 5) << 31;
+    this->write32(0x37000000 | literalShifted | bitShifted | val(reg));
+}
+
 void ArmV8Assembler::nop() { this->write32(0xD503201F); }

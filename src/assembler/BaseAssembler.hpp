@@ -24,7 +24,7 @@ namespace tulip::hook {
 		BaseAssembler(int64_t baseAddress);
 		BaseAssembler(BaseAssembler const&) = delete;
 		BaseAssembler(BaseAssembler&&) = delete;
-		~BaseAssembler();
+		virtual ~BaseAssembler();
 
 		int64_t currentAddress() const;
 		// maybe use span?

@@ -5,6 +5,7 @@ project(TulipHook LANGUAGES CXX C VERSION 2.4.2)
 file(GLOB TULIP_HOOK_BASE_SOURCES
 	*.cpp
 	assembler/BaseAssembler.cpp
+	disassembler/BaseDisassembler.cpp
 	convention/CallingConvention.cpp
 	convention/DefaultConvention.cpp
 	generator/Generator.cpp
@@ -32,6 +33,7 @@ elseif(APPLE)
 		assembler/X64Assembler.cpp
 		assembler/ArmV8Assembler.cpp
 		convention/MacosIntelConvention.cpp
+		disassembler/ArmV8Disassembler.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		generator/ArmV8Generator.cpp
@@ -45,6 +47,7 @@ elseif(ANDROID OR UNIX)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
 		assembler/ArmV7Assembler.cpp
 		assembler/ArmV8Assembler.cpp
+		disassembler/ArmV8Disassembler.cpp
 		generator/ArmV7Generator.cpp
 		generator/ArmV8Generator.cpp
 		target/PosixTarget.cpp

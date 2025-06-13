@@ -2,9 +2,8 @@
 
 #include "../Handler.hpp"
 #include "../assembler/ArmV8Assembler.hpp"
+#include "../disassembler/ArmV8Disassembler.hpp"
 #include "../target/PlatformTarget.hpp"
-
-#include <InstructionRelocation/InstructionRelocation.h>
 
 using namespace tulip::hook;
 
@@ -135,27 +134,103 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, si
 }
 
 geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generateTrampoline(uint64_t target) {
-	auto origin = new CodeMemBlock(reinterpret_cast<uint64_t>(m_address), target);
-	auto relocated = new CodeMemBlock();
-	auto originBuffer = m_address;
-	auto relocatedBuffer = m_trampoline;
+	std::vector<uint8_t> originalBytes(target);
+	std::memcpy(originalBytes.data(), m_address, target);
 
-	static thread_local std::string error;
-	error = "";
+	auto address = reinterpret_cast<int64_t>(m_address);
+	auto trampoline = reinterpret_cast<int64_t>(m_trampoline);
 
-	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
-		auto res = Target::get().writeMemory(dest, src, size);
-		if (!res) {
-			error = res.unwrapErr();
+	ArmV8Disassembler d(address, originalBytes);
+	ArmV8Assembler a(trampoline);
+	using enum ArmV8Register;
+
+	while (d.hasNext()) {
+		using enum ArmV8InstructionType;
+		auto ins = d.disassembleNext();
+		
+		switch (ins->m_type) {
+			case ArmV8InstructionType::B: {
+				auto const newOffset = ins->m_literal - a.currentAddress();
+				if (newOffset < -0x8000000 || newOffset > 0x7FFFFFF) {
+					a.adrp(X16, newOffset & ~0xFFFll);
+					a.add(X16, X16, newOffset & 0xFFF);
+					a.br(X16);
+				} else {
+					a.b(newOffset);
+				}
+				break;
+			}
+			case ArmV8InstructionType::BL: {
+				auto const newOffset = ins->m_literal - a.currentAddress();
+				if (newOffset < -0x2000000 || newOffset > 0x1FFFFFF) {
+					a.adrp(X16, newOffset & ~0xFFFll);
+					a.add(X16, X16, newOffset & 0xFFF);
+					a.blr(X16);
+				} else {
+					a.bl(newOffset);
+				}
+				break;
+			}
+			case ArmV8InstructionType::LDR_Literal: {
+				auto const newOffset = ins->m_literal - a.currentAddress();
+				if (newOffset < -0x80000 || newOffset > 0x7FFFF) {
+					a.adrp(X16, newOffset & ~0xFFFll);
+					a.add(X16, X16, newOffset & 0xFFF);
+					a.ldr(ins->m_dst1, X16, 0);
+				} else {
+					a.ldr(ins->m_dst1, newOffset);
+				}
+				break;
+			}
+			case ArmV8InstructionType::ADR: {
+				auto const newOffset = ins->m_literal - a.currentAddress();
+				a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
+				a.add(ins->m_dst1, ins->m_dst1, newOffset & 0xFFF);
+			}
+			case ArmV8InstructionType::ADRP: {
+				auto const newOffset = ins->m_literal - a.currentAddress();
+				a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
+			}
+			case ArmV8InstructionType::B_Cond: {
+				auto const newOffset = ins->m_literal - a.currentAddress();
+				a.adrp(X16, newOffset & ~0xFFFll);
+				a.add(X16, X16, newOffset & 0xFFF);
+				a.write32(
+					ins->m_rawInstruction & 0xFF00001F | // Preserve the condition bits
+					(2 << 5)
+				);
+				a.b(8);
+				a.br(X16);
+				break;
+			}
+			case ArmV8InstructionType::TBZ:
+				auto const newOffset = ins->m_literal - a.currentAddress();
+				a.adrp(X16, newOffset & ~0xFFFll);
+				a.add(X16, X16, newOffset & 0xFFF);
+				a.tbz(ins->m_src1, ins->m_other, 8);
+				a.b(8);
+				a.br(X16);
+				break;
+			case ArmV8InstructionType::TBNZ:
+				auto const newOffset = ins->m_literal - a.currentAddress();
+				a.adrp(X16, newOffset & ~0xFFFll);
+				a.add(X16, X16, newOffset & 0xFFF);
+				a.tbnz(ins->m_src1, ins->m_other, 8);
+				a.b(8);
+				a.br(X16);
+				break;
+			default:
+				a.write32(instruction->m_rawInstruction);
+				break;
 		}
-	});
-
-	if (!error.empty()) {
-		return geode::Err(std::move(error));
 	}
 
-	if (relocated->size == 0) {
-		return geode::Err("Failed to relocate original function");
-	}
-	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, relocated->size}, relocated->size});
+	auto const newOffset = a.currentAddress() - target;
+	a.adrp(X16, target & ~0xFFFll);
+	a.add(X16, X16, target & 0xFFF);
+	a.br(X16);
+
+	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
+
+	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, a.m_buffer.size()}, a.m_buffer.size()});
 }
