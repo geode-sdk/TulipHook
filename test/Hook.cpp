@@ -38,6 +38,9 @@ void makeWrapper(FunctionPtrType& out) {
 	ASSERT_FALSE(wrapped.isErr()) << "Failed to create wrapper: " << wrapped.unwrapErr();
 
 	out = reinterpret_cast<FunctionPtrType>(wrapped.unwrap());
+
+	auto ret = out(1, 2, 3, 4, 5, 6, 7, 8, 9, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f);
+	EXPECT_EQ(ret, 1);
 }
 
 template <int N>

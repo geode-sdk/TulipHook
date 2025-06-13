@@ -30,8 +30,19 @@ static uint32_t val(ArmV8Register reg) {
 }
 
 void ArmV8Assembler::mov(ArmV8Register dst, ArmV8Register src) {
+    if (src == ArmV8Register::SP) {
+        this->write32(0x910003E0 | val(dst));
+        return;
+    }
     const auto srcShifted = val(src) << 16;
     this->write32(0xAA0003E0 | srcShifted | val(dst));
+}
+
+void ArmV8Assembler::mov(ArmV8Register dst, int32_t imm) {
+    const auto absImm = imm < 0 ? (-imm - 1) : imm;
+    const auto immShifted = (static_cast<uint32_t>(absImm) & 0xffff) << 5;
+    const auto negShifted = (imm >= 0) << 30;
+    this->write32(0xD2400000 | negShifted | immShifted | val(dst));
 }
 
 void ArmV8Assembler::ldr(ArmV8Register dst, std::string const& label) {
@@ -105,6 +116,12 @@ void ArmV8Assembler::add(ArmV8Register dst, ArmV8Register src, uint16_t imm) {
     const auto srcShifted = val(src) << 5;
     const auto immShifted = (static_cast<uint32_t>(imm) & 0xFFF) << 10;
     this->write32(0x91000000 | srcShifted | immShifted | val(dst));
+}
+
+void ArmV8Assembler::add(ArmV8Register dst, ArmV8Register src, ArmV8Register src2) {
+    const auto srcShifted = val(src) << 16;
+    const auto src2Shifted = val(src2) << 5;
+    this->write32(0x8B000000 | srcShifted | src2Shifted | val(dst));
 }
 
 void ArmV8Assembler::b(uint32_t imm) {

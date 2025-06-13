@@ -8,35 +8,21 @@
 
 namespace tulip::hook {
 
-	class X86HandlerGenerator : public HandlerGenerator {
+	class X86Generator : public BaseGenerator {
 	protected:
-		uint64_t m_modifiedBytesSize = 0;
 		// this is only relevant for 64-bit relocation, pointer is to the buffer so dont keep this around
 		std::unordered_map<int64_t, int8_t*> m_shortBranchRelocations;
 	public:
-		using HandlerGenerator::HandlerGenerator;
+		using BaseGenerator::BaseGenerator;
 
-		geode::Result<RelocateReturn> relocatedBytes(uint64_t base, uint64_t target) override;
+		std::vector<uint8_t> handlerBytes(int64_t handler, void* content, HandlerMetadata const& metadata) override;
+		std::vector<uint8_t> intervenerBytes(int64_t original, int64_t handler, size_t size) override;
+		geode::Result<RelocateReturn> relocatedBytes(int64_t original, int64_t relocated, size_t size) override;
+		std::vector<uint8_t> wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata) override;
 
-		std::vector<uint8_t> handlerBytes(uint64_t address) override;
-		std::vector<uint8_t> intervenerBytes(uint64_t address, size_t size) override;
-
-		geode::Result<TrampolineReturn> generateTrampoline(uint64_t target) override;
-
-		virtual geode::Result<> relocateInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress);
+		virtual geode::Result<> relocateInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t relocated, size_t originalTarget);
 		virtual geode::Result<> relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp);
-		virtual geode::Result<> relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress);
-	};
-
-	class X86WrapperGenerator : public WrapperGenerator {
-	public:
-		using WrapperGenerator::WrapperGenerator;
-
-		geode::Result<FunctionData> generateWrapper() override;
-		// geode::Result<void*> generateReverseWrapper() override;
-
-		std::vector<uint8_t> wrapperBytes(uint64_t address) override;
-		// std::vector<uint8_t> reverseWrapperBytes(uint64_t address) override;
+		virtual geode::Result<> relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget);
 	};
 
 }

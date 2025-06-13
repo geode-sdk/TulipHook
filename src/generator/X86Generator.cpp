@@ -24,33 +24,33 @@ namespace {
 RegMem32 m;
 using enum X86Register;
 
-std::vector<uint8_t> X86HandlerGenerator::handlerBytes(uint64_t address) {
-	X86Assembler a(address);
+std::vector<uint8_t> X86Generator::handlerBytes(int64_t handler, void* content, HandlerMetadata const& metadata) {
+	X86Assembler a(handler);
 
 	// idk what this is for
 	for (int i = 0; i < 10; ++i) {
 		a.nop();
 	}
 
-	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
+	metadata.m_convention->generateIntoDefault(a, metadata.m_abstract);
 
 	a.push(ESI);
 
 	// set the parameters
-	a.mov(EAX, reinterpret_cast<uintptr_t>(m_content));
+	a.mov(EAX, reinterpret_cast<int64_t>(content));
 	a.push(EAX);
 
 	// call the pre handler, incrementing
-	a.call(reinterpret_cast<uintptr_t>(preHandler));
+	a.call(reinterpret_cast<int64_t>(preHandler));
 
 	a.add(ESP, 4);
 
 	size_t stackSize = 0;
-	for (auto& param : m_metadata.m_abstract.m_parameters) {
+	for (auto& param : metadata.m_abstract.m_parameters) {
 		stackSize += (param.m_size + 3) / 4 * 4;
 	}
 	// struct return
-	if (m_metadata.m_abstract.m_return.m_kind == AbstractTypeKind::Other) {
+	if (metadata.m_abstract.m_return.m_kind == AbstractTypeKind::Other) {
 		stackSize += 4;
 	}
 
@@ -84,7 +84,7 @@ std::vector<uint8_t> X86HandlerGenerator::handlerBytes(uint64_t address) {
 	a.movsd(m[ESP], XMM0);
 
 	// call the post handler, decrementing
-	a.call(reinterpret_cast<uintptr_t>(postHandler));
+	a.call(reinterpret_cast<int64_t>(postHandler));
 
 	// recover the return values
 	a.mov(EAX, m[ESP + 0x10]);
@@ -95,15 +95,17 @@ std::vector<uint8_t> X86HandlerGenerator::handlerBytes(uint64_t address) {
 
 	a.pop(ESI);
 
-	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
+	metadata.m_convention->generateDefaultCleanup(a, metadata.m_abstract);
+
+	a.align16();
 
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> X86HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
-	X86Assembler a(address);
+std::vector<uint8_t> X86Generator::intervenerBytes(int64_t original, int64_t handler, size_t size) {
+	X86Assembler a(original);
 
-	a.jmp(reinterpret_cast<uintptr_t>(m_handler));
+	a.jmp(handler);
 
 	while (a.m_buffer.size() < size) {
 		a.nop();
@@ -112,16 +114,79 @@ std::vector<uint8_t> X86HandlerGenerator::intervenerBytes(uint64_t address, size
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> X86WrapperGenerator::wrapperBytes(uint64_t address) {
-	X86Assembler a(address);
+std::vector<uint8_t> X86Generator::wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata) {
+	X86Assembler a(wrapper);
 
-	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
+	metadata.m_convention->generateIntoOriginal(a, metadata.m_abstract);
 
-	a.call(reinterpret_cast<uintptr_t>(m_address));
+	a.call(original);
 
-	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
+	metadata.m_convention->generateOriginalCleanup(a, metadata.m_abstract);
+
+	a.align16();
 
 	return std::move(a.m_buffer);
+}
+
+geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_t original, int64_t relocated, size_t size) {
+	X86Assembler a(relocated);
+	RegMem32 m;
+	using enum X86Register;
+
+	GEODE_UNWRAP_INTO(auto cs, Target::get().openCapstone());
+
+	cs_option(cs, CS_OPT_DETAIL, CS_OPT_ON);
+
+	auto insn = cs_malloc(cs);
+
+	uint64_t address = relocated;
+	uint8_t const* code = reinterpret_cast<uint8_t const*>(original);
+	size_t codeSize = 32;
+
+	auto difference = relocated - original;
+
+	auto targetAddress = address + codeSize;
+
+	uint64_t originalAddress = original;
+	uint64_t trampolineAddress = relocated;
+	std::array<uint8_t, 0x80> buffer;
+
+	m_shortBranchRelocations.clear();
+	while (cs_disasm_iter(cs, &code, &codeSize, &address, insn)) {
+		if (insn->address >= targetAddress) {
+			break;
+		}
+		auto bufferOffset = trampolineAddress - relocated;
+
+		auto it = m_shortBranchRelocations.find(originalAddress);
+		if (it != m_shortBranchRelocations.end()) {
+			auto relByte = it->second;
+			auto srcOffset = reinterpret_cast<uint8_t*>(relByte) - buffer.data();
+			// why the -1? idk
+			*relByte = bufferOffset - srcOffset - 1;
+			m_shortBranchRelocations.erase(it);
+		}
+
+		GEODE_UNWRAP(this->relocateInstruction(insn, buffer.data() + bufferOffset, trampolineAddress, originalAddress, relocated, size));
+	}
+
+	cs_free(insn, 1);
+
+	Target::get().closeCapstone();
+
+	auto bufferOffset = trampolineAddress - relocated;
+	auto originalOffset = originalAddress - original;
+	a.writeBuffer({buffer.begin(), buffer.begin() + bufferOffset});
+
+	auto branch = this->intervenerBytes(trampolineAddress, originalAddress, 0);
+	a.writeBuffer({branch.begin(), branch.end()});
+
+	a.align16();
+	
+	return geode::Ok(RelocateReturn{
+		.bytes = std::move(a.m_buffer),
+		.offset = originalOffset,
+	});
 }
 
 // std::vector<uint8_t> X86WrapperGenerator::reverseWrapperBytes(uint64_t address) {
@@ -129,29 +194,12 @@ std::vector<uint8_t> X86WrapperGenerator::wrapperBytes(uint64_t address) {
 
 // 	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
 
-// 	a.call(reinterpret_cast<uintptr_t>(m_address));
+// 	a.call(reinterpret_cast<uint64_t>(m_address));
 
 // 	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
 
 // 	return std::move(a.m_buffer);
 // }
-
-geode::Result<FunctionData> X86WrapperGenerator::generateWrapper() {
-	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
-		return geode::Ok(FunctionData{m_address, 0});
-	}
-	
-	// this is silly, butt
-	auto codeSize = this->wrapperBytes(0).size();
-	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
-
-	GEODE_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
-	auto code = this->wrapperBytes(reinterpret_cast<uintptr_t>(area));
-
-	GEODE_UNWRAP(Target::get().writeMemory(area, code.data(), codeSize));
-
-	return geode::Ok(FunctionData{area, codeSize});
-}
 
 // geode::Result<void*> X86WrapperGenerator::generateReverseWrapper() {
 // 	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
@@ -163,95 +211,14 @@ geode::Result<FunctionData> X86WrapperGenerator::generateWrapper() {
 // 	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
 
 // 	GEODE_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
-// 	auto code = this->reverseWrapperBytes(reinterpret_cast<uintptr_t>(area));
+// 	auto code = this->reverseWrapperBytes(reinterpret_cast<uint64_t>(area));
 
 // 	GEODE_UNWRAP(Target::get().writeMemory(area, code.data(), codeSize));
 
 // 	return geode::Ok(area);
 // }
 
-geode::Result<HandlerGenerator::TrampolineReturn> X86HandlerGenerator::generateTrampoline(uint64_t target) {
-	X86Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
-	RegMem32 m;
-	using enum X86Register;
-
-	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
-	a.call("relocated");
-	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
-
-	a.label("relocated");
-
-	GEODE_UNWRAP_INTO(auto code, this->relocatedBytes(a.currentAddress(), target));
-
-	a.m_buffer.insert(a.m_buffer.end(), code.m_relocatedBytes.begin(), code.m_relocatedBytes.end());
-
-	a.jmp(reinterpret_cast<uintptr_t>(m_address) + code.m_originalOffset);
-
-	a.updateLabels();
-
-	auto codeSize = a.m_buffer.size();
-	auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
-
-
-	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
-
-	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, codeSize}, code.m_originalOffset});
-}
-
-geode::Result<X86HandlerGenerator::RelocateReturn> X86HandlerGenerator::relocatedBytes(uint64_t baseAddress, uint64_t target) {
-	// memcpy(m_trampoline, m_address, 32);
-
-	m_modifiedBytesSize = target;
-
-	GEODE_UNWRAP_INTO(auto cs, Target::get().openCapstone());
-
-	cs_option(cs, CS_OPT_DETAIL, CS_OPT_ON);
-
-	auto insn = cs_malloc(cs);
-
-	uint64_t address = baseAddress;
-	uint8_t const* code = reinterpret_cast<uint8_t const*>(m_address);
-	size_t size = 32;
-
-	auto difference = baseAddress - reinterpret_cast<uint64_t>(m_address);
-
-	auto targetAddress = address + target;
-
-	auto originalAddress = reinterpret_cast<uint64_t>(m_address);
-	auto trampolineAddress = baseAddress;
-	std::array<uint8_t, 0x80> buffer;
-
-	m_shortBranchRelocations.clear();
-	while (cs_disasm_iter(cs, &code, &size, &address, insn)) {
-		if (insn->address >= targetAddress) {
-			break;
-		}
-		auto bufferOffset = trampolineAddress - baseAddress;
-
-		auto it = m_shortBranchRelocations.find(originalAddress);
-		if (it != m_shortBranchRelocations.end()) {
-			auto relByte = it->second;
-			auto srcOffset = reinterpret_cast<uint8_t*>(relByte) - buffer.data();
-			// why the -1? idk
-			*relByte = bufferOffset - srcOffset - 1;
-			m_shortBranchRelocations.erase(it);
-		}
-
-		GEODE_UNWRAP(this->relocateInstruction(insn, buffer.data() + bufferOffset, trampolineAddress, originalAddress));
-	}
-
-	cs_free(insn, 1);
-
-	Target::get().closeCapstone();
-
-	auto bufferOffset = trampolineAddress - baseAddress;
-	return geode::Ok(RelocateReturn{
-		.m_relocatedBytes = std::vector<uint8_t>(buffer.begin(), buffer.begin() + bufferOffset),
-		.m_originalOffset = static_cast<size_t>(originalAddress - reinterpret_cast<uint64_t>(m_address)),
-	});
-}
-
-geode::Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress) {
+geode::Result<> X86Generator::relocateInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t relocated, size_t originalTarget) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -274,10 +241,10 @@ geode::Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint8_t*
 
 	// branches, jumps, calls
 	if (detail->x86.encoding.imm_offset != 0 && relativeGroup) {
-		intptr_t jmpTargetAddr = static_cast<intptr_t>(detail->x86.operands[0].imm) -
-		static_cast<intptr_t>(insn->address) + static_cast<intptr_t>(originalAddress);
+		int64_t jmpTargetAddr = static_cast<int64_t>(detail->x86.operands[0].imm) -
+		static_cast<int64_t>(insn->address) + static_cast<int64_t>(originalAddress);
 
-		return this->relocateBranchInstruction(insn, buffer, trampolineAddress, originalAddress, jmpTargetAddr);
+		return this->relocateBranchInstruction(insn, buffer, trampolineAddress, originalAddress, jmpTargetAddr, relocated, originalTarget);
 	}
 
 	if (detail->x86.encoding.disp_offset != 0) {
@@ -300,12 +267,12 @@ geode::Result<> X86HandlerGenerator::relocateInstruction(cs_insn* insn, uint8_t*
 	return geode::Ok();
 }
 
-geode::Result<> X86HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
+geode::Result<> X86Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
 	auto const size = insn->size;
-	auto difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
+	auto difference = static_cast<int64_t>(trampolineAddress) - static_cast<int64_t>(originalAddress);
 
 	if (difference > 0x7fffffffll || difference < -0x80000000ll) {
 		return geode::Err("rip displacement too large");
@@ -324,12 +291,12 @@ geode::Result<> X86HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8
 	return geode::Ok();
 }
 
-geode::Result<> X86HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) {
+geode::Result<> X86Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
 	auto const size = insn->size;
-	auto difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
+	auto difference = static_cast<int64_t>(trampolineAddress) - static_cast<int64_t>(originalAddress);
 	
 	if (difference > 0x7fffffffll || difference < -0x80000000ll) {
 		return geode::Err("branch displacement too large");

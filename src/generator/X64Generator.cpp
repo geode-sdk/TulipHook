@@ -23,7 +23,7 @@ namespace {
 	}
 }
 
-size_t X64HandlerGenerator::preserveRegisters(X64Assembler& a) {
+size_t X64Generator::preserveRegisters(X64Assembler& a) {
 	using enum X64Register;
 	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
@@ -61,7 +61,7 @@ size_t X64HandlerGenerator::preserveRegisters(X64Assembler& a) {
 #endif
 	return PRESERVE_SIZE;
 }
-void X64HandlerGenerator::restoreRegisters(X64Assembler& a, size_t size) {
+void X64Generator::restoreRegisters(X64Assembler& a, size_t size) {
 	using enum X64Register;
 	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
@@ -95,7 +95,7 @@ void X64HandlerGenerator::restoreRegisters(X64Assembler& a, size_t size) {
 #endif
 }
 
-size_t X64HandlerGenerator::preserveReturnRegisters(X64Assembler& a) {
+size_t X64Generator::preserveReturnRegisters(X64Assembler& a) {
 	using enum X64Register;
 	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
@@ -115,7 +115,7 @@ size_t X64HandlerGenerator::preserveReturnRegisters(X64Assembler& a) {
 #endif
 	return PRESERVE_SIZE;
 }
-void X64HandlerGenerator::restoreReturnRegisters(X64Assembler& a, size_t size) {
+void X64Generator::restoreReturnRegisters(X64Assembler& a, size_t size) {
 	using enum X64Register;
 	RegMem64 m;
 #ifdef TULIP_HOOK_WINDOWS
@@ -166,9 +166,8 @@ namespace {
 }
 #endif
 
-geode::Result<FunctionData> X64HandlerGenerator::generateHandler() {
-	auto address = reinterpret_cast<uint64_t>(m_handler);
-	X64Assembler a(address);
+std::vector<uint8_t> X64Generator::handlerBytes(int64_t handler, void* content, HandlerMetadata const& metadata) {
+	X64Assembler a(handler);
 	RegMem64 m;
 	using enum X64Register;
 
@@ -204,7 +203,7 @@ geode::Result<FunctionData> X64HandlerGenerator::generateHandler() {
 	restoreRegisters(a, preservedSize);
 
 	// convert the current cc into the default cc
-	m_metadata.m_convention->generateIntoDefault(a, m_metadata.m_abstract);
+	metadata.m_convention->generateIntoDefault(a, metadata.m_abstract);
 
 	// restore the next function ptr from shadow space
 	a.mov(RAX, m[RBP - 0x10]);
@@ -213,7 +212,7 @@ geode::Result<FunctionData> X64HandlerGenerator::generateHandler() {
 	// a.int3();
 	a.call(RAX);
 	// // a.int3();
-	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
+	metadata.m_convention->generateDefaultCleanup(a, metadata.m_abstract);
 
 	// preserve the return values
 	const auto returnPreservedSize = preserveReturnRegisters(a);
@@ -236,25 +235,103 @@ geode::Result<FunctionData> X64HandlerGenerator::generateHandler() {
 	a.write64(reinterpret_cast<uint64_t>(postHandler));
 
 	a.label("content");
-	a.write64(reinterpret_cast<uint64_t>(m_content));
+	a.write64(reinterpret_cast<uint64_t>(content));
 
 	a.updateLabels();
 
+	auto runtimeInfo = this->runtimeInfoBytes(handler, a.buffer().size(), a.getLabel("handler-push"), a.getLabel("handler-alloc-mid"));
+
+	a.writeBuffer({runtimeInfo.begin(), runtimeInfo.end()});
+
 	a.align16();
 
-	auto codeSize = a.m_buffer.size();
+	return std::move(a.m_buffer);
+}
 
-	#ifdef TULIP_HOOK_WINDOWS
+std::vector<uint8_t> X64Generator::intervenerBytes(int64_t original, int64_t handler, size_t size) {
+	X64Assembler a(original);
+	RegMem64 m;
+	using enum X64Register;
+
+	auto difference = reinterpret_cast<int64_t>(handler) - static_cast<int64_t>(original) - 5;
+
+	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
+		a.jmp(handler);
+	}
+	else {
+		a.jmpip("handler");
+		a.label("handler");
+		a.write64(handler);
+
+		a.updateLabels();
+	}
+
+	while (a.m_buffer.size() < size) {
+		a.nop();
+	}
+
+	return std::move(a.m_buffer);
+}
+
+std::vector<uint8_t> X64Generator::wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata) {
+	// if (!metadata.m_convention->needsWrapper(metadata.m_abstract)) {
+	// 	return BaseGenerator::wrapperBytes(original, wrapper, metadata);
+	// }
+
+	X64Assembler a(wrapper);
+	using enum X64Register;
+
+	a.push(RBP);
+	a.label("wrapper-push");
+	a.mov(RBP, RSP);
+
+	// shadow space
+	a.sub(RSP, 0xc0);
+	a.label("wrapper-alloc-mid");
+
+	metadata.m_convention->generateIntoOriginal(a, metadata.m_abstract);
+
+	auto difference = a.currentAddress() - reinterpret_cast<int64_t>(original) + 5;
+	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
+		a.call(original);
+	}
+	else {
+		a.callip("address");
+	}
+
+	metadata.m_convention->generateOriginalCleanup(a, metadata.m_abstract);
+
+	a.add(RSP, 0xc0);
+
+	a.pop(RBP);
+	a.ret();
+
+	a.label("address");
+	a.write64(original);
+
+	a.updateLabels();
+
+	auto runtimeInfo = this->runtimeInfoBytes(wrapper, a.buffer().size(), a.getLabel("wrapper-push"), a.getLabel("wrapper-alloc-mid"));
+
+	a.writeBuffer({runtimeInfo.begin(), runtimeInfo.end()});
+
+	a.align16();
+
+	return std::move(a.m_buffer);
+}
+
+std::vector<uint8_t> X64Generator::runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t alloc) {
+	X64Assembler a(function);
+#ifdef TULIP_HOOK_WINDOWS
 
 	// UNWIND_INFO structure & RUNTIME_FUNCTION structure
-
 	{
-		auto const offsetBegin = address & 0xffff;
-		auto const offsetEnd = (address + a.m_buffer.size()) & 0xffff;
+		auto const offsetBegin = function & 0xffff;
+		auto const offsetEnd = (function + size) & 0xffff;
 
-		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("handler-push")) & 0xffff;
-		auto const allocOffset = reinterpret_cast<uint64_t>(a.getLabel("handler-alloc-mid")) & 0xffff;
-		// auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
+		auto const pushOffset = push & 0xffff;
+		auto const allocOffset = alloc & 0xffff;
+
 		auto const prologSize = allocOffset;
 
 
@@ -265,7 +342,6 @@ geode::Result<FunctionData> X64HandlerGenerator::generateHandler() {
 		a.write32(offsetEnd + 0xc); // UnwindData
 
 		// UNWIND_INFO
-
 		a.write8(
 			0x1 | // Version : 3
 			0x0 // Flags : 5
@@ -276,15 +352,8 @@ geode::Result<FunctionData> X64HandlerGenerator::generateHandler() {
 			0x0 | // FrameRegister : 4
 			0x0  // FrameOffset : 4
 		);
+
 		// UNWIND_CODE[]
-
-		// auto padded = 0x20 + getPaddedStackParamSize(m_metadata.m_abstract);
-		// a.write8(conventionOffset); // CodeOffset
-		// a.write8(
-		// 	(((padded >> 3) - 1) << 4) | // UnwindOp : 4
-		// 	0x2  // OpInfo : 4
-		// );
-
 		a.write8(allocOffset); // CodeOffset
 		a.write8(
 			0x0 | // UnwindOp : 4
@@ -299,49 +368,21 @@ geode::Result<FunctionData> X64HandlerGenerator::generateHandler() {
 		);
 	}
 
-	#endif
-
-	GEODE_UNWRAP(Target::get().writeMemory(m_handler, a.m_buffer.data(), a.m_buffer.size()));
-
-	return geode::Ok(FunctionData{m_handler, codeSize});
-}
-
-std::vector<uint8_t> X64HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
-	X64Assembler a(address);
-	RegMem64 m;
-	using enum X64Register;
-
-	auto difference = reinterpret_cast<int64_t>(m_handler) - static_cast<int64_t>(address) - 5;
-
-	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
-		a.jmp(reinterpret_cast<uint64_t>(m_handler));
-	}
-	else {
-		a.jmpip("handler");
-		a.label("handler");
-		a.write64(reinterpret_cast<uint64_t>(m_handler));
-
-		a.updateLabels();
-	}
-
-	while (a.m_buffer.size() < size) {
-		a.nop();
-	}
+#endif
 
 	return std::move(a.m_buffer);
 }
 
-
-geode::Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
+geode::Result<> X64Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
 	auto const size = insn->size;
-	auto const difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
-	auto const absolute = static_cast<intptr_t>(originalAddress) + size + disp;
+	auto const difference = static_cast<int64_t>(trampolineAddress) - static_cast<int64_t>(originalAddress);
+	auto const absolute = static_cast<int64_t>(originalAddress) + size + disp;
 
 	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
-		return X86HandlerGenerator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
+		return X86Generator::relocateRIPInstruction(insn, buffer, trampolineAddress, originalAddress, disp);
 	}
 
 	auto& operand0 = detail->x86.operands[0];
@@ -411,132 +452,6 @@ geode::Result<> X64HandlerGenerator::relocateRIPInstruction(cs_insn* insn, uint8
 	return geode::Ok();
 }
 
-std::vector<uint8_t> X64WrapperGenerator::wrapperBytes(uint64_t address) {
-	X64Assembler a(address);
-	using enum X64Register;
-
-	a.push(RBP);
-	a.label("wrapper-push");
-	a.mov(RBP, RSP);
-
-	// shadow space
-	a.sub(RSP, 0xc0);
-	a.label("wrapper-alloc-mid");
-
-	m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
-
-	auto difference = a.currentAddress() - reinterpret_cast<int64_t>(m_address) + 5;
-	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
-		a.call(reinterpret_cast<uint64_t>(m_address));
-	}
-	else {
-		a.callip("address");
-	}
-
-	m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
-
-	a.add(RSP, 0xc0);
-
-	a.pop(RBP);
-	a.ret();
-
-	a.label("address");
-	a.write64(reinterpret_cast<uintptr_t>(m_address));
-
-	a.updateLabels();
-
-	a.align16();
-
-	return std::move(a.m_buffer);
-}
-
-#ifdef TULIP_HOOK_WINDOWS
-std::vector<uint8_t> X64WrapperGenerator::unwindInfoBytes(uint64_t address) {
-	X64Assembler a(address);
-
-	{
-		auto const offsetBegin = address & 0xffff;
-		auto const offsetEnd = (address + a.m_buffer.size()) & 0xffff;
-
-		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("wrapper-push")) & 0xffff;
-		auto const allocOffset = reinterpret_cast<uint64_t>(a.getLabel("wrapper-alloc-mid")) & 0xffff;
-		// auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
-		auto const prologSize = allocOffset;
-
-
-		// RUNTIME_FUNCTION
-
-		a.label("wrapper-unwind-info");
-
-		a.write32(offsetBegin); // BeginAddress
-		a.write32(offsetEnd); // EndAddress
-		a.write32(offsetEnd + 0xc); // UnwindData
-
-		// UNWIND_INFO
-
-		a.write8(
-			0x1 | // Version : 3
-			0x0 // Flags : 5
-		);
-		a.write8(prologSize); // SizeOfProlog
-		a.write8(3); // CountOfUnwindCodes
-		a.write8(
-			0x0 | // FrameRegister : 4
-			0x0  // FrameOffset : 4
-		);
-		// UNWIND_CODE[]
-
-		a.write8(allocOffset); // CodeOffset
-		a.write8(
-			0x0 | // UnwindOp : 4
-			0x1  // OpInfo : 4
-		);
-		a.write16(0xc0 >> 3); // UWOP_ALLOC_LARGE continuation
-
-		a.write8(pushOffset); // CodeOffset
-		a.write8(
-			0x50 | // UnwindOp : 4
-			0x0  // OpInfo : 4
-		);
-	}
-
-	return std::move(a.m_buffer);
-}
-#endif
-
-geode::Result<FunctionData> X64WrapperGenerator::generateWrapper() {
-	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
-		return geode::Ok(FunctionData{m_address, 0});
-	}
-
-	// this is silly, butt
-	auto codeSize = this->wrapperBytes(0).size();
-
-#ifdef TULIP_HOOK_WINDOWS
-	auto unwindInfoSize = this->unwindInfoBytes(0).size();
-	auto totalSize = codeSize + unwindInfoSize;
-#else
-	auto totalSize = codeSize;
-#endif
-
-	auto areaSize = (totalSize + (0x20 - totalSize) % 0x20);
-
-	GEODE_UNWRAP_INTO(auto area, Target::get().allocateArea(areaSize));
-	auto address = reinterpret_cast<uint64_t>(area);
-
-	auto code = this->wrapperBytes(address);
-	codeSize = code.size();
-
-#ifdef TULIP_HOOK_WINDOWS
-	auto unwindInfo = this->unwindInfoBytes(address + codeSize);
-	code.insert(code.end(), unwindInfo.begin(), unwindInfo.end());
-#endif
-
-	GEODE_UNWRAP(Target::get().writeMemory(area, code.data(), code.size()));
-
-	return geode::Ok(FunctionData{area, codeSize});
-}
-
 // std::vector<uint8_t> X64WrapperGenerator::reverseWrapperBytes(uint64_t address) {
 // 	X64Assembler a(address);
 // 	using enum X64Register;
@@ -549,130 +464,22 @@ geode::Result<FunctionData> X64WrapperGenerator::generateWrapper() {
 // 	m_metadata.m_convention->generateDefaultCleanup(a, m_metadata.m_abstract);
 
 // 	a.label("address");
-// 	a.write64(reinterpret_cast<uintptr_t>(m_address));
+// 	a.write64(reinterpret_cast<uint64_t>(m_address));
 
 // 	a.updateLabels();
 
 // 	return std::move(a.m_buffer);
 // }
 
-geode::Result<HandlerGenerator::TrampolineReturn> X64HandlerGenerator::generateTrampoline(uint64_t target) {
-	X64Assembler a(reinterpret_cast<uint64_t>(m_trampoline));
-	using enum X64Register;
-
-	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
-		a.push(RBP);
-		a.label("trampoline-push");
-		a.mov(RBP, RSP);
-
-		// shadow space
-		a.sub(RSP, 0xc0);
-		a.label("trampoline-alloc-mid");
-
-		m_metadata.m_convention->generateIntoOriginal(a, m_metadata.m_abstract);
-
-		a.call("relocated");
-
-		m_metadata.m_convention->generateOriginalCleanup(a, m_metadata.m_abstract);
-
-		a.add(RSP, 0xc0);
-
-		a.pop(RBP);
-		a.ret();
-	}
-
-	auto codeSizeFake = a.m_buffer.size();
-
-	a.label("relocated");
-
-	GEODE_UNWRAP_INTO(auto code, this->relocatedBytes(a.currentAddress(), target));
-
-	a.m_buffer.insert(a.m_buffer.end(), code.m_relocatedBytes.begin(), code.m_relocatedBytes.end());
-
-	auto difference = a.currentAddress() - reinterpret_cast<int64_t>(m_address) + 5 - code.m_originalOffset;
-
-	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
-		a.jmp(reinterpret_cast<uint64_t>(m_address) + code.m_originalOffset);
-	}
-	else {
-		a.jmpip("handler");
-		a.jmp8("skip-pointer");
-		a.label("handler");
-		a.write64(reinterpret_cast<uint64_t>(m_address) + code.m_originalOffset);
-		a.label("skip-pointer");
-	}
-
-	a.updateLabels();
-
-	a.align16();
-
-
-#ifdef TULIP_HOOK_WINDOWS
-
-	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
-		auto const address = reinterpret_cast<uint64_t>(m_trampoline);
-		auto const offsetBegin = address & 0xffff;
-		auto const offsetEnd = (address + a.m_buffer.size()) & 0xffff;
-
-		auto const pushOffset = reinterpret_cast<uint64_t>(a.getLabel("trampoline-push")) & 0xffff;
-		auto const allocOffset = reinterpret_cast<uint64_t>(a.getLabel("trampoline-alloc-mid")) & 0xffff;
-		// auto const conventionOffset = reinterpret_cast<uint64_t>(a.getLabel("convention-alloc-small")) & 0xffff;
-		auto const prologSize = allocOffset;
-
-
-		// RUNTIME_FUNCTION
-
-		a.write32(offsetBegin); // BeginAddress
-		a.write32(offsetEnd); // EndAddress
-		a.write32(offsetEnd + 0xc); // UnwindData
-
-		// UNWIND_INFO
-
-		a.write8(
-			0x1 | // Version : 3
-			0x0 // Flags : 5
-		);
-		a.write8(prologSize); // SizeOfProlog
-		a.write8(3); // CountOfUnwindCodes
-		a.write8(
-			0x0 | // FrameRegister : 4
-			0x0  // FrameOffset : 4
-		);
-		// UNWIND_CODE[]
-
-		a.write8(allocOffset); // CodeOffset
-		a.write8(
-			0x0 | // UnwindOp : 4
-			0x1  // OpInfo : 4
-		);
-		a.write16(0xc0 >> 3); // UWOP_ALLOC_LARGE continuation
-
-		a.write8(pushOffset); // CodeOffset
-		a.write8(
-			0x50 | // UnwindOp : 4
-			0x0  // OpInfo : 4
-		);
-	}
-
-#endif
-
-	// auto codeSize = a.m_buffer.size();
-	// auto areaSize = (codeSize + (0x20 - codeSize) % 0x20);
-
-	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
-
-	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, codeSizeFake}, code.m_originalOffset});
-}
-
-geode::Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) {
+geode::Result<> X64Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
 	auto const size = insn->size;
-	auto const difference = static_cast<intptr_t>(trampolineAddress) - static_cast<intptr_t>(originalAddress);
+	auto const difference = static_cast<int64_t>(trampolineAddress) - static_cast<int64_t>(originalAddress);
 
 	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
-		return X86HandlerGenerator::relocateBranchInstruction(insn, buffer, trampolineAddress, originalAddress, targetAddress);
+		return X86Generator::relocateBranchInstruction(insn, buffer, trampolineAddress, originalAddress, targetAddress, relocated, originalTarget);
 	}
 
 	if (id == X86_INS_JMP) {
@@ -713,9 +520,9 @@ geode::Result<> X64HandlerGenerator::relocateBranchInstruction(cs_insn* insn, ui
 		trampolineAddress += bytes.size();
 		originalAddress += size;
 	}
-	else if (targetAddress - reinterpret_cast<int64_t>(m_address) < m_modifiedBytesSize) {
+	else if (targetAddress - relocated < originalTarget) {
 		// conditional branch that jmps to code we relocated, so we need to keep track of where it jumps to
-		// relocation is later done in X86HandlerGenerator::relocatedBytes
+		// relocation is later done in X86Generator::relocatedBytes
 		std::memcpy(buffer, insn->bytes, size);
 		if (size == 2) {
 			auto* relativeByte = reinterpret_cast<int8_t*>(buffer + 1);

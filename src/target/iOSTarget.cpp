@@ -24,18 +24,12 @@ geode::Result<csh> iOSTarget::openCapstone() {
 	// return geode::Ok(m_capstone);
 }
 
-std::unique_ptr<HandlerGenerator> iOSTarget::getHandlerGenerator(
-	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
-) {
-	return std::make_unique<ArmV8HandlerGenerator>(address, trampoline, handler, content, metadata);
-}
-
-std::unique_ptr<WrapperGenerator> iOSTarget::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {
-	return std::make_unique<ArmV8WrapperGenerator>(address, metadata);
+std::unique_ptr<BaseGenerator> iOSTarget::getGenerator() {
+	return std::make_unique<ArmV8Generator>();
 }
 
 uint32_t iOSTarget::getWritableProtection() {
-	return VM_PROT_READ | VM_PROT_WRITE;
+	return VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY;
 }
 
 #endif

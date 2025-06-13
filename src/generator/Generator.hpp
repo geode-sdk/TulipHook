@@ -8,54 +8,23 @@
 
 namespace tulip::hook {
 
-	class HandlerGenerator {
+	class BaseGenerator {
 	public:
-		void* const m_address;
-		void* const m_trampoline;
-		void* const m_handler;
-		void* const m_content;
-		HandlerMetadata const m_metadata;
+		BaseGenerator() = default;
 
-		HandlerGenerator(
-			void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
-		);
-
-		virtual ~HandlerGenerator() = default;
-
-		virtual geode::Result<FunctionData> generateHandler();
-		virtual geode::Result<std::vector<uint8_t>> generateIntervener(int64_t size);
+		virtual ~BaseGenerator() = default;
 
 		struct RelocateReturn {
-			std::vector<uint8_t> m_relocatedBytes;
-			size_t m_originalOffset;
+			std::vector<uint8_t> bytes;
+			size_t offset; // can be different than size
 		};
 
-		struct TrampolineReturn {
-			FunctionData m_trampoline;
-			size_t m_originalOffset;
-		};
-
-		virtual geode::Result<TrampolineReturn> generateTrampoline(uint64_t target);
-
-		virtual std::vector<uint8_t> handlerBytes(uint64_t address);
-		virtual std::vector<uint8_t> intervenerBytes(uint64_t address, size_t size);
-		virtual std::vector<uint8_t> trampolineBytes(uint64_t address, size_t offset);
-		virtual geode::Result<RelocateReturn> relocatedBytes(uint64_t base, uint64_t target);
-	};
-
-	class WrapperGenerator {
-	public:
-		void* const m_address;
-		WrapperMetadata const m_metadata;
-
-		virtual ~WrapperGenerator() = default;
-
-		WrapperGenerator(void* address, WrapperMetadata const& metadata);
-
-		virtual geode::Result<FunctionData> generateWrapper();
-		virtual geode::Result<FunctionData> generateReverseWrapper();
-
-		virtual std::vector<uint8_t> wrapperBytes(uint64_t address);
-		virtual std::vector<uint8_t> reverseWrapperBytes(uint64_t address);
+		virtual std::vector<uint8_t> handlerBytes(int64_t handler, void* content, HandlerMetadata const& metadata);
+		virtual std::vector<uint8_t> intervenerBytes(int64_t original, int64_t handler, size_t size);
+		virtual geode::Result<RelocateReturn> relocatedBytes(int64_t original, int64_t relocated, size_t size);
+		virtual std::vector<uint8_t> wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata);
+		virtual std::vector<uint8_t> runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t alloc);
+		virtual std::vector<uint8_t> commonHandlerBytes(int64_t handler, ptrdiff_t spaceOffset);
+		virtual std::vector<uint8_t> commonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset);
 	};
 }

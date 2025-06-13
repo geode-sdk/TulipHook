@@ -11,20 +11,29 @@ Wrapper& Wrapper::get() {
 
 geode::Result<void*> Wrapper::createWrapper(void* address, WrapperMetadata const& metadata) {
 	if (m_wrappers.count(address) == 0) {
-		auto generator = Target::get().getWrapperGenerator(address, metadata);
-		GEODE_UNWRAP_INTO(auto wrapped, generator->generateWrapper());
-		m_wrappers[address] = wrapped;
+		auto generator = Target::get().getGenerator();
+		auto dry = generator->wrapperBytes((int64_t)address, 0, metadata);
+
+		if (dry.size() == 0) {
+			m_wrappers[address] = { address, 0 };
+			return geode::Ok(address);
+		}
+
+		GEODE_UNWRAP_INTO(auto wrapper, Target::get().allocateArea(dry.size()));
+		auto wrapped = generator->wrapperBytes((int64_t)address, (int64_t)wrapper, metadata);
+
+		if (dry.size() != wrapped.size()) {
+			// There is something wrong? i think?
+		}
+
+		GEODE_UNWRAP(Target::get().writeMemory(wrapper, wrapped.data(), wrapped.size()));
+
+		m_wrappers[address] = { wrapper, wrapped.size() };
 	}
 
 	return geode::Ok(m_wrappers[address].m_address);
 }
 
 geode::Result<void*> Wrapper::createReverseWrapper(void* address, WrapperMetadata const& metadata) {
-	if (m_reverseWrappers.count(address) == 0) {
-		auto generator = Target::get().getWrapperGenerator(address, metadata);
-		GEODE_UNWRAP_INTO(auto wrapped, generator->generateReverseWrapper());
-		m_reverseWrappers[address] = wrapped;
-	}
-
-	return geode::Ok(m_reverseWrappers[address].m_address);
+	return geode::Err("Deprecated");
 }

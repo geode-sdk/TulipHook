@@ -14,10 +14,7 @@ namespace tulip::hook {
 
 		geode::Result<csh> openCapstone() override;
 
-		std::unique_ptr<HandlerGenerator> getHandlerGenerator(
-			void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
-		) override;
-		std::unique_ptr<WrapperGenerator> getWrapperGenerator(void* address, WrapperMetadata const& metadata) override;
+		std::unique_ptr<BaseGenerator> getGenerator() override;
 
         uint32_t getWritableProtection() override;
 	};

@@ -24,14 +24,8 @@ geode::Result<csh> PosixArmV8Target::openCapstone() {
 	//return geode::Ok(m_capstone);
 }
 
-std::unique_ptr<HandlerGenerator> PosixArmV8Target::getHandlerGenerator(
-	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
-) {
-	return std::make_unique<ArmV8HandlerGenerator>(address, trampoline, handler, content, metadata);
-}
-
-std::unique_ptr<WrapperGenerator> PosixArmV8Target::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {
-	return std::make_unique<ArmV8WrapperGenerator>(address, metadata);
+std::unique_ptr<BaseGenerator> PosixArmV8Target::getGenerator() {
+	return std::make_unique<ArmV8Generator>();
 }
 
 #endif
