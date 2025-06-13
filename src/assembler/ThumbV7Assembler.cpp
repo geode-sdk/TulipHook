@@ -21,7 +21,7 @@ void ThumbV7Assembler::rwl(int8_t offset, int8_t size, int32_t value) {
 	*pointer = (*pointer & ~mask) | (value << offset);
 }
 
-int32_t arrayMaskLow(ArmV7RegisterArray const& array) {
+static int32_t arrayMaskLow(ArmV7RegisterArray const& array) {
 	int32_t mask = 0;
 
 	for (auto const& reg : array) {
@@ -31,15 +31,15 @@ int32_t arrayMaskLow(ArmV7RegisterArray const& array) {
 	return mask;
 }
 
-int32_t val(ArmV7Register reg) {
+static int32_t val(ArmV7Register reg) {
 	return (int32_t)reg & 0xf;
 }
 
-int32_t vall(ArmV7Register reg) {
+static int32_t vall(ArmV7Register reg) {
 	return (int32_t)reg & 0x7;
 }
 
-int32_t valh(ArmV7Register reg) {
+static int32_t valh(ArmV7Register reg) {
 	return ((int32_t)reg & 0x8) >> 3;
 }
 
