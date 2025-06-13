@@ -29,6 +29,10 @@ std::unique_ptr<Handler> Handler::create(void* address, HandlerMetadata const& m
 Handler::~Handler() {}
 
 geode::Result<> Handler::init() {
+	if (Pool::get().m_runtimeInterveningDisabled) {
+		return geode::Err("Runtime intervening is disabled");
+	}
+
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
 
 	auto generator = Target::get().getGenerator();
@@ -56,11 +60,11 @@ geode::Result<> Handler::init() {
 
 	auto dryIntervener = generator->intervenerBytes(realAddress, (int64_t)m_handler, 0);
 
-	GEODE_UNWRAP_INTO(auto dryRelocated, generator->relocatedBytes(realAddress, 0, dryIntervener.size()));
+	GEODE_UNWRAP_INTO(auto dryRelocated, generator->relocatedBytes(realAddress, 0, dryIntervener));
 	BaseGenerator::RelocateReturn relocated;
 	do {
 		GEODE_UNWRAP_INTO(m_relocated, Target::get().allocateArea(dryRelocated.bytes.size()));
-		GEODE_UNWRAP_INTO(relocated, generator->relocatedBytes(realAddress, (int64_t)m_relocated, dryIntervener.size()));
+		GEODE_UNWRAP_INTO(relocated, generator->relocatedBytes(realAddress, (int64_t)m_relocated, dryIntervener));
 
 		if (handler.size() <= dryHandler.size()) break;
 

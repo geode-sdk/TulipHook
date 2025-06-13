@@ -74,3 +74,23 @@ std::shared_ptr<CallingConvention> tulip::hook::createConvention(TulipConvention
 geode::Result<> tulip::hook::disableRuntimeIntervening(void* commonHandlerSpace) noexcept {
 	return Pool::get().disableRuntimeIntervening(commonHandlerSpace);
 }
+
+RelocaledBytesReturn tulip::hook::getRelocatedBytes(int64_t original, int64_t relocated, std::vector<uint8_t> const& originalBuffer) {
+	RelocaledBytesReturn result;
+	if (GEODE_UNWRAP_EITHER(res, err, Target::get().getGenerator()->relocatedBytes(original, relocated, originalBuffer))) {
+		result.error = std::move(err);
+	}
+	else {
+		result.bytes = std::move(res.bytes);
+		result.offset = res.offset;
+	}
+	return result;
+}
+
+std::vector<uint8_t> tulip::hook::getCommonHandlerBytes(int64_t handler, ptrdiff_t spaceOffset) {
+	return Target::get().getGenerator()->commonHandlerBytes(handler, spaceOffset);
+}
+
+std::vector<uint8_t> tulip::hook::getCommonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset) {
+	return Target::get().getGenerator()->commonIntervenerBytes(original, handler, unique, relocOffset);
+}

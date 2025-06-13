@@ -128,7 +128,7 @@ std::vector<uint8_t> X86Generator::wrapperBytes(int64_t original, int64_t wrappe
 	return std::move(a.m_buffer);
 }
 
-geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_t original, int64_t relocated, size_t size) {
+geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer) {
 	X86Assembler a(relocated);
 	RegMem32 m;
 	using enum X86Register;
@@ -145,7 +145,7 @@ geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_
 
 	auto difference = relocated - original;
 
-	auto targetAddress = address + size;
+	auto targetAddress = address + originalBuffer.size();
 
 	uint64_t originalAddress = original;
 	uint64_t trampolineAddress = relocated;
@@ -167,7 +167,7 @@ geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_
 			m_shortBranchRelocations.erase(it);
 		}
 
-		GEODE_UNWRAP(this->relocateInstruction(insn, buffer.data() + bufferOffset, trampolineAddress, originalAddress, relocated, size));
+		GEODE_UNWRAP(this->relocateInstruction(insn, buffer.data() + bufferOffset, trampolineAddress, originalAddress, relocated, originalBuffer.size()));
 	}
 
 	cs_free(insn, 1);

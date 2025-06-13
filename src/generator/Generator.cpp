@@ -19,7 +19,7 @@ std::vector<uint8_t> BaseGenerator::intervenerBytes(int64_t original, int64_t ha
 	return std::vector<uint8_t>();
 }
 
-geode::Result<BaseGenerator::RelocateReturn> BaseGenerator::relocatedBytes(int64_t original, int64_t relocated, size_t size) {
+geode::Result<BaseGenerator::RelocateReturn> BaseGenerator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer) {
 	return geode::Ok(RelocateReturn{ std::vector<uint8_t>(), 0 });
 }
 

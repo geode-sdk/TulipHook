@@ -112,18 +112,16 @@ std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t h
 
 	return std::move(a.m_buffer);
 }
-geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, size_t size) {
-	auto originMem = new CodeMemBlock(original, size);
+geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer) {
+	auto originMem = new CodeMemBlock(original, originalBuffer.size());
 	auto relocatedMem = new CodeMemBlock();
 	// idk about arm thumb stuff help me
 	std::array<uint8_t, 0x100> relocatedBuffer;
 
-	auto originBuffer = (void*)original;
-
 	static thread_local std::string error;
 	error = "";
 
-	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer.data(), originMem, relocatedMem, +[](void* dest, void const* src, size_t size) {
+	GenRelocateCodeAndBranch(const_cast<void*>(originalBuffer.data()), relocatedBuffer.data(), originMem, relocatedMem, +[](void* dest, void const* src, size_t size) {
 		auto res = Target::get().writeMemory(dest, src, size);
 		if (!res) {
 			error = res.unwrapErr();
@@ -137,5 +135,5 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int6
 	if (relocatedMem->size == 0) {
 		return geode::Err("Failed to relocate original function");
 	}
-	return geode::Ok(RelocateReturn{{relocatedBuffer.data(), relocatedMem->size}, relocatedMem->size});
+	return geode::Ok(RelocateReturn{{relocatedBuffer.data(), relocatedMem->size}, originalBuffer.size()});
 }
