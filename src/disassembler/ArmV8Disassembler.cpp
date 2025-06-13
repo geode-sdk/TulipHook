@@ -8,8 +8,12 @@ ArmV8Disassembler::ArmV8Disassembler(int64_t baseAddress, std::vector<uint8_t> c
 ArmV8Disassembler::~ArmV8Disassembler() = default;
 
 namespace {
-    int32_t extractValue(int startBit, int size, uint32_t instruction) {
-        return (instruction >> startBit) & ((1 << size) - 1);
+    int32_t extractValue(int startBit, int size, uint32_t instruction, bool signExtend = true) {
+        auto val = (instruction >> startBit) & ((1 << size) - 1);
+        if (signExtend && (val & (1 << (size - 1)))) {
+            val |= ~((1 << size) - 1);
+        }
+        return val;
     }
 
     ArmV8Register extractRegister(int startBit, uint32_t instruction) {
@@ -40,7 +44,7 @@ void ArmV8Disassembler::handleLDRLiteral(ArmV8Instruction& instruction) {
 void ArmV8Disassembler::handleADR(ArmV8Instruction& instruction) {
     instruction.m_type = ArmV8InstructionType::ADR;
     instruction.m_dst1 = extractRegister(0, instruction.m_rawInstruction);
-    instruction.m_immediate = extractValue(29, 2, instruction.m_rawInstruction);
+    instruction.m_immediate = extractValue(29, 2, instruction.m_rawInstruction, false);
     instruction.m_immediate |= extractValue(5, 19, instruction.m_rawInstruction) << 2;
     instruction.m_literal = m_baseAddress + (instruction.m_immediate);
 }
@@ -48,7 +52,7 @@ void ArmV8Disassembler::handleADR(ArmV8Instruction& instruction) {
 void ArmV8Disassembler::handleADRP(ArmV8Instruction& instruction) {
     instruction.m_type = ArmV8InstructionType::ADRP;
     instruction.m_dst1 = extractRegister(0, instruction.m_rawInstruction);
-    instruction.m_immediate = extractValue(29, 2, instruction.m_rawInstruction) << 12;
+    instruction.m_immediate = extractValue(29, 2, instruction.m_rawInstruction, false) << 12;
     instruction.m_immediate |= extractValue(5, 19, instruction.m_rawInstruction) << 14;
     instruction.m_literal = (m_baseAddress + (instruction.m_immediate)) & ~0xFFFll;
 }

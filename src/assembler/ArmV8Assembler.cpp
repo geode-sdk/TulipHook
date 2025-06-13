@@ -90,14 +90,14 @@ void ArmV8Assembler::stp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register r
 }
 
 void ArmV8Assembler::adr(ArmV8Register dst, int64_t imm) {
-    const auto immlo = ((imm) & 3ull) << 29;
-    const auto immhi = ((imm >> 2) & 0x7ffffull) << 5;
+    const auto immlo = ((imm) & 3ll) << 29;
+    const auto immhi = ((imm >> 2) & 0x7ffffll) << 5;
     this->write32(0x10000000 | immlo | immhi | val(dst));
 }
 
 void ArmV8Assembler::adrp(ArmV8Register dst, int64_t imm) {
-    const auto immlo = ((imm >> 12) & 3ull) << 29;
-    const auto immhi = ((imm >> 14) & 0x7ffffull) << 5;
+    const auto immlo = ((imm >> 12) & 3ll) << 29;
+    const auto immhi = ((imm >> 14) & 0x7ffffll) << 5;
     this->write32(0x90000000 | immlo | immhi | val(dst));
 }
 
@@ -133,7 +133,7 @@ void ArmV8Assembler::blr(ArmV8Register reg) {
 void ArmV8Assembler::push(ArmV8RegisterArray const& array) {
     using enum ArmV8IndexKind;
 
-    const auto alignedSize = array.size() & ~1ull;
+    const auto alignedSize = array.size() & ~1ll;
     for (auto i = 0u; i < alignedSize; i += 2)
         this->stp(array[i], array[i + 1], SP, -0x10, PreIndex);
 }
@@ -141,7 +141,7 @@ void ArmV8Assembler::push(ArmV8RegisterArray const& array) {
 void ArmV8Assembler::pop(ArmV8RegisterArray const& array) {
     using enum ArmV8IndexKind;
 
-    const auto alignedSize = array.size() & ~1ull;
+    const auto alignedSize = array.size() & ~1ll;
     for (auto i = 0u; i < alignedSize; i += 2)
         this->ldp(array[alignedSize - i - 2], array[alignedSize - i - 1], SP, 0x10, PostIndex);
 }
