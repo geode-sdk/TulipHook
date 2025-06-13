@@ -24,7 +24,7 @@ namespace {
 RegMem32 m;
 using enum X86Register;
 
-std::vector<uint8_t> X86Generator::handlerBytes(int64_t handler, void* content, HandlerMetadata const& metadata) {
+std::vector<uint8_t> X86Generator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
 	X86Assembler a(handler);
 
 	// idk what this is for
@@ -145,7 +145,7 @@ geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_
 
 	auto difference = relocated - original;
 
-	auto targetAddress = address + codeSize;
+	auto targetAddress = address + size;
 
 	uint64_t originalAddress = original;
 	uint64_t trampolineAddress = relocated;

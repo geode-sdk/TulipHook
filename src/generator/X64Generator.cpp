@@ -12,7 +12,7 @@
 using namespace tulip::hook;
 
 namespace {
-	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content) {
+	void* TULIP_HOOK_DEFAULT_CONV preHandler(HandlerContent* content, void* function) {
 		Handler::incrementIndex(content);
 		auto ret = Handler::getNextFunction(content);
 		return ret;
@@ -166,15 +166,17 @@ namespace {
 }
 #endif
 
-std::vector<uint8_t> X64Generator::handlerBytes(int64_t handler, void* content, HandlerMetadata const& metadata) {
+std::vector<uint8_t> X64Generator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
 	X64Assembler a(handler);
 	RegMem64 m;
 	using enum X64Register;
 
 #ifdef TULIP_HOOK_WINDOWS
 	constexpr auto FIRST_PARAM = RCX;
+	constexpr auto SECOND_PARAM = RDX;
 #else
 	constexpr auto FIRST_PARAM = RDI;
+	constexpr auto SECOND_PARAM = RSI;
 #endif
 
 	// for (size_t i = 0; i < 8; ++i) {
@@ -192,6 +194,7 @@ std::vector<uint8_t> X64Generator::handlerBytes(int64_t handler, void* content, 
 
 	// set the parameters
 	a.mov(FIRST_PARAM, "content");
+	a.mov(SECOND_PARAM, "original");
 
 	// call the pre handler, incrementing
 	a.callip("handlerPre");
@@ -237,6 +240,9 @@ std::vector<uint8_t> X64Generator::handlerBytes(int64_t handler, void* content, 
 	a.label("content");
 	a.write64(reinterpret_cast<uint64_t>(content));
 
+	a.label("original");
+	a.write64(original);
+
 	a.updateLabels();
 
 	auto runtimeInfo = this->runtimeInfoBytes(handler, a.buffer().size(), a.getLabel("handler-push"), a.getLabel("handler-alloc-mid"));
@@ -253,7 +259,7 @@ std::vector<uint8_t> X64Generator::intervenerBytes(int64_t original, int64_t han
 	RegMem64 m;
 	using enum X64Register;
 
-	auto difference = reinterpret_cast<int64_t>(handler) - static_cast<int64_t>(original) - 5;
+	auto difference = handler - original - 5;
 
 	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
 		a.jmp(handler);
@@ -291,7 +297,7 @@ std::vector<uint8_t> X64Generator::wrapperBytes(int64_t original, int64_t wrappe
 
 	metadata.m_convention->generateIntoOriginal(a, metadata.m_abstract);
 
-	auto difference = a.currentAddress() - reinterpret_cast<int64_t>(original) + 5;
+	auto difference = a.currentAddress() - original + 5;
 	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
 		a.call(original);
 	}

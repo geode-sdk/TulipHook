@@ -19,7 +19,7 @@ namespace tulip::hook {
 			size_t offset; // can be different than size
 		};
 
-		virtual std::vector<uint8_t> handlerBytes(int64_t handler, void* content, HandlerMetadata const& metadata);
+		virtual std::vector<uint8_t> handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata);
 		virtual std::vector<uint8_t> intervenerBytes(int64_t original, int64_t handler, size_t size);
 		virtual geode::Result<RelocateReturn> relocatedBytes(int64_t original, int64_t relocated, size_t size);
 		virtual std::vector<uint8_t> wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata);

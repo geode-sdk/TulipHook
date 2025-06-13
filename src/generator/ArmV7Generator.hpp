@@ -6,18 +6,12 @@
 
 namespace tulip::hook {
 
-	class ArmV7HandlerGenerator : public HandlerGenerator {
+	class ArmV7Generator : public BaseGenerator {
 	public:
-		using HandlerGenerator::HandlerGenerator;
+		using BaseGenerator::BaseGenerator;
 
-		geode::Result<TrampolineReturn> generateTrampoline(uint64_t target) override;
-
-		std::vector<uint8_t> handlerBytes(uint64_t address) override;
-		std::vector<uint8_t> intervenerBytes(uint64_t address, size_t size) override;
-	};
-
-	class ArmV7WrapperGenerator : public WrapperGenerator {
-	public:
-		using WrapperGenerator::WrapperGenerator;
+		std::vector<uint8_t> handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) override;
+		std::vector<uint8_t> intervenerBytes(int64_t original, int64_t handler, size_t size) override;
+		geode::Result<RelocateReturn> relocatedBytes(int64_t original, int64_t relocated, size_t size) override;
 	};
 }

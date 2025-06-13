@@ -13,10 +13,5 @@ namespace tulip::hook {
 		std::shared_ptr<CallingConvention> m_convention;
 
 		AbstractFunction m_abstract;
-
-		WrapperMetadata() = default;
-		WrapperMetadata(HandlerMetadata const& handlerMetadata)
-			: m_convention(handlerMetadata.m_convention),
-			  m_abstract(handlerMetadata.m_abstract) {}
 	};
 }

@@ -16,18 +16,14 @@ using namespace tulip::hook;
 Handler::Handler(void* address, HandlerMetadata const& metadata) :
 	m_address(address),
 	m_metadata(metadata),
-	m_wrapperMetadata(metadata) {
+	m_content(std::make_unique<HandlerContent>()),
+	m_wrapperMetadata{metadata.m_convention, metadata.m_abstract} {
 
 }
 
-geode::Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata const& metadata) {
+std::unique_ptr<Handler> Handler::create(void* address, HandlerMetadata const& metadata) {
 	auto ret = std::make_unique<Handler>(address, metadata);
-
-	ret->m_content = new (std::nothrow) HandlerContent();
-	if (!ret->m_content) {
-		return geode::Err("Failed to allocate HandlerContent");
-	}
-	return geode::Ok(std::move(ret));
+	return ret;
 }
 
 Handler::~Handler() {}
@@ -40,11 +36,11 @@ geode::Result<> Handler::init() {
 
 	// std::cout << std::noshowbase << std::setfill('0') << std::hex;
 
-	auto dryHandler = generator->handlerBytes(0, m_content, m_metadata);
+	auto dryHandler = generator->handlerBytes((int64_t)m_address, 0, m_content.get(), m_metadata);
 	std::vector<uint8_t> handler;
 	do {
 		GEODE_UNWRAP_INTO(m_handler, Target::get().allocateArea(dryHandler.size()));
-		handler = generator->handlerBytes((int64_t)m_handler, m_content, m_metadata);
+		handler = generator->handlerBytes((int64_t)m_address, (int64_t)m_handler, m_content.get(), m_metadata);
 
 		if (handler.size() <= dryHandler.size()) break;
 

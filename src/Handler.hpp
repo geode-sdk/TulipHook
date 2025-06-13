@@ -28,7 +28,7 @@ namespace tulip::hook {
 		std::unordered_map<HookHandle, std::unique_ptr<Hook>> m_hooks;
 		std::unordered_map<void*, HookHandle> m_handles;
 
-		HandlerContent* m_content = nullptr;
+		std::unique_ptr<HandlerContent> m_content;
 
 		void* m_trampoline = nullptr;
 		size_t m_trampolineSize = 0;
@@ -41,7 +41,7 @@ namespace tulip::hook {
 		std::vector<uint8_t> m_originalBytes;
 		std::vector<uint8_t> m_modifiedBytes;
 
-		static geode::Result<std::unique_ptr<Handler>> create(void* address, HandlerMetadata const& metadata);
+		static std::unique_ptr<Handler> create(void* address, HandlerMetadata const& metadata);
 		~Handler();
 
 		geode::Result<> init();

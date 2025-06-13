@@ -20,8 +20,8 @@ namespace {
 	}
 }
 
-std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
-    ArmV8Assembler a(address);
+std::vector<uint8_t> ArmV8Generator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
+	ArmV8Assembler a(handler);
     using enum ArmV8Register;
 	using enum ArmV8IndexKind;
 
@@ -88,13 +88,12 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 	a.write64(reinterpret_cast<uint64_t>(postHandler));
 
 	a.label("content");
-	a.write64(reinterpret_cast<uint64_t>(m_content));
+	a.write64(reinterpret_cast<uint64_t>(content));
 
 	a.updateLabels();
 
-	return std::move(a.m_buffer);
+	return std::move(a.m_buffer);	
 }
-
 namespace {
 	bool canDeltaRange(int64_t delta, int64_t range) {
 		// Check if the delta can be encoded in range bits or less.
@@ -102,14 +101,14 @@ namespace {
 	}
 }
 
-std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
-    ArmV8Assembler a(address);
+std::vector<uint8_t> ArmV8Generator::intervenerBytes(int64_t original, int64_t handler, size_t size) {
+	ArmV8Assembler a(original);
     using enum ArmV8Register;
 
-	const auto callback = reinterpret_cast<int64_t>(m_handler);
-	const int64_t alignedAddr = address & ~0xFFF;
+	const auto callback = handler;
+	const int64_t alignedAddr = original & ~0xFFF;
 	const int64_t alignedCallback = callback & ~0xFFF;
-	const int64_t delta = callback - static_cast<int64_t>(address);
+	const int64_t delta = callback - original;
 
 	// Delta can be encoded in 28 bits or less -> use branch.
 	if (canDeltaRange(delta, 28)) {
@@ -139,13 +138,12 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, si
 
     return std::move(a.m_buffer);
 }
+geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int64_t original, int64_t relocated, size_t size) {
+	std::vector<uint8_t> originalBytes(size);
+	std::memcpy(originalBytes.data(), (void*)original, size);
 
-geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generateTrampoline(uint64_t target) {
-	std::vector<uint8_t> originalBytes(target);
-	std::memcpy(originalBytes.data(), m_address, target);
-
-	auto address = reinterpret_cast<int64_t>(m_address);
-	auto trampoline = reinterpret_cast<int64_t>(m_trampoline);
+	auto address = original;
+	auto trampoline = relocated;
 
 	ArmV8Disassembler d(address, originalBytes);
 	ArmV8Assembler a(trampoline);
@@ -362,11 +360,11 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 		idx++;
 	}
 
-	auto const newOffset = (address + target) - a.currentAddress();
+	auto const newOffset = (address + size) - a.currentAddress();
 	if (canDeltaRange(newOffset, 28)) {
 		a.b(newOffset);
 	} else if (canDeltaRange(newOffset, 33)) {
-		auto const callback = address + target;
+		auto const callback = address + size;
 		auto const alignedCallback = callback & ~0xFFFll;
 		auto const alignedAddress = a.currentAddress() & ~0xFFFll;
 		a.adrp(X16, alignedCallback - alignedAddress);
@@ -377,12 +375,123 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 		a.br(X16);
 
 		a.label("literal-final");
-		a.write64(address + target);
+		a.write64(address + size);
 	}
 
 	a.updateLabels();
 
-	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
+	return geode::Ok(RelocateReturn{std::move(a.m_buffer), size});
+}
 
-	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, a.m_buffer.size()}, a.m_buffer.size()});
+std::vector<uint8_t> ArmV8Generator::commonHandlerBytes(int64_t handler, ptrdiff_t spaceOffset) {
+	ArmV8Assembler a(handler);
+    using enum ArmV8Register;
+	using enum ArmV8IndexKind;
+
+	a.adr(X13, 0);
+
+    a.stp(X29, X30, SP, -0xc0, PreIndex);
+    a.mov(X29, SP);
+    a.stp(X19, X20, SP, 0x10, SignedOffset);
+
+    a.mov(X19, X30);
+    a.mov(X20, X14);
+
+    a.stp(X0, X1, SP, 0x20, SignedOffset);
+    a.stp(X2, X3, SP, 0x30, SignedOffset);
+    a.stp(X4, X5, SP, 0x40, SignedOffset);
+    a.stp(X6, X7, SP, 0x50, SignedOffset);
+    a.stp(X8, X9, SP, 0x60, SignedOffset);
+    a.stp(D0, D1, SP, 0x70, SignedOffset);
+    a.stp(D2, D3, SP, 0x80, SignedOffset);
+    a.stp(D4, D5, SP, 0x90, SignedOffset);
+    a.stp(D6, D7, SP, 0xa0, SignedOffset);
+
+    // set the parameters
+    a.mov(X0, X10);
+    a.mov(X1, X11);
+    a.mov(X2, X12);
+    a.mov(X3, X13);
+    a.mov(X4, 0);
+
+    // call the func
+    a.ldr(X5, "spaceOffset");
+    a.add(X5, X5, X20);
+    a.ldr(X5, X5, 0);
+    a.blr(X5);
+    a.mov(X16, X0);
+
+    // recover registers
+    a.ldp(D6, D7, SP, 0xa0, SignedOffset);
+    a.ldp(D4, D5, SP, 0x90, SignedOffset);
+    a.ldp(D2, D3, SP, 0x80, SignedOffset);
+    a.ldp(D0, D1, SP, 0x70, SignedOffset);
+    a.ldp(X8, X9, SP, 0x60, SignedOffset);
+    a.ldp(X6, X7, SP, 0x50, SignedOffset);
+    a.ldp(X4, X5, SP, 0x40, SignedOffset);
+    a.ldp(X2, X3, SP, 0x30, SignedOffset);
+    a.ldp(X0, X1, SP, 0x20, SignedOffset);
+
+    a.blr(X16);
+
+    a.stp(X0, X8, SP, 0x20, SignedOffset);
+    a.stp(D0, D1, SP, 0x30, SignedOffset);
+
+    // call the post handler, decrementing
+    a.mov(X4, 1);
+    a.ldr(X5, "spaceOffset");
+    a.add(X5, X5, X20);
+    a.ldr(X5, X5, 0);
+    a.blr(X5);
+
+    // recover the original return
+    a.mov(X16, X19);
+
+    // recover the return values
+    a.ldp(D0, D1, SP, 0x30, SignedOffset);
+    a.ldp(X0, X8, SP, 0x20, SignedOffset);
+
+    a.ldp(X19, X20, SP, 0x10, SignedOffset);
+    a.ldp(X29, X30, SP, 0xc0, PostIndex);
+
+    // done!
+    a.br(X16);
+
+    a.label("spaceOffset");
+    a.write64(spaceOffset);
+
+    a.updateLabels();
+
+	return std::move(a.m_buffer);
+}
+std::vector<uint8_t> ArmV8Generator::commonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset) {
+	ArmV8Assembler a(original);
+    using enum ArmV8Register;
+
+	a.adr(X10, 0);
+	a.mov(X11, unique);
+	a.mov(X12, relocOffset);
+
+	const auto callback = handler;
+	const int64_t alignedAddr = a.currentAddress() & ~0xFFF;
+	const int64_t alignedCallback = callback & ~0xFFF;
+	const int64_t delta = callback - a.currentAddress();
+
+	if (canDeltaRange(delta, 28)) {
+		a.b(delta);
+	} else if (canDeltaRange(delta, 33)) {
+		a.adrp(X16, alignedCallback - alignedAddr);
+		a.add(X16, X16, callback & 0xFFF);
+		a.br(X16);
+	} else {
+		a.ldr(X16, "handler");
+		a.br(X16);
+
+		a.label("handler");
+		a.write64(callback);
+	}
+
+	a.updateLabels();
+
+	return std::move(a.m_buffer);
 }
