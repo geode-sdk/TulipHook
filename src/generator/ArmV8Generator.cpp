@@ -281,7 +281,7 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				}
 				break;
 			}
-			case ArmV8Instruction::CB_: {
+			case ArmV8InstructionType::CB_: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
 				if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, newOffset & ~0xFFFll);
