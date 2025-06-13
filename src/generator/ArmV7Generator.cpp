@@ -121,7 +121,7 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int6
 	static thread_local std::string error;
 	error = "";
 
-	GenRelocateCodeAndBranch(const_cast<void*>(originalBuffer.data()), relocatedBuffer.data(), originMem, relocatedMem, +[](void* dest, void const* src, size_t size) {
+	GenRelocateCodeAndBranch(const_cast<uint8_t*>(originalBuffer.data()), relocatedBuffer.data(), originMem, relocatedMem, +[](void* dest, void const* src, size_t size) {
 		auto res = Target::get().writeMemory(dest, src, size);
 		if (!res) {
 			error = res.unwrapErr();
@@ -135,5 +135,7 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int6
 	if (relocatedMem->size == 0) {
 		return geode::Err("Failed to relocate original function");
 	}
-	return geode::Ok(RelocateReturn{{relocatedBuffer.data(), relocatedMem->size}, originalBuffer.size()});
+	std::vector<uint8_t> relocatedBufferVec(relocatedMem->size);
+	std::memcpy(relocatedBufferVec.data(), relocatedBuffer.data(), relocatedMem->size);
+	return geode::Ok(RelocateReturn{std::move(relocatedBufferVec), originalBuffer.size()});
 }

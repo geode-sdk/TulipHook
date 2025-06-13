@@ -185,7 +185,7 @@ geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_
 	
 	return geode::Ok(RelocateReturn{
 		.bytes = std::move(a.m_buffer),
-		.offset = originalOffset,
+		.offset = (size_t)originalOffset,
 	});
 }
 
