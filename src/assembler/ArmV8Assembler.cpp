@@ -89,6 +89,12 @@ void ArmV8Assembler::stp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register r
     this->write32(opc | reg2Shifted | regBaseShifted | immShifted | val(reg1));
 }
 
+void ArmV8Assembler::adr(ArmV8Register dst, int64_t imm) {
+    const auto immlo = ((imm) & 3ull) << 29;
+    const auto immhi = ((imm >> 2) & 0x7ffffull) << 5;
+    this->write32(0x10000000 | immlo | immhi | val(dst));
+}
+
 void ArmV8Assembler::adrp(ArmV8Register dst, int64_t imm) {
     const auto immlo = ((imm >> 12) & 3ull) << 29;
     const auto immhi = ((imm >> 14) & 0x7ffffull) << 5;
