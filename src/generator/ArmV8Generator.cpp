@@ -257,8 +257,8 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 					a.adrp(X16, newOffset & ~0xFFFll);
 					a.add(X16, X16, newOffset & 0xFFF);
 					a.write32(
-						ins->m_rawInstruction & 0xFF00001F | // Preserve the condition bits
-						(1 << 5)
+						(ins->m_rawInstruction & 0xFF00001F) | // Preserve the condition bits
+						(2 << 5)
 					);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
@@ -268,8 +268,8 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				else {
 					a.ldr(X16, "literal-" + idxLabel);
 					a.write32(
-						ins->m_rawInstruction & 0xFF00001F | // Preserve the condition bits
-						(1 << 5)
+						(ins->m_rawInstruction & 0xFF00001F) | // Preserve the condition bits
+						(2 << 5)
 					);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
@@ -281,12 +281,41 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				}
 				break;
 			}
-			case ArmV8InstructionType::TBZ:{
+			case ArmV8Instruction::CB_: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
 				if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, newOffset & ~0xFFFll);
 					a.add(X16, X16, newOffset & 0xFFF);
-					a.tbz(ins->m_src1, ins->m_other, 4);
+					a.write32(
+						(ins->m_rawInstruction & 0xFFFFE01F) | // Preserve the real bits
+						(2 << 5)
+					);
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("jump-" + idxLabel);
+				} else {
+					a.ldr(X16, "literal-" + idxLabel);
+					a.write32(
+						(ins->m_rawInstruction & 0xFFFFE01F) | // Preserve the real bits
+						(2 << 5)
+					);
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("literal-" + idxLabel);
+					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
+				}
+				break;
+			}
+			case ArmV8InstructionType::TBZ: {
+				auto const newOffset = ins->m_literal - a.currentAddress();
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, newOffset & ~0xFFFll);
+					a.add(X16, X16, newOffset & 0xFFF);
+					a.tbz(ins->m_src1, ins->m_other, 8);
 
 					a.b("jump-" + idxLabel);
 					a.br(X16);
@@ -294,7 +323,7 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 					a.label("jump-" + idxLabel);
 				} else {
 					a.ldr(X16, "literal-" + idxLabel);
-					a.tbz(ins->m_src1, ins->m_other, 4);
+					a.tbz(ins->m_src1, ins->m_other, 8);
 
 					a.b("jump-" + idxLabel);
 					a.br(X16);
@@ -311,14 +340,14 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, newOffset & ~0xFFFll);
 					a.add(X16, X16, newOffset & 0xFFF);
-					a.tbnz(ins->m_src1, ins->m_other, 4);
+					a.tbnz(ins->m_src1, ins->m_other, 8);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
 
 					a.label("jump-" + idxLabel);
 				} else {
 					a.ldr(X16, "literal-" + idxLabel);
-					a.tbnz(ins->m_src1, ins->m_other, 4);
+					a.tbnz(ins->m_src1, ins->m_other, 8);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
 

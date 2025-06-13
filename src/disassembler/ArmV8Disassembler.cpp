@@ -71,6 +71,13 @@ void ArmV8Disassembler::handleTB_Z(ArmV8Instruction& instruction) {
     instruction.m_literal = m_baseAddress + (instruction.m_immediate);
 }
 
+void ArmV8Disassembler::handleCB_(ArmV8Instruction& instruction) {
+    instruction.m_type = ArmV8InstructionType::CB_;
+    instruction.m_src1 = extractRegister(0, instruction.m_rawInstruction);
+    instruction.m_immediate = extractValue(5, 9, instruction.m_rawInstruction) << 2;
+    instruction.m_literal = m_baseAddress + (instruction.m_immediate);
+}
+
 std::unique_ptr<BaseInstruction> ArmV8Disassembler::disassembleNext() {
     if (m_currentIndex >= m_input.size()) {
         return nullptr; // No more instructions to disassemble
@@ -99,7 +106,9 @@ std::unique_ptr<BaseInstruction> ArmV8Disassembler::disassembleNext() {
         } else {
             this->handleADR(*instruction);
         }
-    } else if ((rawInstruction & 0x7E000000) == 0x34000000) { // B_Cond
+    } else if ((rawInstruction & 0x7E000000) == 0x74000000) { // CB_
+        this->handleCB_(*instruction);
+    } else if ((rawInstruction & 0xFE000000) == 0x54000000) { // B_Cond
         this->handleBCond(*instruction);
     } else if ((rawInstruction & 0x7E000000) == 0x36000000) { // TB_Z
         this->handleTB_Z(*instruction);

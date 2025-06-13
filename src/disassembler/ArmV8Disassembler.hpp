@@ -12,6 +12,7 @@ namespace tulip::hook {
         ADR,
         ADRP,
         B_Cond,
+        CB_,
         TBZ,
         TBNZ,
     };
@@ -45,6 +46,7 @@ namespace tulip::hook {
         void handleADRP(ArmV8Instruction& instruction);
         void handleBCond(ArmV8Instruction& instruction);
         void handleTB_Z(ArmV8Instruction& instruction);
+        void handleCB_(ArmV8Instruction& instruction);
 
         std::unique_ptr<BaseInstruction> disassembleNext() override;
 	};
