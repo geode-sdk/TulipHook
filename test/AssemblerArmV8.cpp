@@ -15,7 +15,7 @@ TEST(ArmV8AssemblerTest, ADRPReloc) {
     auto ins = static_cast<ArmV8Instruction*>(instruction.get());
     EXPECT_EQ(ins->m_type, ArmV8InstructionType::ADRP);
     EXPECT_EQ(ins->m_dst1, ArmV8Register::X8);
-    EXPECT_EQ(ins->m_immediate, 0x456);
+    EXPECT_EQ(ins->m_immediate, 0x456000);
     EXPECT_EQ(ins->m_literal, 0x8a7000);
 
     auto const newOffset = a.m_baseAddress - 0x8a7000;

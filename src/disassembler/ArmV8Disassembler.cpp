@@ -19,21 +19,21 @@ namespace {
 
 void ArmV8Disassembler::handleB(ArmV8Instruction& instruction) {
     instruction.m_type = ArmV8InstructionType::B;
-    instruction.m_immediate = extractValue(5, 26, instruction.m_rawInstruction);
-    instruction.m_literal = m_baseAddress + (instruction.m_immediate << 2);
+    instruction.m_immediate = extractValue(5, 26, instruction.m_rawInstruction) << 2;
+    instruction.m_literal = m_baseAddress + (instruction.m_immediate);
 }
 
 void ArmV8Disassembler::handleBL(ArmV8Instruction& instruction) {
     instruction.m_type = ArmV8InstructionType::BL;
-    instruction.m_immediate = extractValue(5, 26, instruction.m_rawInstruction);
-    instruction.m_literal = m_baseAddress + (instruction.m_immediate << 2);
+    instruction.m_immediate = extractValue(5, 26, instruction.m_rawInstruction) << 2;
+    instruction.m_literal = m_baseAddress + (instruction.m_immediate);
 }
 
 void ArmV8Disassembler::handleLDRLiteral(ArmV8Instruction& instruction) {
     instruction.m_type = ArmV8InstructionType::LDR_Literal;
     instruction.m_dst1 = extractRegister(0, instruction.m_rawInstruction);
-    instruction.m_immediate = extractValue(5, 19, instruction.m_rawInstruction);
-    instruction.m_literal = m_baseAddress + (instruction.m_immediate << 2);
+    instruction.m_immediate = extractValue(5, 19, instruction.m_rawInstruction) << 2;
+    instruction.m_literal = m_baseAddress + (instruction.m_immediate);
 
 }
 
@@ -48,23 +48,23 @@ void ArmV8Disassembler::handleADR(ArmV8Instruction& instruction) {
 void ArmV8Disassembler::handleADRP(ArmV8Instruction& instruction) {
     instruction.m_type = ArmV8InstructionType::ADRP;
     instruction.m_dst1 = extractRegister(0, instruction.m_rawInstruction);
-    instruction.m_immediate = extractValue(29, 2, instruction.m_rawInstruction);
-    instruction.m_immediate |= extractValue(5, 19, instruction.m_rawInstruction) << 2;
-    instruction.m_literal = (m_baseAddress + (instruction.m_immediate << 12)) & ~0xFFFll;
+    instruction.m_immediate = extractValue(29, 2, instruction.m_rawInstruction) << 12;
+    instruction.m_immediate |= extractValue(5, 19, instruction.m_rawInstruction) << 14;
+    instruction.m_literal = (m_baseAddress + (instruction.m_immediate)) & ~0xFFFll;
 }
 
 void ArmV8Disassembler::handleBCond(ArmV8Instruction& instruction) {
     instruction.m_type = ArmV8InstructionType::B_Cond;
-    instruction.m_immediate = extractValue(5, 19, instruction.m_rawInstruction);
-    instruction.m_literal = m_baseAddress + (instruction.m_immediate << 2);
+    instruction.m_immediate = extractValue(5, 19, instruction.m_rawInstruction) << 1;
+    instruction.m_literal = m_baseAddress + (instruction.m_immediate);
 }
 
 void ArmV8Disassembler::handleTB_Z(ArmV8Instruction& instruction) {
     instruction.m_type = extractValue(24, 1, instruction.m_rawInstruction) == 0 ? ArmV8InstructionType::TBZ : ArmV8InstructionType::TBNZ;
     instruction.m_src1 = extractRegister(0, instruction.m_rawInstruction);
     instruction.m_other = extractValue(19, 5, instruction.m_rawInstruction) | (extractValue(31, 1, instruction.m_rawInstruction) << 5);
-    instruction.m_immediate = extractValue(5, 14, instruction.m_rawInstruction);
-    instruction.m_literal = m_baseAddress + (instruction.m_immediate << 2);
+    instruction.m_immediate = extractValue(5, 14, instruction.m_rawInstruction) << 2;
+    instruction.m_literal = m_baseAddress + (instruction.m_immediate);
 }
 
 std::unique_ptr<BaseInstruction> ArmV8Disassembler::disassembleNext() {
