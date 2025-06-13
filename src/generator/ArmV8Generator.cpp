@@ -230,7 +230,7 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 		}
 	}
 
-	auto const newOffset = a.currentAddress() - target;
+	auto const newOffset = target - a.currentAddress();
 	a.adrp(X16, target & ~0xFFFll);
 	a.add(X16, X16, target & 0xFFF);
 	a.br(X16);
