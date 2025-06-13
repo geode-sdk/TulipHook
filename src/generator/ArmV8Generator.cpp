@@ -146,7 +146,8 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 
 	while (d.hasNext()) {
 		using enum ArmV8InstructionType;
-		auto ins = std::static_pointer_cast<ArmV8Instruction>(d.disassembleNext());
+		auto baseIns = d.disassembleNext();
+		auto ins = static_cast<ArmV8Instruction*>(baseIns.get());
 
 		switch (ins->m_type) {
 			case ArmV8InstructionType::B: {
