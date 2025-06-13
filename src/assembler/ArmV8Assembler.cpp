@@ -112,7 +112,7 @@ void ArmV8Assembler::b(uint32_t imm) {
 }
 
 void ArmV8Assembler::b(std::string const& label) {
-    m_labelUpdates.push_back({this->currentAddress(), label, 26, 5});
+    m_labelUpdates.push_back({this->currentAddress(), label, 26, 0});
     this->write32(0x14000000);
 }
 
