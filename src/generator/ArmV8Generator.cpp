@@ -151,10 +151,14 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 	ArmV8Assembler a(trampoline);
 	using enum ArmV8Register;
 
+	size_t idx = 0;
+
 	while (d.hasNext()) {
 		using enum ArmV8InstructionType;
 		auto baseIns = d.disassembleNext();
 		auto ins = static_cast<ArmV8Instruction*>(baseIns.get());
+
+		auto idxLabel = std::to_string(idx);
 
 		switch (ins->m_type) {
 			case ArmV8InstructionType::B: {
@@ -166,8 +170,10 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 					a.add(X16, X16, newOffset & 0xFFF);
 					a.br(X16);
 				} else {
-					a.ldr(X16, 4);
+					a.ldr(X16, "literal-" + idxLabel);
 					a.br(X16);
+
+					a.label("literal-" + idxLabel);
 					a.write64(ins->m_literal);
 				}
 				break;
@@ -181,10 +187,14 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 					a.add(X16, X16, newOffset & 0xFFF);
 					a.blr(X16);
 				} else {
-					a.ldr(X16, 8);
+					a.ldr(X16, "literal-" + idxLabel);
 					a.blr(X16);
-					a.b(8);
+					a.b("jump-" + idxLabel);
+
+					a.label("literal-" + idxLabel);
 					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
 				}
 				break;
 			}
@@ -197,10 +207,14 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 					a.add(X16, X16, newOffset & 0xFFF);
 					a.ldr(ins->m_dst1, X16, 0);
 				} else {
-					a.ldr(X16, 8);
+					a.ldr(X16, "literal-" + idxLabel);
 					a.ldr(ins->m_dst1, X16, 0);
-					a.b(4);
+					a.b("jump-" + idxLabel);
+
+					a.label("literal-" + idxLabel);
 					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
 				} 
 				break;
 			}
@@ -210,9 +224,13 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 					a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
 					a.add(ins->m_dst1, ins->m_dst1, newOffset & 0xFFF);
 				} else {
-					a.ldr(ins->m_dst1, 4);
-					a.b(4);
+					a.ldr(ins->m_dst1, "literal-" + idxLabel);
+					a.b("jump-" + idxLabel);
+
+					a.label("literal-" + idxLabel);
 					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
 				}
 				break;
 			}
@@ -221,9 +239,13 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				if (canDeltaRange(newOffset, 33)) {
 					a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
 				} else {
-					a.ldr(ins->m_dst1, 4);
-					a.b(4);
+					a.ldr(ins->m_dst1, "literal-" + idxLabel);
+					a.b("jump-" + idxLabel);
+
+					a.label("literal-" + idxLabel);
 					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
 				}
 				break;
 			}
@@ -236,18 +258,24 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 						ins->m_rawInstruction & 0xFF00001F | // Preserve the condition bits
 						(1 << 5)
 					);
-					a.b(4);
+					a.b("jump-" + idxLabel);
 					a.br(X16);
+
+					a.label("jump-" + idxLabel);
 				}
 				else {
-					a.ldr(X16, 12);
+					a.ldr(X16, "literal-" + idxLabel);
 					a.write32(
 						ins->m_rawInstruction & 0xFF00001F | // Preserve the condition bits
 						(1 << 5)
 					);
-					a.b(12);
+					a.b("jump-" + idxLabel);
 					a.br(X16);
+
+					a.label("literal-" + idxLabel);
 					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
 				}
 				break;
 			}
@@ -257,14 +285,22 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 					a.adrp(X16, newOffset & ~0xFFFll);
 					a.add(X16, X16, newOffset & 0xFFF);
 					a.tbz(ins->m_src1, ins->m_other, 4);
-					a.b(4);
+
+					a.b("jump-" + idxLabel);
 					a.br(X16);
+
+					a.label("jump-" + idxLabel);
 				} else {
-					a.ldr(X16, 12);
+					a.ldr(X16, "literal-" + idxLabel);
 					a.tbz(ins->m_src1, ins->m_other, 4);
-					a.b(12);
+
+					a.b("jump-" + idxLabel);
 					a.br(X16);
+
+					a.label("literal-" + idxLabel);
 					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
 				}
 				break;
 			}
@@ -274,14 +310,20 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 					a.adrp(X16, newOffset & ~0xFFFll);
 					a.add(X16, X16, newOffset & 0xFFF);
 					a.tbnz(ins->m_src1, ins->m_other, 4);
-					a.b(4);
+					a.b("jump-" + idxLabel);
 					a.br(X16);
+
+					a.label("jump-" + idxLabel);
 				} else {
-					a.ldr(X16, 12);
+					a.ldr(X16, "literal-" + idxLabel);
 					a.tbnz(ins->m_src1, ins->m_other, 4);
-					a.b(12);
+					a.b("jump-" + idxLabel);
 					a.br(X16);
+
+					a.label("literal-" + idxLabel);
 					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
 				}
 				break;
 			}
@@ -289,6 +331,8 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				a.write32(ins->m_rawInstruction);
 				break;
 		}
+
+		idx++;
 	}
 
 	auto const newOffset = (address + target) - a.currentAddress();
@@ -299,10 +343,14 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 		a.add(X16, X16, newOffset & 0xFFF);
 		a.br(X16);
 	} else {
-		a.ldr(X16, 4);
+		a.ldr(X16, "literal-final");
 		a.br(X16);
+
+		a.label("literal-final");
 		a.write64(address + target);
 	}
+
+	a.updateLabels();
 
 	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
 
