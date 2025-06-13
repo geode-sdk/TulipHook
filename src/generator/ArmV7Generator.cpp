@@ -1,6 +1,7 @@
 #include "ArmV7Generator.hpp"
 
 #include "../Handler.hpp"
+#include "../assembler/ThumbV7Assembler.hpp"
 #include "../assembler/ArmV7Assembler.hpp"
 #include "../target/PlatformTarget.hpp"
 
@@ -22,7 +23,7 @@ namespace {
 }
 
 std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
-	ArmV7Assembler a((uint64_t)Target::get().getRealPtr((void*)address));
+	ThumbV7Assembler a((uint64_t)Target::get().getRealPtr((void*)address));
 	using enum ArmV7Register;
 
 	// preserve registers
@@ -88,21 +89,21 @@ std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
 }
 
 std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
-	ArmV7Assembler a((uint64_t)Target::get().getRealPtr((void*)address));
+	ThumbV7Assembler a((uint64_t)Target::get().getRealPtr((void*)address));
+	ArmV7Assembler aA((uint64_t)Target::get().getRealPtrAs((void*)address, m_address));
 	using enum ArmV7Register;
 
-	// align
-	if (address & 0x2) {
-		a.nop();
-	}
-
 	if (address & 0x1) {
+		// align
+		if (address & 0x2) {
+			a.nop();
+		}
 		// thumb
 		a.ldrw(PC, PC, -4);
 	}
 	else {
 		// arm
-		a.ldrArm(PC, PC, -4);
+		aA.ldr(PC, PC, -4);
 	}
 	
 	// my thumbs will eat me

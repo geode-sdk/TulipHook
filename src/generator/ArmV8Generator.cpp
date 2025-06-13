@@ -2,9 +2,8 @@
 
 #include "../Handler.hpp"
 #include "../assembler/ArmV8Assembler.hpp"
+#include "../disassembler/ArmV8Disassembler.hpp"
 #include "../target/PlatformTarget.hpp"
-
-#include <InstructionRelocation/InstructionRelocation.h>
 
 using namespace tulip::hook;
 
@@ -96,6 +95,13 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
+namespace {
+	bool canDeltaRange(int64_t delta, int64_t range) {
+		// Check if the delta can be encoded in range bits or less.
+		return delta >= -(1ll << range) && delta <= (1ll << range) - 1;
+	}
+}
+
 std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
@@ -106,11 +112,11 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, si
 	const int64_t delta = callback - static_cast<int64_t>(address);
 
 	// Delta can be encoded in 28 bits or less -> use branch.
-	if (delta >= -0x8000000 && delta <= 0x7FFFFFF) {
+	if (canDeltaRange(delta, 28)) {
 		a.b(delta);
 	}
 	// Delta can be encoded in 33 bits or less -> use adrp.
-	else if (delta >= -static_cast<int64_t>(0x100000000) && delta <= 0xFFFFFFFF) {
+	else if (canDeltaRange(delta, 33)) {
 		a.adrp(X16, alignedCallback - alignedAddr);
 		a.add(X16, X16, callback & 0xFFF);
 		a.br(X16);
@@ -135,27 +141,248 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, si
 }
 
 geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generateTrampoline(uint64_t target) {
-	auto origin = new CodeMemBlock(reinterpret_cast<uint64_t>(m_address), target);
-	auto relocated = new CodeMemBlock();
-	auto originBuffer = m_address;
-	auto relocatedBuffer = m_trampoline;
+	std::vector<uint8_t> originalBytes(target);
+	std::memcpy(originalBytes.data(), m_address, target);
 
-	static thread_local std::string error;
-	error = "";
+	auto address = reinterpret_cast<int64_t>(m_address);
+	auto trampoline = reinterpret_cast<int64_t>(m_trampoline);
 
-	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
-		auto res = Target::get().writeMemory(dest, src, size);
-		if (!res) {
-			error = res.unwrapErr();
+	ArmV8Disassembler d(address, originalBytes);
+	ArmV8Assembler a(trampoline);
+	using enum ArmV8Register;
+
+	size_t idx = 0;
+
+	while (d.hasNext()) {
+		using enum ArmV8InstructionType;
+		auto baseIns = d.disassembleNext();
+		auto ins = static_cast<ArmV8Instruction*>(baseIns.get());
+
+		auto idxLabel = std::to_string(idx);
+
+		auto const newOffset = ins->m_literal - a.currentAddress();
+		auto const callback = ins->m_literal;
+		auto const alignedAddr = a.currentAddress() & ~0xFFFll;
+		auto const alignedCallback = callback & ~0xFFFll;
+
+		switch (ins->m_type) {
+			case ArmV8InstructionType::B: {
+				if (canDeltaRange(newOffset, 28)) {
+					a.b(newOffset);
+				} else if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
+					a.br(X16);
+				} else {
+					a.ldr(X16, "literal-" + idxLabel);
+					a.br(X16);
+
+					a.label("literal-" + idxLabel);
+					a.write64(ins->m_literal);
+				}
+				break;
+			}
+			case ArmV8InstructionType::BL: {
+				if (canDeltaRange(newOffset, 28)) {
+					a.bl(newOffset);
+				} else if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
+					a.blr(X16);
+				} else {
+					a.ldr(X16, "literal-" + idxLabel);
+					a.blr(X16);
+					a.b("jump-" + idxLabel);
+
+					a.label("literal-" + idxLabel);
+					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
+				}
+				break;
+			}
+			case ArmV8InstructionType::LDR_Literal: {
+				if (canDeltaRange(newOffset, 21)) {
+					a.ldr(ins->m_dst1, newOffset);
+				} else if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
+					a.ldr(ins->m_dst1, X16, 0);
+				} else {
+					a.ldr(X16, "literal-" + idxLabel);
+					a.ldr(ins->m_dst1, X16, 0);
+					a.b("jump-" + idxLabel);
+
+					a.label("literal-" + idxLabel);
+					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
+				} 
+				break;
+			}
+			case ArmV8InstructionType::ADR: {
+				if (canDeltaRange(newOffset, 21)) {
+					a.adr(ins->m_dst1, newOffset);
+				} else if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
+				} else {
+					a.ldr(ins->m_dst1, "literal-" + idxLabel);
+					a.b("jump-" + idxLabel);
+
+					a.label("literal-" + idxLabel);
+					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
+				}
+				break;
+			}
+			case ArmV8InstructionType::ADRP: {
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(ins->m_dst1, alignedCallback - alignedAddr);
+				} else {
+					a.ldr(ins->m_dst1, "literal-" + idxLabel);
+					a.b("jump-" + idxLabel);
+
+					a.label("literal-" + idxLabel);
+					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
+				}
+				break;
+			}
+			case ArmV8InstructionType::B_Cond: {
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
+					a.write32(
+						(ins->m_rawInstruction & 0xFF00001F) | // Preserve the condition bits
+						(2 << 5)
+					);
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("jump-" + idxLabel);
+				}
+				else {
+					a.ldr(X16, "literal-" + idxLabel);
+					a.write32(
+						(ins->m_rawInstruction & 0xFF00001F) | // Preserve the condition bits
+						(2 << 5)
+					);
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("literal-" + idxLabel);
+					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
+				}
+				break;
+			}
+			case ArmV8InstructionType::CB_: {
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
+					a.write32(
+						(ins->m_rawInstruction & 0xFFFFE01F) | // Preserve the real bits
+						(2 << 5)
+					);
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("jump-" + idxLabel);
+				} else {
+					a.ldr(X16, "literal-" + idxLabel);
+					a.write32(
+						(ins->m_rawInstruction & 0xFFFFE01F) | // Preserve the real bits
+						(2 << 5)
+					);
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("literal-" + idxLabel);
+					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
+				}
+				break;
+			}
+			case ArmV8InstructionType::TBZ: {
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
+					a.tbz(ins->m_src1, ins->m_other, 8);
+
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("jump-" + idxLabel);
+				} else {
+					a.ldr(X16, "literal-" + idxLabel);
+					a.tbz(ins->m_src1, ins->m_other, 8);
+
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("literal-" + idxLabel);
+					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
+				}
+				break;
+			}
+			case ArmV8InstructionType::TBNZ: {
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
+					a.tbnz(ins->m_src1, ins->m_other, 8);
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("jump-" + idxLabel);
+				} else {
+					a.ldr(X16, "literal-" + idxLabel);
+					a.tbnz(ins->m_src1, ins->m_other, 8);
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("literal-" + idxLabel);
+					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
+				}
+				break;
+			}
+			default:
+				a.write32(ins->m_rawInstruction);
+				break;
 		}
-	});
 
-	if (!error.empty()) {
-		return geode::Err(std::move(error));
+		idx++;
 	}
 
-	if (relocated->size == 0) {
-		return geode::Err("Failed to relocate original function");
+	auto const newOffset = (address + target) - a.currentAddress();
+	if (canDeltaRange(newOffset, 28)) {
+		a.b(newOffset);
+	} else if (canDeltaRange(newOffset, 33)) {
+		auto const callback = address + target;
+		auto const alignedCallback = callback & ~0xFFFll;
+		auto const alignedAddress = a.currentAddress() & ~0xFFFll;
+		a.adrp(X16, alignedCallback - alignedAddress);
+		a.add(X16, X16, callback & 0xFFF);
+		a.br(X16);
+	} else {
+		a.ldr(X16, "literal-final");
+		a.br(X16);
+
+		a.label("literal-final");
+		a.write64(address + target);
 	}
-	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, relocated->size}, relocated->size});
+
+	a.updateLabels();
+
+	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
+
+	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, a.m_buffer.size()}, a.m_buffer.size()});
 }

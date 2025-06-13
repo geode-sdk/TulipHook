@@ -11,8 +11,10 @@ void ArmV8Assembler::updateLabels() {
     // Handle LDR
 	for (auto const& update : m_labelUpdates) {
         const auto diff = m_labels[update.m_name] - update.m_address;
-        const auto opc = this->read32(update.m_address);
-        this->rewrite32(update.m_address, opc | ((diff >> 2) << 5));
+        const auto mask = ((1 << update.m_size) - 1) << update.m_offset;
+        const auto opc = this->read32(update.m_address) & ~mask;
+        const auto offset = ((diff >> 2) << update.m_offset) & mask;
+        this->rewrite32(update.m_address, opc | offset);
 	}
 }
 
@@ -33,7 +35,7 @@ void ArmV8Assembler::mov(ArmV8Register dst, ArmV8Register src) {
 }
 
 void ArmV8Assembler::ldr(ArmV8Register dst, std::string const& label) {
-    m_labelUpdates.push_back({this->currentAddress(), label, 4});
+    m_labelUpdates.push_back({this->currentAddress(), label, 19, 5});
 	this->write32((0x58ul << 24) | val(dst));
 }
 
@@ -87,20 +89,35 @@ void ArmV8Assembler::stp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register r
     this->write32(opc | reg2Shifted | regBaseShifted | immShifted | val(reg1));
 }
 
+void ArmV8Assembler::adr(ArmV8Register dst, int64_t imm) {
+    const auto immlo = ((imm) & 3ll) << 29;
+    const auto immhi = ((imm >> 2) & 0x7ffffll) << 5;
+    this->write32(0x10000000 | immlo | immhi | val(dst));
+}
+
 void ArmV8Assembler::adrp(ArmV8Register dst, int64_t imm) {
-    const auto immlo = ((imm >> 12) & 3ull) << 29;
-    const auto immhi = ((imm >> 14) & 0x7ffffull) << 5;
+    const auto immlo = ((imm >> 12) & 3ll) << 29;
+    const auto immhi = ((imm >> 14) & 0x7ffffll) << 5;
     this->write32(0x90000000 | immlo | immhi | val(dst));
 }
 
 void ArmV8Assembler::add(ArmV8Register dst, ArmV8Register src, uint16_t imm) {
     const auto srcShifted = val(src) << 5;
-    const auto immShifted = static_cast<uint32_t>(imm) << 10;
+    const auto immShifted = (static_cast<uint32_t>(imm) & 0xFFF) << 10;
     this->write32(0x91000000 | srcShifted | immShifted | val(dst));
 }
 
 void ArmV8Assembler::b(uint32_t imm) {
     this->write32(0x14000000 | ((imm >> 2) & 0x3FFFFFF));
+}
+
+void ArmV8Assembler::b(std::string const& label) {
+    m_labelUpdates.push_back({this->currentAddress(), label, 26, 0});
+    this->write32(0x14000000);
+}
+
+void ArmV8Assembler::bl(uint32_t imm) {
+    this->write32(0x94000000 | ((imm >> 2) & 0x3FFFFFF));
 }
 
 void ArmV8Assembler::br(ArmV8Register reg) {
@@ -116,7 +133,7 @@ void ArmV8Assembler::blr(ArmV8Register reg) {
 void ArmV8Assembler::push(ArmV8RegisterArray const& array) {
     using enum ArmV8IndexKind;
 
-    const auto alignedSize = array.size() & ~1ull;
+    const auto alignedSize = array.size() & ~1ll;
     for (auto i = 0u; i < alignedSize; i += 2)
         this->stp(array[i], array[i + 1], SP, -0x10, PreIndex);
 }
@@ -124,9 +141,32 @@ void ArmV8Assembler::push(ArmV8RegisterArray const& array) {
 void ArmV8Assembler::pop(ArmV8RegisterArray const& array) {
     using enum ArmV8IndexKind;
 
-    const auto alignedSize = array.size() & ~1ull;
+    const auto alignedSize = array.size() & ~1ll;
     for (auto i = 0u; i < alignedSize; i += 2)
         this->ldp(array[alignedSize - i - 2], array[alignedSize - i - 1], SP, 0x10, PostIndex);
+}
+
+void ArmV8Assembler::ldr(ArmV8Register dst, ArmV8Register src, int32_t imm) {
+    const auto srcShifted = val(src) << 5;
+    const auto offsetShifted = ((imm >> 2) & 0x3FFF) << 10;
+    const auto simdShifted = is_simd(dst) << 26;
+    this->write32(0xf9400000 | srcShifted | offsetShifted | val(dst) | simdShifted);
+}
+void ArmV8Assembler::ldr(ArmV8Register dst, int32_t literal) {
+    const auto literalShifted = ((literal >> 2) & 0x7FFFF) << 5;
+    const auto simdShifted = is_simd(dst) << 26;
+    this->write32(0x58000000 | literalShifted | val(dst) | simdShifted);
+}
+
+void ArmV8Assembler::tbz(ArmV8Register reg, int32_t bit, int32_t imm) {
+    const auto literalShifted = ((imm >> 2) & 0x3FFF) << 5;
+    const auto bitShifted = (bit & 0x1F) << 19 | ((bit >> 5) & 1) << 31;
+    this->write32(0x36000000 | literalShifted | bitShifted | val(reg));
+}
+void ArmV8Assembler::tbnz(ArmV8Register reg, int32_t bit, int32_t imm) {
+    const auto literalShifted = ((imm >> 2) & 0x3FFF) << 5;
+    const auto bitShifted = (bit & 0x1F) << 19 | ((bit >> 5) & 1) << 31;
+    this->write32(0x37000000 | literalShifted | bitShifted | val(reg));
 }
 
 void ArmV8Assembler::nop() { this->write32(0xD503201F); }

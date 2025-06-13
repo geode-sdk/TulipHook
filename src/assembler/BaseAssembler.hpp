@@ -11,6 +11,7 @@ namespace tulip::hook {
 		int64_t m_address;
 		std::string m_name;
 		uint8_t m_size;
+		uint8_t m_offset;
 	};
 
 	class BaseAssembler {
@@ -24,7 +25,7 @@ namespace tulip::hook {
 		BaseAssembler(int64_t baseAddress);
 		BaseAssembler(BaseAssembler const&) = delete;
 		BaseAssembler(BaseAssembler&&) = delete;
-		~BaseAssembler();
+		virtual ~BaseAssembler();
 
 		int64_t currentAddress() const;
 		// maybe use span?

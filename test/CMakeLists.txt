@@ -8,7 +8,7 @@ CPMAddPackage("gh:google/googletest#f8d7d77")
 
 enable_testing()
 
-add_executable(${PROJECT_NAME} Assembler86.cpp Assembler64.cpp Hook.cpp)
+add_executable(${PROJECT_NAME} AssemblerArmV8.cpp Assembler86.cpp Assembler64.cpp Hook.cpp)
 target_link_libraries(${PROJECT_NAME} PUBLIC GTest::gtest_main TulipHook)
 
 if(WIN32)

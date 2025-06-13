@@ -7,7 +7,6 @@ file(GLOB DOBBY_SOURCES
     source/core/assembler/*.cc
     source/core/codegen/*.cc
     source/InstructionRelocation/arm/*.cc
-    source/InstructionRelocation/arm64/*.cc
     source/MemoryAllocator/*.cc
     source/MemoryAllocator/CodeBuffer/*.cc
 )

@@ -16,17 +16,17 @@ X86Assembler::X86Assembler(int64_t baseAddress) :
 X86Assembler::~X86Assembler() {}
 
 void X86Assembler::label8(std::string const& name) {
-	m_labelUpdates.push_back({this->currentAddress(), name, 1});
+	m_labelUpdates.push_back({this->currentAddress(), name, 1, 0});
 	this->write8(0);
 }
 
 void X86Assembler::label32(std::string const& name) {
-	m_labelUpdates.push_back({this->currentAddress(), name, 4});
+	m_labelUpdates.push_back({this->currentAddress(), name, 4, 0});
 	this->write32(0);
 }
 
 void X86Assembler::abslabel32(std::string const& name) {
-	m_absoluteLabelUpdates.push_back({this->currentAddress(), name, 4});
+	m_absoluteLabelUpdates.push_back({this->currentAddress(), name, 4, 0});
 	this->write32(0);
 }
 
