@@ -40,7 +40,8 @@ void ArmV8Disassembler::handleLDRLiteral(ArmV8Instruction& instruction) {
 void ArmV8Disassembler::handleADR(ArmV8Instruction& instruction) {
     instruction.m_type = ArmV8InstructionType::ADR;
     instruction.m_dst1 = extractRegister(0, instruction.m_rawInstruction);
-    instruction.m_immediate = extractValue(5, 12, instruction.m_rawInstruction);
+    instruction.m_immediate = extractValue(29, 2, instruction.m_rawInstruction);
+    instruction.m_immediate |= extractValue(5, 19, instruction.m_rawInstruction) << 2;
     instruction.m_literal = m_baseAddress + (instruction.m_immediate);
 }
 
