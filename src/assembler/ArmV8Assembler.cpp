@@ -42,7 +42,7 @@ void ArmV8Assembler::mov(ArmV8Register dst, int32_t imm) {
     const auto absImm = imm < 0 ? (-imm - 1) : imm;
     const auto immShifted = (static_cast<uint32_t>(absImm) & 0xffff) << 5;
     const auto negShifted = (imm >= 0) << 30;
-    this->write32(0xD2400000 | negShifted | immShifted | val(dst));
+    this->write32(0xD2800000 | negShifted | immShifted | val(dst));
 }
 
 void ArmV8Assembler::ldr(ArmV8Register dst, std::string const& label) {
