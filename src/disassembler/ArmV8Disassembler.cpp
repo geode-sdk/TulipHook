@@ -75,6 +75,7 @@ std::unique_ptr<BaseInstruction> ArmV8Disassembler::disassembleNext() {
     uint32_t rawInstruction = 0;
     std::memcpy(&rawInstruction, &m_input[m_currentIndex], sizeof(rawInstruction));
     m_currentIndex += sizeof(rawInstruction);
+    m_baseAddress += sizeof(rawInstruction);
 
     auto instruction = std::make_unique<ArmV8Instruction>();
     instruction->m_rawInstruction = rawInstruction;
@@ -99,6 +100,5 @@ std::unique_ptr<BaseInstruction> ArmV8Disassembler::disassembleNext() {
     } else if ((rawInstruction & 0x7E000000) == 0x36000000) { // TB_Z
         this->handleTB_Z(*instruction);
     }
-    m_baseAddress += sizeof(rawInstruction);
     return instruction;
 }

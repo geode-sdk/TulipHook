@@ -24,3 +24,20 @@ TEST(ArmV8AssemblerTest, ADRPReloc) {
     ArmV8Disassembler d2(a.m_baseAddress - 4, a.m_buffer);
     EXPECT_EQ(ins->m_literal, 0x8a7000);
 }
+
+TEST(ArmV8AssemblerTest, ADRReloc) {
+	ArmV8Assembler a(0xc312a0);
+    ArmV8Disassembler d(0x451344, {0xa8, 0x22, 0x00, 0x10});
+	auto instruction = d.disassembleNext();
+    auto ins = static_cast<ArmV8Instruction*>(instruction.get());
+    EXPECT_EQ(ins->m_type, ArmV8InstructionType::ADR);
+    EXPECT_EQ(ins->m_dst1, ArmV8Register::X8);
+    EXPECT_EQ(ins->m_immediate, 0x454);
+    EXPECT_EQ(ins->m_literal, 0x45179c);
+
+    auto const newOffset = a.m_baseAddress - 0x45179c;
+    a.adrp(X8, newOffset);
+
+    ArmV8Disassembler d2(a.m_baseAddress - 4, a.m_buffer);
+    EXPECT_EQ(ins->m_literal, 0x45179c);
+}
