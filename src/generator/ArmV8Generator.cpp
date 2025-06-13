@@ -146,8 +146,8 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 
 	while (d.hasNext()) {
 		using enum ArmV8InstructionType;
-		auto ins = d.disassembleNext();
-		
+		auto ins = std::static_pointer_cast<ArmV8Instruction>(d.disassembleNext());
+
 		switch (ins->m_type) {
 			case ArmV8InstructionType::B: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
@@ -186,10 +186,12 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				auto const newOffset = ins->m_literal - a.currentAddress();
 				a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
 				a.add(ins->m_dst1, ins->m_dst1, newOffset & 0xFFF);
+				break;
 			}
 			case ArmV8InstructionType::ADRP: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
 				a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
+				break;
 			}
 			case ArmV8InstructionType::B_Cond: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
@@ -203,7 +205,7 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				a.br(X16);
 				break;
 			}
-			case ArmV8InstructionType::TBZ:
+			case ArmV8InstructionType::TBZ:{
 				auto const newOffset = ins->m_literal - a.currentAddress();
 				a.adrp(X16, newOffset & ~0xFFFll);
 				a.add(X16, X16, newOffset & 0xFFF);
@@ -211,7 +213,8 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				a.b(8);
 				a.br(X16);
 				break;
-			case ArmV8InstructionType::TBNZ:
+			}
+			case ArmV8InstructionType::TBNZ: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
 				a.adrp(X16, newOffset & ~0xFFFll);
 				a.add(X16, X16, newOffset & 0xFFF);
@@ -219,6 +222,7 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				a.b(8);
 				a.br(X16);
 				break;
+			}
 			default:
 				a.write32(instruction->m_rawInstruction);
 				break;

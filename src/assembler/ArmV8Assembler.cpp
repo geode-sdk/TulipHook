@@ -103,6 +103,10 @@ void ArmV8Assembler::b(uint32_t imm) {
     this->write32(0x14000000 | ((imm >> 2) & 0x3FFFFFF));
 }
 
+void ArmV8Assembler::bl(uint32_t imm) {
+    this->write32(0x94000000 | ((imm >> 2) & 0x3FFFFFF));
+}
+
 void ArmV8Assembler::br(ArmV8Register reg) {
     const auto shifted = val(reg) << 5;
     this->write32(0xD61F0000 | shifted);
