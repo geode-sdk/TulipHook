@@ -12,7 +12,7 @@ void ArmV8Assembler::updateLabels() {
 	for (auto const& update : m_labelUpdates) {
         const auto diff = m_labels[update.m_name] - update.m_address;
         const auto opc = this->read32(update.m_address);
-        this->rewrite32(update.m_address, opc | ((diff >> 2) << 5));
+        this->rewrite32(update.m_address, opc | (((diff >> 2) << update.m_offset) & ((1 << update.m_size) - 1)));
 	}
 }
 
@@ -33,7 +33,7 @@ void ArmV8Assembler::mov(ArmV8Register dst, ArmV8Register src) {
 }
 
 void ArmV8Assembler::ldr(ArmV8Register dst, std::string const& label) {
-    m_labelUpdates.push_back({this->currentAddress(), label, 4});
+    m_labelUpdates.push_back({this->currentAddress(), label, 19, 5});
 	this->write32((0x58ul << 24) | val(dst));
 }
 
@@ -101,6 +101,11 @@ void ArmV8Assembler::add(ArmV8Register dst, ArmV8Register src, uint16_t imm) {
 
 void ArmV8Assembler::b(uint32_t imm) {
     this->write32(0x14000000 | ((imm >> 2) & 0x3FFFFFF));
+}
+
+void ArmV8Assembler::b(std::string const& label) {
+    m_labelUpdates.push_back({this->currentAddress(), label, 26, 5});
+    this->write32(0x14000000);
 }
 
 void ArmV8Assembler::bl(uint32_t imm) {

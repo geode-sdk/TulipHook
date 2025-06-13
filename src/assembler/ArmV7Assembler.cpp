@@ -44,7 +44,7 @@ int32_t valh(ArmV7Register reg) {
 }
 
 void ArmV7Assembler::label8(std::string const& name) {
-	m_labelUpdates.push_back({this->currentAddress(), name, 1});
+	m_labelUpdates.push_back({this->currentAddress(), name, 1, 0});
 	this->write8(0);
 }
 
