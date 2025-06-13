@@ -95,6 +95,13 @@ std::vector<uint8_t> ArmV8HandlerGenerator::handlerBytes(uint64_t address) {
 	return std::move(a.m_buffer);
 }
 
+namespace {
+	bool canDeltaRange(int64_t delta, int64_t range) {
+		// Check if the delta can be encoded in range bits or less.
+		return delta >= -(1ll << range) && delta <= (1ll << range) - 1;
+	}
+}
+
 std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
     ArmV8Assembler a(address);
     using enum ArmV8Register;
@@ -105,11 +112,11 @@ std::vector<uint8_t> ArmV8HandlerGenerator::intervenerBytes(uint64_t address, si
 	const int64_t delta = callback - static_cast<int64_t>(address);
 
 	// Delta can be encoded in 28 bits or less -> use branch.
-	if (delta >= -0x8000000 && delta <= 0x7FFFFFF) {
+	if (canDeltaRange(delta, 28)) {
 		a.b(delta);
 	}
 	// Delta can be encoded in 33 bits or less -> use adrp.
-	else if (delta >= -static_cast<int64_t>(0x100000000) && delta <= 0xFFFFFFFF) {
+	else if (canDeltaRange(delta, 33)) {
 		a.adrp(X16, alignedCallback - alignedAddr);
 		a.add(X16, X16, callback & 0xFFF);
 		a.br(X16);
@@ -152,76 +159,130 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 		switch (ins->m_type) {
 			case ArmV8InstructionType::B: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
-				if (newOffset < -0x8000000 || newOffset > 0x7FFFFFF) {
+				if (canDeltaRange(newOffset, 28)) {
+					a.b(newOffset);
+				} else if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, newOffset & ~0xFFFll);
 					a.add(X16, X16, newOffset & 0xFFF);
 					a.br(X16);
 				} else {
-					a.b(newOffset);
+					a.ldr(X16, 4);
+					a.br(X16);
+					a.write64(ins->m_literal);
 				}
 				break;
 			}
 			case ArmV8InstructionType::BL: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
-				if (newOffset < -0x2000000 || newOffset > 0x1FFFFFF) {
+				if (canDeltaRange(newOffset, 28)) {
+					a.bl(newOffset);
+				} else if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, newOffset & ~0xFFFll);
 					a.add(X16, X16, newOffset & 0xFFF);
 					a.blr(X16);
 				} else {
-					a.bl(newOffset);
+					a.ldr(X16, 8);
+					a.blr(X16);
+					a.b(8);
+					a.write64(ins->m_literal);
 				}
 				break;
 			}
 			case ArmV8InstructionType::LDR_Literal: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
-				if (newOffset < -0x80000 || newOffset > 0x7FFFF) {
+				if (canDeltaRange(newOffset, 21)) {
+					a.ldr(ins->m_dst1, newOffset);
+				} else if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, newOffset & ~0xFFFll);
 					a.add(X16, X16, newOffset & 0xFFF);
 					a.ldr(ins->m_dst1, X16, 0);
 				} else {
-					a.ldr(ins->m_dst1, newOffset);
-				}
+					a.ldr(X16, 8);
+					a.ldr(ins->m_dst1, X16, 0);
+					a.b(4);
+					a.write64(ins->m_literal);
+				} 
 				break;
 			}
 			case ArmV8InstructionType::ADR: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
-				a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
-				a.add(ins->m_dst1, ins->m_dst1, newOffset & 0xFFF);
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
+					a.add(ins->m_dst1, ins->m_dst1, newOffset & 0xFFF);
+				} else {
+					a.ldr(ins->m_dst1, 4);
+					a.b(4);
+					a.write64(ins->m_literal);
+				}
 				break;
 			}
 			case ArmV8InstructionType::ADRP: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
-				a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
+				} else {
+					a.ldr(ins->m_dst1, 4);
+					a.b(4);
+					a.write64(ins->m_literal);
+				}
 				break;
 			}
 			case ArmV8InstructionType::B_Cond: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
-				a.adrp(X16, newOffset & ~0xFFFll);
-				a.add(X16, X16, newOffset & 0xFFF);
-				a.write32(
-					ins->m_rawInstruction & 0xFF00001F | // Preserve the condition bits
-					(2 << 5)
-				);
-				a.b(8);
-				a.br(X16);
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, newOffset & ~0xFFFll);
+					a.add(X16, X16, newOffset & 0xFFF);
+					a.write32(
+						ins->m_rawInstruction & 0xFF00001F | // Preserve the condition bits
+						(1 << 5)
+					);
+					a.b(4);
+					a.br(X16);
+				}
+				else {
+					a.ldr(X16, 12);
+					a.write32(
+						ins->m_rawInstruction & 0xFF00001F | // Preserve the condition bits
+						(1 << 5)
+					);
+					a.b(12);
+					a.br(X16);
+					a.write64(ins->m_literal);
+				}
 				break;
 			}
 			case ArmV8InstructionType::TBZ:{
 				auto const newOffset = ins->m_literal - a.currentAddress();
-				a.adrp(X16, newOffset & ~0xFFFll);
-				a.add(X16, X16, newOffset & 0xFFF);
-				a.tbz(ins->m_src1, ins->m_other, 8);
-				a.b(8);
-				a.br(X16);
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, newOffset & ~0xFFFll);
+					a.add(X16, X16, newOffset & 0xFFF);
+					a.tbz(ins->m_src1, ins->m_other, 4);
+					a.b(4);
+					a.br(X16);
+				} else {
+					a.ldr(X16, 12);
+					a.tbz(ins->m_src1, ins->m_other, 4);
+					a.b(12);
+					a.br(X16);
+					a.write64(ins->m_literal);
+				}
 				break;
 			}
 			case ArmV8InstructionType::TBNZ: {
 				auto const newOffset = ins->m_literal - a.currentAddress();
-				a.adrp(X16, newOffset & ~0xFFFll);
-				a.add(X16, X16, newOffset & 0xFFF);
-				a.tbnz(ins->m_src1, ins->m_other, 8);
-				a.b(8);
-				a.br(X16);
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, newOffset & ~0xFFFll);
+					a.add(X16, X16, newOffset & 0xFFF);
+					a.tbnz(ins->m_src1, ins->m_other, 4);
+					a.b(4);
+					a.br(X16);
+				} else {
+					a.ldr(X16, 12);
+					a.tbnz(ins->m_src1, ins->m_other, 4);
+					a.b(12);
+					a.br(X16);
+					a.write64(ins->m_literal);
+				}
 				break;
 			}
 			default:
@@ -231,12 +292,16 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 	}
 
 	auto const newOffset = (address + target) - a.currentAddress();
-	if (newOffset < -0x8000000 || newOffset > 0x7FFFFFF) {
+	if (canDeltaRange(newOffset, 28)) {
+		a.b(newOffset);
+	} else if (canDeltaRange(newOffset, 33)) {
 		a.adrp(X16, newOffset & ~0xFFFll);
 		a.add(X16, X16, newOffset & 0xFFF);
 		a.br(X16);
 	} else {
-		a.b(newOffset);
+		a.ldr(X16, 4);
+		a.br(X16);
+		a.write64(address + target);
 	}
 
 	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
