@@ -231,13 +231,13 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 	}
 
 	auto const newOffset = (address + target) - a.currentAddress();
-	// if (newOffset < -0x8000000 || newOffset > 0x7FFFFFF) {
+	if (newOffset < -0x8000000 || newOffset > 0x7FFFFFF) {
 		a.adrp(X16, newOffset & ~0xFFFll);
 		a.add(X16, X16, newOffset & 0xFFF);
 		a.br(X16);
-	// } else {
-	// 	a.b(newOffset);
-	// }
+	} else {
+		a.b(newOffset);
+	}
 
 	GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, a.m_buffer.data(), a.m_buffer.size()));
 
