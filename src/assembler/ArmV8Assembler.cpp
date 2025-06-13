@@ -11,8 +11,10 @@ void ArmV8Assembler::updateLabels() {
     // Handle LDR
 	for (auto const& update : m_labelUpdates) {
         const auto diff = m_labels[update.m_name] - update.m_address;
-        const auto opc = this->read32(update.m_address);
-        this->rewrite32(update.m_address, opc | (((diff >> 2) << update.m_offset) & ((1 << update.m_size) - 1)));
+        const auto mask = (1 << update.m_size) - 1;
+        const auto opc = this->read32(update.m_address) & ~mask;
+        const auto offset = ((diff >> 2) << update.m_offset) & mask;
+        this->rewrite32(update.m_address, opc | offset);
 	}
 }
 
