@@ -78,11 +78,11 @@ geode::Result<> tulip::hook::disableRuntimeIntervening(void* commonHandlerSpace)
 RelocaledBytesReturn tulip::hook::getRelocatedBytes(int64_t original, int64_t relocated, std::vector<uint8_t> const& originalBuffer) {
 	RelocaledBytesReturn result;
 	if (GEODE_UNWRAP_EITHER(res, err, Target::get().getGenerator()->relocatedBytes(original, relocated, originalBuffer))) {
-		result.error = std::move(err);
-	}
-	else {
 		result.bytes = std::move(res.bytes);
 		result.offset = res.offset;
+	}
+	else {
+		result.error = std::move(err);
 	}
 	return result;
 }
