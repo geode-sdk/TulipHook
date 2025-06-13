@@ -341,8 +341,11 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 	if (canDeltaRange(newOffset, 28)) {
 		a.b(newOffset);
 	} else if (canDeltaRange(newOffset, 33)) {
-		a.adrp(X16, newOffset & ~0xFFFll);
-		a.add(X16, X16, newOffset & 0xFFF);
+		auto const callback = address + target;
+		auto const alignedCallback = callback & ~0xFFFll;
+		auto const alignedAddress = a.currentAddress() & ~0xFFFll;
+		a.adrp(X16, alignedCallback - alignedAddress);
+		a.add(X16, X16, callback & 0xFFF);
 		a.br(X16);
 	} else {
 		a.ldr(X16, "literal-final");
