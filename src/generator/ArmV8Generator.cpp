@@ -160,14 +160,18 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 
 		auto idxLabel = std::to_string(idx);
 
+		auto const newOffset = ins->m_literal - a.currentAddress();
+		auto const callback = ins->m_literal;
+		auto const alignedAddr = a.currentAddress() & ~0xFFFll;
+		auto const alignedCallback = callback & ~0xFFFll;
+
 		switch (ins->m_type) {
 			case ArmV8InstructionType::B: {
-				auto const newOffset = ins->m_literal - a.currentAddress();
 				if (canDeltaRange(newOffset, 28)) {
 					a.b(newOffset);
 				} else if (canDeltaRange(newOffset, 33)) {
-					a.adrp(X16, newOffset & ~0xFFFll);
-					a.add(X16, X16, newOffset & 0xFFF);
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
 					a.br(X16);
 				} else {
 					a.ldr(X16, "literal-" + idxLabel);
@@ -179,12 +183,11 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				break;
 			}
 			case ArmV8InstructionType::BL: {
-				auto const newOffset = ins->m_literal - a.currentAddress();
 				if (canDeltaRange(newOffset, 28)) {
 					a.bl(newOffset);
 				} else if (canDeltaRange(newOffset, 33)) {
-					a.adrp(X16, newOffset & ~0xFFFll);
-					a.add(X16, X16, newOffset & 0xFFF);
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
 					a.blr(X16);
 				} else {
 					a.ldr(X16, "literal-" + idxLabel);
@@ -199,12 +202,11 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				break;
 			}
 			case ArmV8InstructionType::LDR_Literal: {
-				auto const newOffset = ins->m_literal - a.currentAddress();
 				if (canDeltaRange(newOffset, 21)) {
 					a.ldr(ins->m_dst1, newOffset);
 				} else if (canDeltaRange(newOffset, 33)) {
-					a.adrp(X16, newOffset & ~0xFFFll);
-					a.add(X16, X16, newOffset & 0xFFF);
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
 					a.ldr(ins->m_dst1, X16, 0);
 				} else {
 					a.ldr(X16, "literal-" + idxLabel);
@@ -219,12 +221,11 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				break;
 			}
 			case ArmV8InstructionType::ADR: {
-				auto const newOffset = ins->m_literal - a.currentAddress();
 				if (canDeltaRange(newOffset, 21)) {
 					a.adr(ins->m_dst1, newOffset);
 				} else if (canDeltaRange(newOffset, 33)) {
-					a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
-					a.add(ins->m_dst1, ins->m_dst1, newOffset & 0xFFF);
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
 				} else {
 					a.ldr(ins->m_dst1, "literal-" + idxLabel);
 					a.b("jump-" + idxLabel);
@@ -237,9 +238,8 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				break;
 			}
 			case ArmV8InstructionType::ADRP: {
-				auto const newOffset = ins->m_literal - (a.currentAddress() & ~0xFFFll);
 				if (canDeltaRange(newOffset, 33)) {
-					a.adrp(ins->m_dst1, newOffset & ~0xFFFll);
+					a.adrp(ins->m_dst1, alignedCallback - alignedAddr);
 				} else {
 					a.ldr(ins->m_dst1, "literal-" + idxLabel);
 					a.b("jump-" + idxLabel);
@@ -252,10 +252,9 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				break;
 			}
 			case ArmV8InstructionType::B_Cond: {
-				auto const newOffset = ins->m_literal - a.currentAddress();
 				if (canDeltaRange(newOffset, 33)) {
-					a.adrp(X16, newOffset & ~0xFFFll);
-					a.add(X16, X16, newOffset & 0xFFF);
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
 					a.write32(
 						(ins->m_rawInstruction & 0xFF00001F) | // Preserve the condition bits
 						(2 << 5)
@@ -282,10 +281,9 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				break;
 			}
 			case ArmV8InstructionType::CB_: {
-				auto const newOffset = ins->m_literal - a.currentAddress();
 				if (canDeltaRange(newOffset, 33)) {
-					a.adrp(X16, newOffset & ~0xFFFll);
-					a.add(X16, X16, newOffset & 0xFFF);
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
 					a.write32(
 						(ins->m_rawInstruction & 0xFFFFE01F) | // Preserve the real bits
 						(2 << 5)
@@ -311,10 +309,9 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				break;
 			}
 			case ArmV8InstructionType::TBZ: {
-				auto const newOffset = ins->m_literal - a.currentAddress();
 				if (canDeltaRange(newOffset, 33)) {
-					a.adrp(X16, newOffset & ~0xFFFll);
-					a.add(X16, X16, newOffset & 0xFFF);
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
 					a.tbz(ins->m_src1, ins->m_other, 8);
 
 					a.b("jump-" + idxLabel);
@@ -336,10 +333,9 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				break;
 			}
 			case ArmV8InstructionType::TBNZ: {
-				auto const newOffset = ins->m_literal - a.currentAddress();
 				if (canDeltaRange(newOffset, 33)) {
-					a.adrp(X16, newOffset & ~0xFFFll);
-					a.add(X16, X16, newOffset & 0xFFF);
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
 					a.tbnz(ins->m_src1, ins->m_other, 8);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
