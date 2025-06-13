@@ -8,6 +8,7 @@ file(GLOB TULIP_HOOK_BASE_SOURCES
 	assembler/X86Assembler.cpp
 	assembler/X64Assembler.cpp
 	assembler/ArmV7Assembler.cpp
+	assembler/ThumbV7Assembler.cpp
 	assembler/ArmV8Assembler.cpp
 	disassembler/BaseDisassembler.cpp
 	disassembler/ArmV8Disassembler.cpp
