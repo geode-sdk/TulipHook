@@ -225,7 +225,7 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV8HandlerGenerator::generat
 				break;
 			}
 			default:
-				a.write32(instruction->m_rawInstruction);
+				a.write32(ins->m_rawInstruction);
 				break;
 		}
 	}
