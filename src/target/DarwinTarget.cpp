@@ -16,7 +16,7 @@ geode::Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;
 	vm_address_t ret;
 
-	status = vm_allocate(mach_task_self(), &ret, static_cast<vm_size_t>(PAGE_MAX_SIZE), VM_FLAGS_ANYWHERE);
+	status = vm_allocate(mach_task_self(), &ret, static_cast<vm_size_t>(0x10000), VM_FLAGS_ANYWHERE);
 
 	if (status != KERN_SUCCESS) {
 		return geode::Err("Couldn't allocate page");
@@ -24,9 +24,9 @@ geode::Result<> DarwinTarget::allocatePage() {
 
 	m_allocatedPage = reinterpret_cast<void*>(ret);
 	m_currentOffset = 0;
-	m_remainingOffset = PAGE_MAX_SIZE;
+	m_remainingOffset = 0x10000;
 
-	return this->protectMemory(m_allocatedPage, PAGE_MAX_SIZE, VM_PROT_READ | VM_PROT_EXECUTE);
+	return this->protectMemory(m_allocatedPage, 0x10000, VM_PROT_READ | VM_PROT_EXECUTE);
 }
 
 geode::Result<uint32_t> DarwinTarget::getProtection(void* address) {

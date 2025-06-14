@@ -4,6 +4,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <tulip/Platform.hpp>
+#include <span>
 
 namespace tulip::hook {
 
@@ -14,7 +16,7 @@ namespace tulip::hook {
 		uint8_t m_offset;
 	};
 
-	class BaseAssembler {
+	class TULIP_HOOK_DLL BaseAssembler {
 	public:
 		int64_t m_baseAddress;
 		std::vector<uint8_t> m_buffer;
@@ -28,8 +30,7 @@ namespace tulip::hook {
 		virtual ~BaseAssembler();
 
 		int64_t currentAddress() const;
-		// maybe use span?
-		std::vector<uint8_t> const& buffer() const;
+		std::span<uint8_t const> buffer() const;
 
 		int8_t read8(int64_t address) const;
 		int16_t read16(int64_t address) const;
@@ -41,6 +42,8 @@ namespace tulip::hook {
 		void write32(int32_t value);
 		void write64(int64_t value);
 
+		void writeBuffer(std::span<uint8_t> span);
+
 		void rewrite8(int64_t address, int8_t value);
 		void rewrite16(int64_t address, int16_t value);
 		void rewrite32(int64_t address, int32_t value);
@@ -48,7 +51,7 @@ namespace tulip::hook {
 
 		void label(std::string const& name);
 
-		void* getLabel(std::string const& name) const;
+		int64_t getLabel(std::string const& name) const;
 
 		virtual void updateLabels();
 	};

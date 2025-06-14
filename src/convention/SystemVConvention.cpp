@@ -1,9 +1,7 @@
 #include <Platform.hpp>
 
-#if defined(TULIP_HOOK_MACOS) && defined(TULIP_HOOK_X64)
-
 #include <AbstractFunction.hpp>
-#include <platform/MacosIntelConvention.hpp>
+#include <platform/SystemVConvention.hpp>
 #include "../assembler/X64Assembler.hpp"
 
 using namespace tulip::hook;
@@ -90,5 +88,3 @@ bool SystemVConvention::needsWrapper(AbstractFunction const& function) const {
 std::shared_ptr<SystemVConvention> SystemVConvention::create() {
 	return std::make_shared<SystemVConvention>();
 }
-
-#endif

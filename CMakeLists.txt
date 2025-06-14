@@ -8,6 +8,7 @@ project(TulipHookRoot LANGUAGES CXX C)
 include(cmake/CPM.cmake)
 
 option(TULIP_LINK_SOURCE "Link to TulipHook source files, including external libs" OFF)
+option(TULIP_BUILD_DYNAMIC "Build TulipHook as a dynamic library" OFF)
 
 if(TULIP_LINK_SOURCE OR PROJECT_IS_TOP_LEVEL)
 	if(ANDROID OR UNIX OR APPLE)

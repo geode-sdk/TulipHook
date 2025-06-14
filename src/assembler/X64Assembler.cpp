@@ -214,10 +214,3 @@ void X64Assembler::cmp(X64Register reg, int32_t imm) {
 	rex(this, reg, RAX, true);
 	X86Assembler::cmp(x86reg(reg), imm);
 }
-
-void X64Assembler::align16() {
-	auto align = 16 - (this->currentAddress() % 16);
-	for (auto i = 0; i < align; i++) {
-		this->write8(0x90);
-	}
-}

@@ -1,7 +1,5 @@
 #include <Platform.hpp>
 
-#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
-
 #include <AbstractFunction.hpp>
 #include <platform/Windows64Convention.hpp>
 #include "../assembler/X64Assembler.hpp"
@@ -81,9 +79,9 @@ std::shared_ptr<Windows64Convention> Windows64Convention::create() {
 // SomeStruct* Class::method(Class* this, SomeStruct* ret_ptr, int a, int b);
 // so to undo this we just swap the first two parameters (RCX and RDX).
 
-ThiscallConvention::~ThiscallConvention() {}
+Thiscall64Convention::~Thiscall64Convention() {}
 
-void ThiscallConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction const& function) {
+void Thiscall64Convention::generateIntoDefault(BaseAssembler& a_, AbstractFunction const& function) {
     auto& a = static_cast<X64Assembler&>(a_);
     using enum X64Register;
     RegMem64 m;
@@ -95,7 +93,7 @@ void ThiscallConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction
     Windows64Convention::generateIntoDefault(a, function);
 }
 
-void ThiscallConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunction const& function) {
+void Thiscall64Convention::generateIntoOriginal(BaseAssembler& a_, AbstractFunction const& function) {
     auto& a = static_cast<X64Assembler&>(a_);
     using enum X64Register;
     RegMem64 m;
@@ -108,17 +106,15 @@ void ThiscallConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunctio
     Windows64Convention::generateIntoDefault(a, function);
 }
 
-void ThiscallConvention::generateOriginalCleanup(BaseAssembler& a_, AbstractFunction const& function) {
+void Thiscall64Convention::generateOriginalCleanup(BaseAssembler& a_, AbstractFunction const& function) {
     // the wrapper requires the struct forwarding as well
     Windows64Convention::generateDefaultCleanup(a_, function);
 }
 
-bool ThiscallConvention::needsWrapper(AbstractFunction const& function) const {
+bool Thiscall64Convention::needsWrapper(AbstractFunction const& function) const {
 	return function.m_return.m_kind == AbstractTypeKind::Other;
 }
 
-std::shared_ptr<ThiscallConvention> ThiscallConvention::create() {
-	return std::make_shared<ThiscallConvention>();
+std::shared_ptr<Thiscall64Convention> Thiscall64Convention::create() {
+	return std::make_shared<Thiscall64Convention>();
 }
-
-#endif

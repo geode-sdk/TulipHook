@@ -34,7 +34,7 @@ namespace tulip::hook {
 
 	using ArmV7RegisterArray = std::vector<ArmV7Register>;
 
-	class ThumbV7Assembler : public BaseAssembler {
+	class TULIP_HOOK_DLL ThumbV7Assembler : public BaseAssembler {
 	public:
 		ThumbV7Assembler(int64_t baseAddress);
 		ThumbV7Assembler(ThumbV7Assembler const&) = delete;

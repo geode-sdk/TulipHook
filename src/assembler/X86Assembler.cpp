@@ -298,3 +298,10 @@ void X86Assembler::cmp(X86Register reg, int32_t value) {
 		this->write32(value);
 	}
 }
+
+void X86Assembler::align16() {
+	auto align = 16 - (this->currentAddress() % 16);
+	for (auto i = 0; i < align; i++) {
+		this->write8(0x90);
+	}
+}

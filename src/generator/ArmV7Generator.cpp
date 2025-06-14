@@ -22,13 +22,14 @@ namespace {
 	}
 }
 
-std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
-	ThumbV7Assembler a((uint64_t)Target::get().getRealPtr((void*)address));
+std::vector<uint8_t> ArmV7Generator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
+	ThumbV7Assembler a((uint64_t)Target::get().getRealPtr((void*)handler));
 	using enum ArmV7Register;
 
 	// preserve registers
-	a.push({R4, LR});
-	a.sub(SP, SP, 0x30);
+	a.push({R4, R5, R11, LR});
+	a.mov(R11, SP);
+	a.sub(SP, SP, 0x70);
 
 	a.str(R0, SP, 0x00);
 	a.str(R1, SP, 0x04);
@@ -57,8 +58,13 @@ std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
 	a.ldr(R1, SP, 0x04);
 	a.ldr(R0, SP, 0x00);
 
+	// convert the current cc into the default cc
+	metadata.m_convention->generateIntoDefault(a, metadata.m_abstract);
+
 	// call the func
 	a.blx(R4);
+
+	metadata.m_convention->generateDefaultCleanup(a, metadata.m_abstract);
 
 	// preserve the return values
 	a.str(R0, SP, 0x00);
@@ -71,8 +77,8 @@ std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
 	a.ldr(R0, SP, 0x00);
 
 	// done!
-	a.add(SP, SP, 0x30);
-	a.pop({R4, PC});
+	a.add(SP, SP, 0x70);
+	a.pop({R4, R5, R11, PC});
 
 	a.label("handlerPre");
 	a.write32(reinterpret_cast<uint64_t>(preHandler));
@@ -81,21 +87,20 @@ std::vector<uint8_t> ArmV7HandlerGenerator::handlerBytes(uint64_t address) {
 	a.write32(reinterpret_cast<uint64_t>(postHandler));
 
 	a.label("content");
-	a.write32(reinterpret_cast<uint64_t>(m_content));
+	a.write32(reinterpret_cast<uint64_t>(content));
 
 	a.updateLabels();
 
 	return std::move(a.m_buffer);
 }
-
-std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address, size_t size) {
-	ThumbV7Assembler a((uint64_t)Target::get().getRealPtr((void*)address));
-	ArmV7Assembler aA((uint64_t)Target::get().getRealPtrAs((void*)address, m_address));
+std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t handler, size_t size) {
+	ThumbV7Assembler a((uint64_t)Target::get().getRealPtr((void*)original));
+	ArmV7Assembler aA((uint64_t)Target::get().getRealPtr((void*)original));
 	using enum ArmV7Register;
 
-	if (address & 0x1) {
+	if (original & 0x1) {
 		// align
-		if (address & 0x2) {
+		if (original & 0x2) {
 			a.nop();
 		}
 		// thumb
@@ -107,24 +112,22 @@ std::vector<uint8_t> ArmV7HandlerGenerator::intervenerBytes(uint64_t address, si
 	}
 	
 	// my thumbs will eat me
-	a.write32(reinterpret_cast<uint64_t>(m_handler) + 1);
+	a.write32(handler | 1);
 
 	a.updateLabels();
 
 	return std::move(a.m_buffer);
 }
-
-geode::Result<HandlerGenerator::TrampolineReturn> ArmV7HandlerGenerator::generateTrampoline(uint64_t target) {
-	auto origin = new CodeMemBlock((uint64_t)Target::get().getRealPtr(m_address), target);
-	auto relocated = new CodeMemBlock();
+geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer) {
+	auto originMem = new CodeMemBlock(original, originalBuffer.size());
+	auto relocatedMem = new CodeMemBlock();
 	// idk about arm thumb stuff help me
-	auto originBuffer = m_address;
-	auto relocatedBuffer = m_trampoline;
+	std::array<uint8_t, 0x100> relocatedBuffer;
 
 	static thread_local std::string error;
 	error = "";
 
-	GenRelocateCodeAndBranch(originBuffer, relocatedBuffer, origin, relocated, +[](void* dest, void const* src, size_t size) {
+	GenRelocateCodeAndBranch(const_cast<uint8_t*>(originalBuffer.data()), relocatedBuffer.data(), originMem, relocatedMem, +[](void* dest, void const* src, size_t size) {
 		auto res = Target::get().writeMemory(dest, src, size);
 		if (!res) {
 			error = res.unwrapErr();
@@ -135,8 +138,10 @@ geode::Result<HandlerGenerator::TrampolineReturn> ArmV7HandlerGenerator::generat
 		return geode::Err(std::move(error));
 	}
 
-	if (relocated->size == 0) {
+	if (relocatedMem->size == 0) {
 		return geode::Err("Failed to relocate original function");
 	}
-	return geode::Ok(TrampolineReturn{FunctionData{m_trampoline, relocated->size}, relocated->size});
+	std::vector<uint8_t> relocatedBufferVec(relocatedMem->size);
+	std::memcpy(relocatedBufferVec.data(), relocatedBuffer.data(), relocatedMem->size);
+	return geode::Ok(RelocateReturn{std::move(relocatedBufferVec), originalBuffer.size()});
 }

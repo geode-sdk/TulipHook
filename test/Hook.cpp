@@ -38,6 +38,9 @@ void makeWrapper(FunctionPtrType& out) {
 	ASSERT_FALSE(wrapped.isErr()) << "Failed to create wrapper: " << wrapped.unwrapErr();
 
 	out = reinterpret_cast<FunctionPtrType>(wrapped.unwrap());
+
+	auto ret = out(1, 2, 3, 4, 5, 6, 7, 8, 9, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f);
+	EXPECT_EQ(ret, 1);
 }
 
 template <int N>
@@ -195,7 +198,7 @@ TEST(HookTest, RecreateHandler) {
 	EXPECT_EQ(callFunction<10>(), 1);
 }
 
-int checkParams(int a, int b, int c, int d, int e, int f, int g, float h, int i) {
+int checkParams(int a, int b, int c, int d, int e, int f, int g, float h, int i, int j, int k, int l, int m, int n, int o, int p, int q, int r, int s) {
 	EXPECT_EQ(a, 1);
 	EXPECT_EQ(b, 2);
 	EXPECT_EQ(c, 3);
@@ -205,10 +208,20 @@ int checkParams(int a, int b, int c, int d, int e, int f, int g, float h, int i)
 	EXPECT_EQ(g, 7);
 	EXPECT_EQ(h, 8.0f);
 	EXPECT_EQ(i, 9);
+	EXPECT_EQ(j, 10);
+	EXPECT_EQ(k, 11);
+	EXPECT_EQ(l, 12);
+	EXPECT_EQ(m, 13);
+	EXPECT_EQ(n, 14);
+	EXPECT_EQ(o, 15);
+	EXPECT_EQ(p, 16);
+	EXPECT_EQ(q, 17);
+	EXPECT_EQ(r, 18);
+	EXPECT_EQ(s, 19);
 	return 11;
 }
 
-int checkParamsHook(int a, int b, int c, int d, int e, int f, int g, float h, int i) {
+int checkParamsHook(int a, int b, int c, int d, int e, int f, int g, float h, int i, int j, int k, int l, int m, int n, int o, int p, int q, int r, int s) {
 	EXPECT_EQ(a, 1);
 	EXPECT_EQ(b, 2);
 	EXPECT_EQ(c, 3);
@@ -218,7 +231,17 @@ int checkParamsHook(int a, int b, int c, int d, int e, int f, int g, float h, in
 	EXPECT_EQ(g, 7);
 	EXPECT_EQ(h, 8.0f);
 	EXPECT_EQ(i, 9);
-	return checkParams(a, b, c, d, e, f, g, h, i);
+	EXPECT_EQ(j, 10);
+	EXPECT_EQ(k, 11);
+	EXPECT_EQ(l, 12);
+	EXPECT_EQ(m, 13);
+	EXPECT_EQ(n, 14);
+	EXPECT_EQ(o, 15);
+	EXPECT_EQ(p, 16);
+	EXPECT_EQ(q, 17);
+	EXPECT_EQ(r, 18);
+	EXPECT_EQ(s, 19);
+	return checkParams(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s) + 1;
 }
 
 TEST(HookTest, SingleHookCheckParams) {
@@ -235,5 +258,6 @@ TEST(HookTest, SingleHookCheckParams) {
 	HookMetadata metadata;
 	createHook(handle, reinterpret_cast<void*>(&checkParamsHook), metadata);
 
-	checkParams(1, 2, 3, 4, 5, 6, 7, 8.0f, 9);
+	// hook->original
+	EXPECT_EQ(checkParams(1, 2, 3, 4, 5, 6, 7, 8.0f, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19), 12);
 }

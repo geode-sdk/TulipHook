@@ -14,14 +14,14 @@ geode::Result<> PosixTarget::allocatePage() {
 	auto const protection = PROT_READ | PROT_WRITE | PROT_EXEC;
 	auto const flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
-	auto ret = mmap(nullptr, 0x4000, protection, flags, -1, 0);
+	auto ret = mmap(nullptr, 0x10000, protection, flags, -1, 0);
 	if (ret == MAP_FAILED) {
 		return geode::Err("Couldn't allocate page");
 	}
 
 	m_allocatedPage = reinterpret_cast<void*>(ret);
 	m_currentOffset = 0;
-	m_remainingOffset = 0x4000;
+	m_remainingOffset = 0x10000;
 
 	return geode::Ok();
 }

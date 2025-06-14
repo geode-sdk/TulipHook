@@ -56,7 +56,7 @@ namespace tulip::hook {
 		}
 	};
 
-	class X64Assembler : public X86Assembler {
+	class TULIP_HOOK_DLL X64Assembler : public X86Assembler {
 	public:
 		X64Assembler(int64_t baseAddress);
 		X64Assembler(X64Assembler const&) = delete;
@@ -108,7 +108,5 @@ namespace tulip::hook {
 
 		void cmp(X64Register reg, X64Register reg2);
 		void cmp(X64Register reg, int32_t imm);
-
-		void align16();
 	};
 }

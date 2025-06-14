@@ -22,14 +22,8 @@ geode::Result<csh> MacosIntelTarget::openCapstone() {
 	return geode::Ok(m_capstone);
 }
 
-std::unique_ptr<HandlerGenerator> MacosIntelTarget::getHandlerGenerator(
-	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
-) {
-	return std::make_unique<X64HandlerGenerator>(address, trampoline, handler, content, metadata);
-}
-
-std::unique_ptr<WrapperGenerator> MacosIntelTarget::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {
-	return std::make_unique<X64WrapperGenerator>(address, metadata);
+std::unique_ptr<BaseGenerator> MacosIntelTarget::getGenerator() {
+	return std::make_unique<X64Generator>();
 }
 
 #endif

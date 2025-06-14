@@ -2,8 +2,6 @@
 
 #include "../Platform.hpp"
 
-#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X86)
-
 #include "../CallingConvention.hpp"
 
 #include <memory>
@@ -90,5 +88,3 @@ namespace tulip::hook {
 		static std::shared_ptr<StdcallConvention> create();
 	};
 }
-
-#endif

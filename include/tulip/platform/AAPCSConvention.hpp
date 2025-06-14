@@ -2,8 +2,6 @@
 
 #include "../Platform.hpp"
 
-#if defined(TULIP_HOOK_MACOS) && defined(TULIP_HOOK_X64)
-
 #include "../CallingConvention.hpp"
 
 #include <memory>
@@ -12,9 +10,9 @@
 namespace tulip::hook {
 	class AbstractFunction;
 
-	class TULIP_HOOK_DLL SystemVConvention : public CallingConvention {
+	class TULIP_HOOK_DLL AAPCSConvention : public CallingConvention {
 	public:
-		~SystemVConvention() override;
+		~AAPCSConvention() override;
 
 		void generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) override;
 		void generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) override;
@@ -22,8 +20,6 @@ namespace tulip::hook {
 		void generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) override;
 		bool needsWrapper(AbstractFunction const& function) const override;
 
-		static std::shared_ptr<SystemVConvention> create();
+		static std::shared_ptr<AAPCSConvention> create();
 	};
 }
-
-#endif

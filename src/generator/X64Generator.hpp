@@ -9,19 +9,17 @@
 namespace tulip::hook {
 	class X64Assembler;
 
-	class X64HandlerGenerator : public X86HandlerGenerator {
+	class X64Generator : public X86Generator {
 	public:
-		using X86HandlerGenerator::X86HandlerGenerator;
+		using X86Generator::X86Generator;
 
-		// std::vector<uint8_t> handlerBytes(uint64_t address) override;
-		std::vector<uint8_t> intervenerBytes(uint64_t address, size_t size) override;
-
-		geode::Result<FunctionData> generateHandler() override;
-
-		geode::Result<TrampolineReturn> generateTrampoline(uint64_t target) override;
+		std::vector<uint8_t> handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) override;
+		std::vector<uint8_t> intervenerBytes(int64_t original, int64_t handler, size_t size) override;
+		std::vector<uint8_t> wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata) override;
+		std::vector<uint8_t> runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t alloc) override;
 
 		geode::Result<> relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) override;
-		geode::Result<> relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress) override;
+		geode::Result<> relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget) override;
 
 	private:
 		size_t preserveRegisters(X64Assembler& a);
@@ -29,19 +27,5 @@ namespace tulip::hook {
 
 		size_t preserveReturnRegisters(X64Assembler& a);
 		void restoreReturnRegisters(X64Assembler& a, size_t size);
-	};
-
-	class X64WrapperGenerator : public X86WrapperGenerator {
-	public:
-		using X86WrapperGenerator::X86WrapperGenerator;
-
-		std::vector<uint8_t> wrapperBytes(uint64_t address) override;
-
-#ifdef TULIP_HOOK_WINDOWS
-		std::vector<uint8_t> unwindInfoBytes(uint64_t address);
-#endif
-
-		geode::Result<FunctionData> generateWrapper() override;
-		// std::vector<uint8_t> reverseWrapperBytes(uint64_t address) override;
 	};
 }

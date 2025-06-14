@@ -49,4 +49,13 @@ namespace tulip::hook {
 	TULIP_HOOK_DLL std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept;
 
 	TULIP_HOOK_DLL geode::Result<void, std::string> disableRuntimeIntervening(void* commonHandlerSpace) noexcept;
+
+	struct RelocaledBytesReturn {
+		std::vector<uint8_t> bytes;
+		size_t offset;
+		std::string error;
+	};
+	TULIP_HOOK_DLL RelocaledBytesReturn getRelocatedBytes(int64_t original, int64_t relocated, std::vector<uint8_t> const& originalBuffer);
+	TULIP_HOOK_DLL std::vector<uint8_t> getCommonHandlerBytes(int64_t handler, ptrdiff_t spaceOffset);
+	TULIP_HOOK_DLL std::vector<uint8_t> getCommonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset);
 }

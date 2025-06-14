@@ -7,15 +7,15 @@ ArmV7Assembler::ArmV7Assembler(int64_t baseAddress) :
 
 ArmV7Assembler::~ArmV7Assembler() {}
 
-int32_t val(ArmV7Register reg) {
+static int32_t val(ArmV7Register reg) {
 	return (int32_t)reg & 0xf;
 }
 
-int32_t vall(ArmV7Register reg) {
+static int32_t vall(ArmV7Register reg) {
 	return (int32_t)reg & 0x7;
 }
 
-int32_t valh(ArmV7Register reg) {
+static int32_t valh(ArmV7Register reg) {
 	return ((int32_t)reg & 0x8) >> 3;
 }
 

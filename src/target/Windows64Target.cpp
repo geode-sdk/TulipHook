@@ -87,14 +87,8 @@ geode::Result<csh> Windows64Target::openCapstone() {
 	return geode::Ok(m_capstone);
 }
 
-std::unique_ptr<HandlerGenerator> Windows64Target::getHandlerGenerator(
-	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
-) {
-	return std::make_unique<X64HandlerGenerator>(address, trampoline, handler, content, metadata);
-}
-
-std::unique_ptr<WrapperGenerator> Windows64Target::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {
-	return std::make_unique<X64WrapperGenerator>(address, metadata);
+std::unique_ptr<BaseGenerator> Windows64Target::getGenerator() {
+	return std::make_unique<X64Generator>();
 }
 
 #endif
