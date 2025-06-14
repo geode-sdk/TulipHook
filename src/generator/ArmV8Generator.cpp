@@ -395,22 +395,23 @@ std::vector<uint8_t> ArmV8Generator::commonHandlerBytes(int64_t handler, ptrdiff
 
 	a.adr(X13, 0);
 
-    a.stp(X29, X30, SP, -0xc0, PreIndex);
+    a.stp(X29, X30, SP, -0x10, PreIndex);
     a.mov(X29, SP);
-    a.stp(X19, X20, SP, 0x10, SignedOffset);
+	a.sub(SP, SP, 0xb0);
+    a.stp(X19, X20, SP, 0xa0, SignedOffset);
 
     a.mov(X19, X30);
     a.mov(X20, X13);
 
-    a.stp(X0, X1, SP, 0x20, SignedOffset);
-    a.stp(X2, X3, SP, 0x30, SignedOffset);
-    a.stp(X4, X5, SP, 0x40, SignedOffset);
-    a.stp(X6, X7, SP, 0x50, SignedOffset);
-    a.stp(X8, X9, SP, 0x60, SignedOffset);
-    a.stp(D0, D1, SP, 0x70, SignedOffset);
-    a.stp(D2, D3, SP, 0x80, SignedOffset);
-    a.stp(D4, D5, SP, 0x90, SignedOffset);
-    a.stp(D6, D7, SP, 0xa0, SignedOffset);
+    a.stp(X0, X1, SP, 0x10, SignedOffset);
+    a.stp(X2, X3, SP, 0x20, SignedOffset);
+    a.stp(X4, X5, SP, 0x30, SignedOffset);
+    a.stp(X6, X7, SP, 0x40, SignedOffset);
+    a.stp(X8, X9, SP, 0x50, SignedOffset);
+    a.stp(D0, D1, SP, 0x60, SignedOffset);
+    a.stp(D2, D3, SP, 0x70, SignedOffset);
+    a.stp(D4, D5, SP, 0x80, SignedOffset);
+    a.stp(D6, D7, SP, 0x90, SignedOffset);
 
     // set the parameters
     a.mov(X0, X10);
@@ -424,23 +425,29 @@ std::vector<uint8_t> ArmV8Generator::commonHandlerBytes(int64_t handler, ptrdiff
     a.add(X5, X5, X20);
     a.ldr(X5, X5, 0);
     a.blr(X5);
-    a.mov(X16, X0);
+    a.mov(X19, X0);
 
     // recover registers
-    a.ldp(D6, D7, SP, 0xa0, SignedOffset);
-    a.ldp(D4, D5, SP, 0x90, SignedOffset);
-    a.ldp(D2, D3, SP, 0x80, SignedOffset);
-    a.ldp(D0, D1, SP, 0x70, SignedOffset);
-    a.ldp(X8, X9, SP, 0x60, SignedOffset);
-    a.ldp(X6, X7, SP, 0x50, SignedOffset);
-    a.ldp(X4, X5, SP, 0x40, SignedOffset);
-    a.ldp(X2, X3, SP, 0x30, SignedOffset);
-    a.ldp(X0, X1, SP, 0x20, SignedOffset);
+    a.ldp(D6, D7, SP, 0x90, SignedOffset);
+    a.ldp(D4, D5, SP, 0x80, SignedOffset);
+    a.ldp(D2, D3, SP, 0x70, SignedOffset);
+    a.ldp(D0, D1, SP, 0x60, SignedOffset);
+    a.ldp(X8, X9, SP, 0x50, SignedOffset);
+    a.ldp(X6, X7, SP, 0x40, SignedOffset);
+    a.ldp(X4, X5, SP, 0x30, SignedOffset);
+    a.ldp(X2, X3, SP, 0x20, SignedOffset);
+    a.ldp(X0, X1, SP, 0x10, SignedOffset);
 
-    a.blr(X16);
+	// i hope this much is enough (16 stack parameters)
+	for (size_t i = 0; i < 0x80; i += 0x10) {
+		a.ldp(X16, X17, X29, i + 16, ArmV8IndexKind::SignedOffset);
+    	a.stp(X16, X17, SP, i, ArmV8IndexKind::SignedOffset);
+	}
 
-    a.stp(X0, X8, SP, 0x20, SignedOffset);
-    a.stp(D0, D1, SP, 0x30, SignedOffset);
+    a.blr(X19);
+
+    a.stp(X0, X8, SP, 0x10, SignedOffset);
+    a.stp(D0, D1, SP, 0x20, SignedOffset);
 
     // call the post handler, decrementing
     a.mov(X4, 1);
@@ -449,18 +456,15 @@ std::vector<uint8_t> ArmV8Generator::commonHandlerBytes(int64_t handler, ptrdiff
     a.ldr(X5, X5, 0);
     a.blr(X5);
 
-    // recover the original return
-    a.mov(X16, X19);
-
     // recover the return values
-    a.ldp(D0, D1, SP, 0x30, SignedOffset);
-    a.ldp(X0, X8, SP, 0x20, SignedOffset);
+    a.ldp(D0, D1, SP, 0x20, SignedOffset);
+    a.ldp(X0, X8, SP, 0x10, SignedOffset);
 
-    a.ldp(X19, X20, SP, 0x10, SignedOffset);
-    a.ldp(X29, X30, SP, 0xc0, PostIndex);
-
-    // done!
-    a.br(X16);
+	// done!
+    a.ldp(X19, X20, SP, 0xa0, SignedOffset);
+    a.add(SP, SP, 0xb0);
+	a.ldp(X29, X30, SP, 0x10, PostIndex);
+	a.br(X30);
 
     a.label("spaceOffset");
     a.write64(spaceOffset);
