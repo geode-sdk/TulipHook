@@ -27,11 +27,6 @@ using enum X86Register;
 std::vector<uint8_t> X86Generator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
 	X86Assembler a(handler);
 
-	// idk what this is for
-	for (int i = 0; i < 10; ++i) {
-		a.nop();
-	}
-
 	metadata.m_convention->generateIntoDefault(a, metadata.m_abstract);
 
 	a.push(ESI);

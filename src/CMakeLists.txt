@@ -13,8 +13,13 @@ file(GLOB TULIP_HOOK_BASE_SOURCES
 	disassembler/BaseDisassembler.cpp
 	disassembler/ArmV8Disassembler.cpp
 	disassembler/ThumbV7Disassembler.cpp
+	convention/AAPCSConvention.cpp
+	convention/AAPCS64Convention.cpp
 	convention/CallingConvention.cpp
 	convention/DefaultConvention.cpp
+	convention/SystemVConvention.cpp
+	convention/Windows32Convention.cpp
+	convention/Windows64Convention.cpp
 	generator/Generator.cpp
 	target/Target.cpp
 )
@@ -23,8 +28,6 @@ if(WIN32)
 	set(TULIP_HOOK_LINK_DOBBY Off)
 	set(TULIP_HOOK_LINK_CAPSTONE On)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
-		convention/Windows32Convention.cpp
-		convention/Windows64Convention.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		target/Windows32Target.cpp
@@ -34,7 +37,6 @@ elseif(APPLE)
 	set(TULIP_HOOK_LINK_DOBBY On)
 	set(TULIP_HOOK_LINK_CAPSTONE On)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
-		convention/MacosIntelConvention.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		generator/ArmV8Generator.cpp

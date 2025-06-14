@@ -100,6 +100,7 @@ namespace tulip::hook {
 		void adr(ArmV8Register dst, int64_t imm);
 		void adrp(ArmV8Register dst, int64_t imm);
 		void add(ArmV8Register dst, ArmV8Register src, uint16_t imm);
+		void sub(ArmV8Register dst, ArmV8Register src, uint16_t imm);
 		void add(ArmV8Register dst, ArmV8Register src, ArmV8Register src2);
 		void b(uint32_t imm);
 		void b(std::string const& label);

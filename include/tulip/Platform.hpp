@@ -7,12 +7,14 @@
 	#define TULIP_HOOK_WINDOWS 1
 	#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 
-	#define TULIP_HOOK_DEFAULT_CONV __cdecl
-
 	#if defined(WIN64) || defined(_WIN64) || defined(__WIN64) && !defined(__CYGWIN__)
 		#define TULIP_HOOK_X64 1
+		#define TULIP_HOOK_MICROSOFT_X64_CONV 1
+		#define TULIP_HOOK_DEFAULT_CONV 
 	#else
 		#define TULIP_HOOK_X86 1
+		#define TULIP_HOOK_CDECL_CONV 1
+		#define TULIP_HOOK_DEFAULT_CONV __cdecl
 	#endif
 
 	#ifdef TULIP_HOOK_DYNAMIC
@@ -41,9 +43,11 @@
 
 		#if TARGET_CPU_ARM64
 			#define TULIP_HOOK_ARMV8 1
+			#define TULIP_HOOK_AAPCS64_CONV 1
 			#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 		#elif TARGET_CPU_X86_64
 			#define TULIP_HOOK_X64 1
+			#define TULIP_HOOK_SYSTEMV_CONV 1
 			#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 		#endif
 
@@ -58,6 +62,7 @@
 		#define TULIP_HOOK_IOS 1
 
 		#define TULIP_HOOK_DEFAULT_CONV
+		#define TULIP_HOOK_AAPCS64_CONV 1
 		
 		#define TULIP_HOOK_ARMV8 1
 		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
@@ -82,9 +87,11 @@
 
 	#if defined(__arm__)
 		#define TULIP_HOOK_ARMV7 1
+		#define TULIP_HOOK_AAPCS_CONV 1
 		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 	#elif defined(__aarch64__)
 		#define TULIP_HOOK_ARMV8 1
+		#define TULIP_HOOK_AAPCS64_CONV 1
 		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 	#endif
 

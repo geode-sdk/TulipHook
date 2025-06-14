@@ -7,8 +7,6 @@
 #include <platform/Windows32Convention.hpp>
 #include <variant>
 
-#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X86)
-
 using namespace tulip::hook;
 
 enum class Register {
@@ -710,5 +708,3 @@ std::shared_ptr<StdcallConvention> StdcallConvention::create() {
 }
 
 StdcallConvention::~StdcallConvention() {}
-
-#endif

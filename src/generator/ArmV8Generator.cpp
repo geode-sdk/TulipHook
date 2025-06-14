@@ -4,6 +4,7 @@
 #include "../assembler/ArmV8Assembler.hpp"
 #include "../disassembler/ArmV8Disassembler.hpp"
 #include "../target/PlatformTarget.hpp"
+#include <tulip/CallingConvention.hpp>
 
 using namespace tulip::hook;
 
@@ -26,8 +27,9 @@ std::vector<uint8_t> ArmV8Generator::handlerBytes(int64_t original, int64_t hand
 	using enum ArmV8IndexKind;
 
     // preserve registers
-	a.stp(X29, X30, SP, -0xc0, PreIndex);
+	a.stp(X29, X30, SP, -0x10, PreIndex);
     a.mov(X29, SP);
+	a.sub(SP, SP, 0xb0);
 
     a.stp(X0, X1, SP, 0x10, SignedOffset);
     a.stp(X2, X3, SP, 0x20, SignedOffset);
@@ -45,7 +47,7 @@ std::vector<uint8_t> ArmV8Generator::handlerBytes(int64_t original, int64_t hand
 	// call the pre handler, incrementing
 	a.ldr(X1, "handlerPre");
 	a.blr(X1);
-	a.mov(X16, X0);
+	a.mov(X15, X0);
 
 	// recover registers
 	a.ldp(D6, D7, SP, 0x90, SignedOffset);
@@ -58,8 +60,13 @@ std::vector<uint8_t> ArmV8Generator::handlerBytes(int64_t original, int64_t hand
 	a.ldp(X2, X3, SP, 0x20, SignedOffset);
 	a.ldp(X0, X1, SP, 0x10, SignedOffset);
 
+	// convert the current cc into the default cc
+	metadata.m_convention->generateIntoDefault(a, metadata.m_abstract);
+
 	// call the func
-	a.blr(X16);
+	a.blr(X15);
+
+	metadata.m_convention->generateDefaultCleanup(a, metadata.m_abstract);
 
 	// preserve the return values
 	a.stp(X0, X8, SP, 0x10, SignedOffset);
@@ -74,7 +81,8 @@ std::vector<uint8_t> ArmV8Generator::handlerBytes(int64_t original, int64_t hand
 	a.ldp(X0, X8, SP, 0x10, SignedOffset);
 
 	// done!
-	a.ldp(X29, X30, SP, 0xc0, PostIndex);
+	a.add(SP, SP, 0xb0);
+	a.ldp(X29, X30, SP, 0x10, PostIndex);
 	a.br(X30);
 
 	// Align to 8 bytes for ldr.

@@ -27,8 +27,9 @@ std::vector<uint8_t> ArmV7Generator::handlerBytes(int64_t original, int64_t hand
 	using enum ArmV7Register;
 
 	// preserve registers
-	a.push({R4, LR});
-	a.sub(SP, SP, 0x30);
+	a.push({R4, R5, R11, LR});
+	a.mov(R11, SP);
+	a.sub(SP, SP, 0x70);
 
 	a.str(R0, SP, 0x00);
 	a.str(R1, SP, 0x04);
@@ -57,8 +58,13 @@ std::vector<uint8_t> ArmV7Generator::handlerBytes(int64_t original, int64_t hand
 	a.ldr(R1, SP, 0x04);
 	a.ldr(R0, SP, 0x00);
 
+	// convert the current cc into the default cc
+	metadata.m_convention->generateIntoDefault(a, metadata.m_abstract);
+
 	// call the func
 	a.blx(R4);
+
+	metadata.m_convention->generateDefaultCleanup(a, metadata.m_abstract);
 
 	// preserve the return values
 	a.str(R0, SP, 0x00);
@@ -71,8 +77,8 @@ std::vector<uint8_t> ArmV7Generator::handlerBytes(int64_t original, int64_t hand
 	a.ldr(R0, SP, 0x00);
 
 	// done!
-	a.add(SP, SP, 0x30);
-	a.pop({R4, PC});
+	a.add(SP, SP, 0x70);
+	a.pop({R4, R5, R11, PC});
 
 	a.label("handlerPre");
 	a.write32(reinterpret_cast<uint64_t>(preHandler));

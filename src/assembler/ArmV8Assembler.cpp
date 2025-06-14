@@ -118,6 +118,12 @@ void ArmV8Assembler::add(ArmV8Register dst, ArmV8Register src, uint16_t imm) {
     this->write32(0x91000000 | srcShifted | immShifted | val(dst));
 }
 
+void ArmV8Assembler::sub(ArmV8Register dst, ArmV8Register src, uint16_t imm) {
+    const auto srcShifted = val(src) << 5;
+    const auto immShifted = (static_cast<uint32_t>(imm) & 0xFFF) << 10;
+    this->write32(0xD1000000 | srcShifted | immShifted | val(dst));
+}
+
 void ArmV8Assembler::add(ArmV8Register dst, ArmV8Register src, ArmV8Register src2) {
     const auto srcShifted = val(src) << 16;
     const auto src2Shifted = val(src2) << 5;

@@ -2,7 +2,7 @@
 
 #include "../Platform.hpp"
 
-#include "DefaultConvention.hpp"
+#include "../CallingConvention.hpp"
 
 #include <memory>
 #include <string>
@@ -10,26 +10,16 @@
 namespace tulip::hook {
 	class AbstractFunction;
 
-	class TULIP_HOOK_DLL Windows64Convention : public DefaultConvention {
+	class TULIP_HOOK_DLL AAPCS64Convention : public CallingConvention {
 	public:
-		~Windows64Convention() override;
+		~AAPCS64Convention() override;
 
 		void generateDefaultCleanup(BaseAssembler& a, AbstractFunction const& function) override;
-		void generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) override;
-
-		static std::shared_ptr<Windows64Convention> create();
-	};
-
-	class TULIP_HOOK_DLL Thiscall64Convention : public Windows64Convention {
-	public:
-		~Thiscall64Convention() override;
-
 		void generateIntoDefault(BaseAssembler& a, AbstractFunction const& function) override;
 		void generateIntoOriginal(BaseAssembler& a, AbstractFunction const& function) override;
 		void generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) override;
 		bool needsWrapper(AbstractFunction const& function) const override;
 
-		static std::shared_ptr<Thiscall64Convention> create();
+		static std::shared_ptr<AAPCS64Convention> create();
 	};
 }
-
