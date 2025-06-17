@@ -32,7 +32,9 @@ geode::Result<> Pool::removeHandler(HandlerHandle const& handle) {
 		return geode::Err("Handler not found");
 	}
 	m_handlers[handle]->clearHooks();
-	GEODE_UNWRAP(m_handlers[handle]->restoreFunction());
+	if (!m_runtimeInterveningDisabled) {
+		GEODE_UNWRAP(m_handlers[handle]->restoreFunction());
+	}
 	return geode::Ok();
 }
 
