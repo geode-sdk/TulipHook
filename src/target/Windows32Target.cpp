@@ -94,17 +94,7 @@ geode::Result<> Windows32Target::protectMemory(void* address, size_t size, uint3
 }
 
 geode::Result<> Windows32Target::rawWriteMemory(void* destination, void const* source, size_t size) {
-	DWORD oldProtection;
-
-	// protect memory to be writable
-	if (!VirtualProtect(destination, size, this->getWritableProtection(), &oldProtection)) {
-		return geode::Err("Unable to protect memory");
-	}
-
 	std::memcpy(destination, source, size);
-
-	// restore old protection
-	VirtualProtect(destination, size, oldProtection, &oldProtection);
 
 	return geode::Ok();
 }

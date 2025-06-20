@@ -92,32 +92,6 @@ geode::Result<> DarwinTarget::rawWriteMemory(void* destination, void const* sour
 	return geode::Ok();
 }
 
-geode::Result<> DarwinTarget::writeMemory(void* destination, void const* source, size_t size) {
-	GEODE_UNWRAP_INTO(auto oldProtection, this->getProtection(destination));
-
-	// with no wx pages, we run into the risk of accidentally marking our code as rw
-	// (this causes a crash in the result destructor, which is not very good)
-	// should be fixed now i think
-
-	kern_return_t s1, s2, s3;
-	this->internalProtectMemory(destination, size, this->getWritableProtection(), s1);
-	if (s1 != KERN_SUCCESS) {
-		return geode::Err("Couldn't protect memory to rwc: " + std::to_string(s1));
-	}
-
-	this->internalWriteMemory(destination, source, size, s2);
-	if (s2 != KERN_SUCCESS) {
-		return geode::Err("Couldn't write memory: " + std::to_string(s2));
-	}
-
-	this->internalProtectMemory(destination, size, oldProtection, s3);
-	if (s3 != KERN_SUCCESS) {
-		return geode::Err("Couldn't protect memory back: " + std::to_string(s3));
-	}
-
-	return geode::Ok();
-}
-
 uint32_t DarwinTarget::getWritableProtection() {
 	return VM_PROT_COPY | VM_PROT_READ | VM_PROT_WRITE;
 }

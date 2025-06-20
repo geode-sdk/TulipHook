@@ -26,8 +26,16 @@ geode::Result<void*> Target::peekArea() {
 }
 
 geode::Result<> Target::writeMemory(void* destination, void const* source, size_t size) {
+	GEODE_UNWRAP_INTO(auto oldProtection, this->getProtection(destination));
+	
+	GEODE_UNWRAP(this->protectMemory(destination, size, this->getWritableProtection()));
+
 	GEODE_UNWRAP(this->rawWriteMemory(destination, source, size));
 
+	if (oldProtection != this->getWritableProtection()) {
+		// restore old protection
+		GEODE_UNWRAP(this->protectMemory(destination, size, oldProtection));
+	}
 	return geode::Ok();
 }
 

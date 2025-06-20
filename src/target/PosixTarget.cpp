@@ -51,14 +51,7 @@ geode::Result<> PosixTarget::protectMemory(void* address, size_t size, uint32_t 
 }
 
 geode::Result<> PosixTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
-	auto res = this->protectMemory(destination, size, this->getWritableProtection());
-
-	if (!res) {
-		return geode::Err("Couldn't protect memory");
-	}
-
-	memcpy(destination, source, size);
-
+	std::memcpy(destination, source, size);
 	return geode::Ok();
 }
 
