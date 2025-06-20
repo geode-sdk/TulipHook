@@ -32,22 +32,22 @@ namespace tulip::hook {
 		int64_t currentAddress() const;
 		std::span<uint8_t const> buffer() const;
 
-		int8_t read8(int64_t address) const;
-		int16_t read16(int64_t address) const;
-		int32_t read32(int64_t address) const;
-		int64_t read64(int64_t address) const;
+		uint8_t read8(int64_t address) const;
+		uint16_t read16(int64_t address) const;
+		uint32_t read32(int64_t address) const;
+		uint64_t read64(int64_t address) const;
 
-		void write8(int8_t value);
-		void write16(int16_t value);
-		void write32(int32_t value);
-		void write64(int64_t value);
+		void write8(uint8_t value);
+		void write16(uint16_t value);
+		void write32(uint32_t value);
+		void write64(uint64_t value);
 
 		void writeBuffer(std::span<uint8_t> span);
 
-		void rewrite8(int64_t address, int8_t value);
-		void rewrite16(int64_t address, int16_t value);
-		void rewrite32(int64_t address, int32_t value);
-		void rewrite64(int64_t address, int64_t value);
+		void rewrite8(int64_t address, uint8_t value);
+		void rewrite16(int64_t address, uint16_t value);
+		void rewrite32(int64_t address, uint32_t value);
+		void rewrite64(int64_t address, uint64_t value);
 
 		void label(std::string const& name);
 

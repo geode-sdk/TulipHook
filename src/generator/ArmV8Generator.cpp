@@ -105,7 +105,7 @@ std::vector<uint8_t> ArmV8Generator::handlerBytes(int64_t original, int64_t hand
 namespace {
 	bool canDeltaRange(int64_t delta, int64_t range) {
 		// Check if the delta can be encoded in range bits or less.
-		return delta >= -(1ll << range) && delta <= (1ll << range) - 1;
+		return delta >= -(1ll << (range - 1)) && delta <= (1ll << (range - 1)) - 1;
 	}
 }
 
