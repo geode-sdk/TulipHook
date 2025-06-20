@@ -1,6 +1,7 @@
 #pragma once
 
 #include <HandlerData.hpp>
+#include <WrapperData.hpp>
 #include <HookData.hpp>
 #include <Platform.hpp>
 #include <Geode/Result.hpp>
@@ -22,11 +23,12 @@ namespace tulip::hook {
 
 		void* const m_address;
 		HandlerMetadata const m_metadata;
+		WrapperMetadata const m_wrapperMetadata;
 
 		std::unordered_map<HookHandle, std::unique_ptr<Hook>> m_hooks;
 		std::unordered_map<void*, HookHandle> m_handles;
 
-		HandlerContent* m_content = nullptr;
+		std::unique_ptr<HandlerContent> m_content;
 
 		void* m_trampoline = nullptr;
 		size_t m_trampolineSize = 0;
@@ -34,10 +36,12 @@ namespace tulip::hook {
 		void* m_handler = nullptr;
 		size_t m_handlerSize = 0;
 
+		void* m_relocated = nullptr;
+
 		std::vector<uint8_t> m_originalBytes;
 		std::vector<uint8_t> m_modifiedBytes;
 
-		static geode::Result<std::unique_ptr<Handler>> create(void* address, HandlerMetadata const& metadata);
+		static std::unique_ptr<Handler> create(void* address, HandlerMetadata const& metadata);
 		~Handler();
 
 		geode::Result<> init();

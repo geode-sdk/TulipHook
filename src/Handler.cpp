@@ -4,53 +4,121 @@
 #include "Pool.hpp"
 #include "Wrapper.hpp"
 #include "target/PlatformTarget.hpp"
+#include <tulip/CallingConvention.hpp>
 
 #include <algorithm>
 #include <stack>
 #include <iostream>
+#include <iomanip>
 
 using namespace tulip::hook;
 
 Handler::Handler(void* address, HandlerMetadata const& metadata) :
 	m_address(address),
-	m_metadata(metadata) {}
+	m_metadata(metadata),
+	m_content(std::make_unique<HandlerContent>()),
+	m_wrapperMetadata{metadata.m_convention, metadata.m_abstract} {
 
-geode::Result<std::unique_ptr<Handler>> Handler::create(void* address, HandlerMetadata const& metadata) {
+}
+
+std::unique_ptr<Handler> Handler::create(void* address, HandlerMetadata const& metadata) {
 	auto ret = std::make_unique<Handler>(address, metadata);
-
-	ret->m_content = new (std::nothrow) HandlerContent();
-	if (!ret->m_content) {
-		return geode::Err("Failed to allocate HandlerContent");
-	}
-
-	GEODE_UNWRAP_INTO(ret->m_handler, Target::get().allocateArea(0x300));
-	GEODE_UNWRAP_INTO(ret->m_trampoline, Target::get().allocateArea(0x100));
-
-	return geode::Ok(std::move(ret));
+	return ret;
 }
 
 Handler::~Handler() {}
 
 geode::Result<> Handler::init() {
+	if (Pool::get().m_runtimeInterveningDisabled) {
+		return geode::Err("Runtime intervening is disabled");
+	}
+
 	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
 
-	auto generator =
-		Target::get().getHandlerGenerator(m_address, m_trampoline, m_handler, m_content, m_metadata);
+	auto generator = Target::get().getGenerator();
+	auto realAddress = Target::get().getRealPtr(m_address);
 
-	GEODE_UNWRAP_INTO(auto handler, generator->generateHandler());
-	m_handlerSize = handler.m_size;
+	// std::cout << std::noshowbase << std::setfill('0') << std::hex;
 
-	GEODE_UNWRAP_INTO(auto minIntervener, generator->generateIntervener(0));
+	auto dryHandler = generator->handlerBytes((int64_t)m_address, 0, m_content.get(), m_metadata);
+	std::vector<uint8_t> handler;
+	do {
+		GEODE_UNWRAP_INTO(m_handler, Target::get().allocateArea(dryHandler.size()));
+		handler = generator->handlerBytes((int64_t)m_address, (int64_t)m_handler, m_content.get(), m_metadata);
 
-	GEODE_UNWRAP_INTO(auto trampoline, generator->generateTrampoline(minIntervener.size()));
-	m_trampolineSize = trampoline.m_trampoline.m_size;
+		if (handler.size() <= dryHandler.size()) break;
 
-	GEODE_UNWRAP_INTO(m_modifiedBytes, generator->generateIntervener(trampoline.m_originalOffset));
+		dryHandler = std::move(handler);
+	} while (true);
+	// std::cout << m_handler << " Handler: " << std::endl;
+	// for (auto c : handler) {
+	// 	std::cout << std::setw(2) << +c << ' ';
+	// }
+	// std::cout << std::endl;
+	GEODE_UNWRAP(Target::get().writeMemory(m_handler, handler.data(), handler.size()));
+	m_handlerSize = handler.size();
 
-	auto target = m_modifiedBytes.size();
+	auto dryIntervener = generator->intervenerBytes(realAddress, (int64_t)m_handler, 0);
 
-	auto address = reinterpret_cast<uint8_t*>(Target::get().getRealPtr(m_address));
-	m_originalBytes.insert(m_originalBytes.begin(), address, address + target);
+	std::vector<uint8_t> dryOriginalBytes(dryIntervener.size());
+	// rawWriteMemory that does not handle protections, otherwise destructor might crash
+	GEODE_UNWRAP(Target::get().rawWriteMemory(dryOriginalBytes.data(), m_address, dryIntervener.size()));
+	
+	GEODE_UNWRAP_INTO(auto dryRelocated, generator->relocatedBytes(realAddress, 0, dryOriginalBytes));
+	BaseGenerator::RelocateReturn relocated;
+	do {
+		GEODE_UNWRAP_INTO(m_relocated, Target::get().allocateArea(dryRelocated.bytes.size()));
+		GEODE_UNWRAP_INTO(relocated, generator->relocatedBytes(realAddress, (int64_t)m_relocated, dryOriginalBytes));
+
+		if (handler.size() <= dryHandler.size()) break;
+
+		dryHandler = std::move(handler);
+	} while (true);
+	// std::cout << m_relocated << " Relocated: " << std::endl;
+	// for (auto c : relocated.bytes) {
+	// 	std::cout << std::setw(2) << +c << ' ';
+	// }
+	// std::cout << std::endl;
+	GEODE_UNWRAP(Target::get().writeMemory(m_relocated, relocated.bytes.data(), relocated.bytes.size()));
+
+	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
+		auto dryWrapped = generator->wrapperBytes((int64_t)m_relocated, 0, m_wrapperMetadata);
+		std::vector<uint8_t> wrapped;
+		do {
+			GEODE_UNWRAP_INTO(m_trampoline, Target::get().allocateArea(dryHandler.size()));
+			wrapped = generator->wrapperBytes((int64_t)m_relocated, (int64_t)m_trampoline, m_wrapperMetadata);
+
+			if (wrapped.size() <= dryWrapped.size()) break;
+
+			dryWrapped = std::move(wrapped);
+		} while (true);
+		// std::cout << m_trampoline << " Trampoline: " << std::endl;
+		// for (auto c : wrapped) {
+		// 	std::cout << std::setw(2) << +c << ' ';
+		// }
+		// std::cout << std::endl;
+		GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, wrapped.data(), wrapped.size()));
+		m_trampolineSize = wrapped.size();
+	}
+	else {
+		m_trampoline = m_relocated;
+	}
+	
+	m_modifiedBytes = generator->intervenerBytes(realAddress, (int64_t)m_handler, relocated.offset);
+	// std::cout << m_address << " Intervener: " << std::endl;
+	// for (auto c : m_modifiedBytes) {
+	// 	std::cout << std::setw(2) << +c << ' ';
+	// }
+	// std::cout << std::endl;
+
+	m_originalBytes.insert(m_originalBytes.begin(), m_modifiedBytes.size(), 0);
+	// rawWriteMemory that does not handle protections, otherwise destructor might crash
+	GEODE_UNWRAP(Target::get().rawWriteMemory(m_originalBytes.data(), (void*)realAddress, m_originalBytes.size()));
+	// std::cout << m_address << " Original: " << std::endl;
+	// for (auto c : m_originalBytes) {
+	// 	std::cout << std::setw(2) << +c << ' ';
+	// }
+	// std::cout << std::endl;
 
 	this->addOriginal();
 
@@ -61,7 +129,7 @@ void Handler::addOriginal() {
 	auto metadata = HookMetadata{
 		.m_priority = INT32_MAX,
 	};
-	static_cast<void>(this->createHook(Target::get().getRealPtrAs(m_trampoline, m_address), metadata));
+	static_cast<void>(this->createHook((void*)Target::get().getRealPtrAs(m_trampoline, m_address), metadata));
 }
 
 HookHandle Handler::createHook(void* address, HookMetadata m_metadata) {
@@ -120,7 +188,7 @@ geode::Result<> Handler::interveneFunction() {
 		return geode::Err("Runtime intervening is disabled");
 	}
 	return Target::get().writeMemory(
-		Target::get().getRealPtr(m_address),
+		(void*)Target::get().getRealPtr(m_address),
 		static_cast<void*>(m_modifiedBytes.data()),
 		m_modifiedBytes.size()
 	);
@@ -131,7 +199,7 @@ geode::Result<> Handler::restoreFunction() {
 		return geode::Err("Runtime intervening is disabled");
 	}
 	return Target::get().writeMemory(
-		Target::get().getRealPtr(m_address),
+		(void*)Target::get().getRealPtr(m_address),
 		static_cast<void*>(m_originalBytes.data()),
 		m_originalBytes.size()
 	);

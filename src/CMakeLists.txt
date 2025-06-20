@@ -13,8 +13,13 @@ file(GLOB TULIP_HOOK_BASE_SOURCES
 	disassembler/BaseDisassembler.cpp
 	disassembler/ArmV8Disassembler.cpp
 	disassembler/ThumbV7Disassembler.cpp
+	convention/AAPCSConvention.cpp
+	convention/AAPCS64Convention.cpp
 	convention/CallingConvention.cpp
 	convention/DefaultConvention.cpp
+	convention/SystemVConvention.cpp
+	convention/Windows32Convention.cpp
+	convention/Windows64Convention.cpp
 	generator/Generator.cpp
 	target/Target.cpp
 )
@@ -23,8 +28,6 @@ if(WIN32)
 	set(TULIP_HOOK_LINK_DOBBY Off)
 	set(TULIP_HOOK_LINK_CAPSTONE On)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
-		convention/Windows32Convention.cpp
-		convention/Windows64Convention.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		target/Windows32Target.cpp
@@ -34,13 +37,13 @@ elseif(APPLE)
 	set(TULIP_HOOK_LINK_DOBBY On)
 	set(TULIP_HOOK_LINK_CAPSTONE On)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
-		convention/MacosIntelConvention.cpp
 		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		generator/ArmV8Generator.cpp
 		target/DarwinTarget.cpp
 		target/MacosIntelTarget.cpp
 		target/MacosM1Target.cpp
+		target/iOSTarget.cpp
 	)
 elseif(ANDROID OR UNIX)
 	set(TULIP_HOOK_LINK_DOBBY On)
@@ -56,10 +59,20 @@ else()
 	message(FATAL_ERROR "Unsupported platform.")
 endif()
 
-add_library(${PROJECT_NAME} STATIC
-	${TULIP_HOOK_BASE_SOURCES}
-	${TULIP_HOOK_PLATFORM_SOURCES}
-)
+if (TULIP_BUILD_DYNAMIC)
+	add_library(${PROJECT_NAME} SHARED
+		${TULIP_HOOK_BASE_SOURCES}
+		${TULIP_HOOK_PLATFORM_SOURCES}
+	)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC -DTULIP_HOOK_DYNAMIC=1)
+else()
+	add_library(${PROJECT_NAME} STATIC
+		${TULIP_HOOK_BASE_SOURCES}
+		${TULIP_HOOK_PLATFORM_SOURCES}
+	)
+endif()
+
+
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 

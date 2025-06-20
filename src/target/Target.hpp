@@ -3,6 +3,7 @@
 #include <HandlerData.hpp>
 #include <Geode/Result.hpp>
 #include <WrapperData.hpp>
+#include <FunctionData.hpp>
 #include <memory>
 
 #include <Platform.hpp>
@@ -13,9 +14,7 @@ typedef size_t csh;
 #endif
 
 namespace tulip::hook {
-	class HandlerGenerator;
-	class WrapperGenerator;
-
+	class BaseGenerator;
 	class Target {
 	protected:
 		csh m_capstone = 0;
@@ -30,6 +29,7 @@ namespace tulip::hook {
 		virtual ~Target() = default;
 
 		geode::Result<void*> allocateArea(size_t size);
+		geode::Result<void*> peekArea();
 
 		virtual geode::Result<> writeMemory(void* destination, void const* source, size_t size);
 
@@ -43,14 +43,10 @@ namespace tulip::hook {
 		virtual geode::Result<> rawWriteMemory(void* destination, void const* source, size_t size) = 0;
 		virtual uint32_t getWritableProtection() = 0;
 
-		virtual std::unique_ptr<HandlerGenerator> getHandlerGenerator(
-			void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
-		) = 0;
-		virtual std::unique_ptr<WrapperGenerator> getWrapperGenerator(void* address, WrapperMetadata const& metadata) = 0;
-		// sorry :( virtual BaseAssembler* getAssembler(int64_t baseAddress);
+		virtual std::unique_ptr<BaseGenerator> getGenerator() = 0;
 
 		// These just exist because of arm7! fun!
-		virtual void* getRealPtr(void* ptr);
-		virtual void* getRealPtrAs(void* ptr, void* lookup);
+		virtual int64_t getRealPtr(void* ptr);
+		virtual int64_t getRealPtrAs(void* ptr, void* lookup);
 	};
 };

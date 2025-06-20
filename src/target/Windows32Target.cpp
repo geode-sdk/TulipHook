@@ -61,14 +61,14 @@ PVOID __declspec(dllexport) GeodeFunctionTableAccess64(HANDLE hProcess, DWORD64 
 }
 
 geode::Result<> Windows32Target::allocatePage() {
-	m_allocatedPage = VirtualAlloc(nullptr, 0x4000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READ);
+	m_allocatedPage = VirtualAlloc(nullptr, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READ);
 
 	if (!m_allocatedPage) {
 		return geode::Err("Unable to allocate memory: " + std::to_string(GetLastError()));
 	}
 
 	m_currentOffset = 0;
-	m_remainingOffset = 0x4000;
+	m_remainingOffset = 0x10000;
 
 	return geode::Ok();
 }
@@ -94,17 +94,7 @@ geode::Result<> Windows32Target::protectMemory(void* address, size_t size, uint3
 }
 
 geode::Result<> Windows32Target::rawWriteMemory(void* destination, void const* source, size_t size) {
-	DWORD oldProtection;
-
-	// protect memory to be writable
-	if (!VirtualProtect(destination, size, this->getWritableProtection(), &oldProtection)) {
-		return geode::Err("Unable to protect memory");
-	}
-
 	std::memcpy(destination, source, size);
-
-	// restore old protection
-	VirtualProtect(destination, size, oldProtection, &oldProtection);
 
 	return geode::Ok();
 }
@@ -124,14 +114,8 @@ geode::Result<csh> Windows32Target::openCapstone() {
 	return geode::Ok(m_capstone);
 }
 
-std::unique_ptr<HandlerGenerator> Windows32Target::getHandlerGenerator(
-	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
-) {
-	return std::make_unique<X86HandlerGenerator>(address, trampoline, handler, content, metadata);
-}
-
-std::unique_ptr<WrapperGenerator> Windows32Target::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {
-	return std::make_unique<X86WrapperGenerator>(address, metadata);
+std::unique_ptr<BaseGenerator> Windows32Target::getGenerator() {
+	return std::make_unique<X86Generator>();
 }
 
 #endif

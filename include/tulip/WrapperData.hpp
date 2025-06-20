@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AbstractFunction.hpp"
+#include "HandlerData.hpp"
 
 #include <memory>
 

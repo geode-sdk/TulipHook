@@ -7,7 +7,7 @@ geode::Result<void*> Target::allocateArea(size_t size) {
 		GEODE_UNWRAP(this->allocatePage());
 	}
 
-	auto ret = reinterpret_cast<size_t>(m_allocatedPage) + m_currentOffset;
+	auto ret = reinterpret_cast<uintptr_t>(m_allocatedPage) + m_currentOffset;
 
 	m_remainingOffset -= size;
 	m_currentOffset += size;
@@ -15,9 +15,27 @@ geode::Result<void*> Target::allocateArea(size_t size) {
 	return geode::Ok(reinterpret_cast<void*>(ret));
 }
 
+geode::Result<void*> Target::peekArea() {
+	if (m_remainingOffset == 0) {
+		GEODE_UNWRAP(this->allocatePage());
+	}
+
+	auto ret = reinterpret_cast<uintptr_t>(m_allocatedPage) + m_currentOffset;
+
+	return geode::Ok(reinterpret_cast<void*>(ret));	
+}
+
 geode::Result<> Target::writeMemory(void* destination, void const* source, size_t size) {
+	GEODE_UNWRAP_INTO(auto oldProtection, this->getProtection(destination));
+	
+	GEODE_UNWRAP(this->protectMemory(destination, size, this->getWritableProtection()));
+
 	GEODE_UNWRAP(this->rawWriteMemory(destination, source, size));
 
+	if (oldProtection != this->getWritableProtection()) {
+		// restore old protection
+		GEODE_UNWRAP(this->protectMemory(destination, size, oldProtection));
+	}
 	return geode::Ok();
 }
 
@@ -32,10 +50,10 @@ csh Target::getCapstone() {
 	return m_capstone;
 }
 
-void* Target::getRealPtr(void* ptr) {
-	return ptr;
+int64_t Target::getRealPtr(void* ptr) {
+	return (int64_t)ptr;
 }
 
-void* Target::getRealPtrAs(void* ptr, void* lookup) {
-	return ptr;
+int64_t Target::getRealPtrAs(void* ptr, void* lookup) {
+	return (int64_t)ptr;
 }

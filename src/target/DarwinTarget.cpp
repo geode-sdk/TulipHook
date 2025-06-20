@@ -16,7 +16,7 @@ geode::Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;
 	vm_address_t ret;
 
-	status = vm_allocate(mach_task_self(), &ret, static_cast<vm_size_t>(PAGE_MAX_SIZE), VM_FLAGS_ANYWHERE);
+	status = vm_allocate(mach_task_self(), &ret, static_cast<vm_size_t>(0x10000), VM_FLAGS_ANYWHERE);
 
 	if (status != KERN_SUCCESS) {
 		return geode::Err("Couldn't allocate page");
@@ -24,9 +24,9 @@ geode::Result<> DarwinTarget::allocatePage() {
 
 	m_allocatedPage = reinterpret_cast<void*>(ret);
 	m_currentOffset = 0;
-	m_remainingOffset = PAGE_MAX_SIZE;
+	m_remainingOffset = 0x10000;
 
-	return this->protectMemory(m_allocatedPage, PAGE_MAX_SIZE, VM_PROT_READ | VM_PROT_EXECUTE);
+	return this->protectMemory(m_allocatedPage, 0x10000, VM_PROT_READ | VM_PROT_EXECUTE);
 }
 
 geode::Result<uint32_t> DarwinTarget::getProtection(void* address) {
@@ -89,32 +89,6 @@ geode::Result<> DarwinTarget::rawWriteMemory(void* destination, void const* sour
 	if (status != KERN_SUCCESS) {
 		return geode::Err("Couldn't write memory: " + std::to_string(status));
 	}
-	return geode::Ok();
-}
-
-geode::Result<> DarwinTarget::writeMemory(void* destination, void const* source, size_t size) {
-	GEODE_UNWRAP_INTO(auto oldProtection, this->getProtection(destination));
-
-	// with no wx pages, we run into the risk of accidentally marking our code as rw
-	// (this causes a crash in the result destructor, which is not very good)
-	// should be fixed now i think
-
-	kern_return_t s1, s2, s3;
-	this->internalProtectMemory(destination, size, this->getWritableProtection(), s1);
-	if (s1 != KERN_SUCCESS) {
-		return geode::Err("Couldn't protect memory to rwc: " + std::to_string(s1));
-	}
-
-	this->internalWriteMemory(destination, source, size, s2);
-	if (s2 != KERN_SUCCESS) {
-		return geode::Err("Couldn't write memory: " + std::to_string(s2));
-	}
-
-	this->internalProtectMemory(destination, size, oldProtection, s3);
-	if (s3 != KERN_SUCCESS) {
-		return geode::Err("Couldn't protect memory back: " + std::to_string(s3));
-	}
-
 	return geode::Ok();
 }
 

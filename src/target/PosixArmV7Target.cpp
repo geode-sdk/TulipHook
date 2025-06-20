@@ -26,25 +26,16 @@ geode::Result<csh> PosixArmV7Target::openCapstone() {
 	//return geode::Ok(m_capstone);
 }
 
-std::unique_ptr<HandlerGenerator> PosixArmV7Target::getHandlerGenerator(
-	void* address, void* trampoline, void* handler, void* content, HandlerMetadata const& metadata
-) {
-	return std::make_unique<ArmV7HandlerGenerator>(address, trampoline, handler, content, metadata);
-}
-
-std::unique_ptr<WrapperGenerator> PosixArmV7Target::getWrapperGenerator(void* address, WrapperMetadata const& metadata) {
-	return std::make_unique<ArmV7WrapperGenerator>(address, metadata);
+std::unique_ptr<BaseGenerator> PosixArmV7Target::getGenerator() {
+	return std::make_unique<ArmV7Generator>();
 }
 
 // Thumb is very fun to deal with!
-void* PosixArmV7Target::getRealPtr(void* ptr) {
-	return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ptr) & (~1));
+int64_t PosixArmV7Target::getRealPtr(void* ptr) {
+	return reinterpret_cast<int64_t>(ptr) & (~1ll);
 }
-void* PosixArmV7Target::getRealPtrAs(void* ptr, void* lookup) {
-	return reinterpret_cast<void*>(
-		reinterpret_cast<uintptr_t>(this->getRealPtr(ptr)) |
-		(reinterpret_cast<uintptr_t>(lookup) & 1)
-	);
+int64_t PosixArmV7Target::getRealPtrAs(void* ptr, void* lookup) {
+	return this->getRealPtr(ptr) | (reinterpret_cast<int64_t>(lookup) & 1ll);
 }
 
 #endif

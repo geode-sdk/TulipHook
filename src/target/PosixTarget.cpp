@@ -14,14 +14,14 @@ geode::Result<> PosixTarget::allocatePage() {
 	auto const protection = PROT_READ | PROT_WRITE | PROT_EXEC;
 	auto const flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
-	auto ret = mmap(nullptr, 0x4000, protection, flags, -1, 0);
+	auto ret = mmap(nullptr, 0x10000, protection, flags, -1, 0);
 	if (ret == MAP_FAILED) {
 		return geode::Err("Couldn't allocate page");
 	}
 
 	m_allocatedPage = reinterpret_cast<void*>(ret);
 	m_currentOffset = 0;
-	m_remainingOffset = 0x4000;
+	m_remainingOffset = 0x10000;
 
 	return geode::Ok();
 }
@@ -51,14 +51,7 @@ geode::Result<> PosixTarget::protectMemory(void* address, size_t size, uint32_t 
 }
 
 geode::Result<> PosixTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
-	auto res = this->protectMemory(destination, size, this->getWritableProtection());
-
-	if (!res) {
-		return geode::Err("Couldn't protect memory");
-	}
-
-	memcpy(destination, source, size);
-
+	std::memcpy(destination, source, size);
 	return geode::Ok();
 }
 

@@ -48,12 +48,16 @@ void BaseAssembler::write64(int64_t value) {
 	write32((value >> 32) & 0xFFFFFFFF);
 }
 
+void BaseAssembler::writeBuffer(std::span<uint8_t> span) {
+	m_buffer.insert(m_buffer.end(), span.begin(), span.end());
+}
+
 int64_t BaseAssembler::currentAddress() const {
 	return m_baseAddress + m_buffer.size();
 }
 
-std::vector<uint8_t> const& BaseAssembler::buffer() const {
-	return m_buffer;
+std::span<uint8_t const> BaseAssembler::buffer() const {
+	return std::span<uint8_t const>(m_buffer.begin(), m_buffer.end());
 }
 
 void BaseAssembler::rewrite8(int64_t address, int8_t value) {
@@ -79,11 +83,11 @@ void BaseAssembler::label(std::string const& name) {
 	m_labels[name] = this->currentAddress();
 }
 
-void* BaseAssembler::getLabel(std::string const& name) const {
+int64_t BaseAssembler::getLabel(std::string const& name) const {
 	if (m_labels.find(name) == m_labels.end()) {
-		return nullptr;
+		return 0;
 	}
-	return reinterpret_cast<void*>(m_labels.at(name));
+	return m_labels.at(name);
 }
 
 void BaseAssembler::updateLabels() {}

@@ -3,7 +3,7 @@
 #include "ThumbV7Assembler.hpp"
 
 namespace tulip::hook {
-	class ArmV7Assembler : public BaseAssembler {
+	class TULIP_HOOK_DLL ArmV7Assembler : public BaseAssembler {
 	public:
 		ArmV7Assembler(int64_t baseAddress);
 		ArmV7Assembler(ArmV7Assembler const&) = delete;

@@ -2,6 +2,7 @@
 
 #include "Handler.hpp"
 #include "target/Target.hpp"
+#include <tulip/platform/DefaultConvention.hpp>
 
 using namespace tulip::hook;
 
@@ -14,12 +15,14 @@ geode::Result<HandlerHandle> Pool::createHandler(void* address, HandlerMetadata 
 	auto handle = reinterpret_cast<HandlerHandle>(address);
 
 	if (m_handlers.find(handle) == m_handlers.end()) {
-		GEODE_UNWRAP_INTO(auto handler, Handler::create(address, metadata));
+		auto handler = Handler::create(address, metadata);
 		m_handlers.emplace(handle, std::move(handler));
-		GEODE_UNWRAP(m_handlers[handle]->init());
-	}
 
-	GEODE_UNWRAP(m_handlers[handle]->interveneFunction());
+		if (!m_runtimeInterveningDisabled) {
+			GEODE_UNWRAP(m_handlers[handle]->init());
+			GEODE_UNWRAP(m_handlers[handle]->interveneFunction());
+		}
+	}	
 
 	return geode::Ok(std::move(handle));
 }
@@ -29,7 +32,9 @@ geode::Result<> Pool::removeHandler(HandlerHandle const& handle) {
 		return geode::Err("Handler not found");
 	}
 	m_handlers[handle]->clearHooks();
-	GEODE_UNWRAP(m_handlers[handle]->restoreFunction());
+	if (!m_runtimeInterveningDisabled) {
+		GEODE_UNWRAP(m_handlers[handle]->restoreFunction());
+	}
 	return geode::Ok();
 }
 
@@ -37,22 +42,41 @@ Handler& Pool::getHandler(HandlerHandle const& handle) {
 	return *m_handlers.at(handle);
 }
 
-void* Pool::getCommonHandler(void* originalFunction, size_t uniqueIndex) {
+void* Pool::getCommonHandler(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType) {
+	if (handlerType == 1) {
+		Handler::decrementIndex();
+		return nullptr;
+	}
+
 	if (m_handlerList.size() <= uniqueIndex || m_handlerList[uniqueIndex] == nullptr) {
 		m_handlerList.resize(uniqueIndex + 1, nullptr);
 
-		for (auto& [handle, handler] : m_handlers) {
-			if (handler->m_address == originalFunction) {
-				m_handlerList[uniqueIndex] = handler.get();
-				break;
-			}
+		auto handle = reinterpret_cast<HandlerHandle>(originalFunction);
+		if (m_handlers.find(handle) == m_handlers.end()) {
+			auto handler = Handler::create(originalFunction, HandlerMetadata{
+				.m_convention = std::make_shared<DefaultConvention>(),
+				.m_abstract = AbstractFunction::from<void(void)>()
+			});
+			m_handlers.emplace(handle, std::move(handler));
 		}
+		m_handlerList[uniqueIndex] = m_handlers[handle].get();
+
+		auto trampoline = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(commonHandler) + trampolineOffset);
+
+		auto metadata = HookMetadata{
+			.m_priority = INT_MAX,
+		};
+		m_handlerList[uniqueIndex]->createHook(trampoline, metadata);
 	}
-	return m_handlerList[uniqueIndex]->m_handler;
+
+	auto handler = m_handlerList[uniqueIndex];
+	auto content = handler->m_content.get();
+	Handler::incrementIndex(content);
+	return Handler::getNextFunction(content);
 }
 
-void* Pool::getCommonHandlerStatic(void* originalFunction, size_t uniqueIndex) {
-	return Pool::get().getCommonHandler(originalFunction, uniqueIndex);
+void* Pool::getCommonHandlerStatic(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType) {
+	return Pool::get().getCommonHandler(originalFunction, uniqueIndex, trampolineOffset, commonHandler, handlerType	);
 }
 
 geode::Result<> Pool::disableRuntimeIntervening(void* commonHandlerSpace) {
@@ -65,7 +89,7 @@ geode::Result<> Pool::disableRuntimeIntervening(void* commonHandlerSpace) {
 	}
 
 	auto handler = reinterpret_cast<void*>(&Pool::getCommonHandlerStatic);
-	GEODE_UNWRAP(Target::get().rawWriteMemory(commonHandlerSpace, handler, sizeof(handler)));
+	GEODE_UNWRAP(Target::get().writeMemory(commonHandlerSpace, &handler, sizeof(handler)));
 
 	m_runtimeInterveningDisabled = true;
 	
