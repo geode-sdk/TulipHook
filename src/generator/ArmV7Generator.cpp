@@ -104,19 +104,22 @@ std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t h
 			a.nop();
 		}
 		// thumb
-		a.ldrw(PC, PC, -4);
+		a.ldr(PC, PC, -4);
+
+		// my thumbs will eat me
+		a.write32(handler | 1);
+
+		return std::move(a.m_buffer);
 	}
 	else {
 		// arm
 		aA.ldr(PC, PC, -4);
+
+		// my thumbs are already eating me
+		aA.write32(handler | 1);
+
+		return std::move(a.m_buffer);
 	}
-	
-	// my thumbs will eat me
-	a.write32(handler | 1);
-
-	a.updateLabels();
-
-	return std::move(a.m_buffer);
 }
 geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer) {
 	auto originMem = new CodeMemBlock(original, originalBuffer.size());

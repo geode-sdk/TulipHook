@@ -102,6 +102,14 @@ void ThumbV7Assembler::ldr(ArmV7Register dst, ArmV7Register src, int32_t offset)
 		this->rwl(8, 3, vall(dst));
 		this->rwl(0, 8, offset >> 2);
 	}
+	else if (offset > 126 || offset < 0 || valh(dst) || valh(src)) {
+		this->write16(0xf850);
+		this->rwl(0, 4, val(src));
+		this->write16(0x0000);
+		this->rwl(0, 8, std::fabs(offset));
+		this->rwl(12, 4, val(dst));
+		if (offset > 0) this->rwl(9, 1, 1);
+	}
 	else {
 		this->write16(0x6800);
 		this->rwl(0, 3, vall(dst));
