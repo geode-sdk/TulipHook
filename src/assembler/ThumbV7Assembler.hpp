@@ -49,10 +49,10 @@ namespace tulip::hook {
 
 		void nop();
 
-		void push(ArmV7RegisterArray const& array);
+		void pushw(ArmV7RegisterArray const& array);
 		void vpush(ArmV7RegisterArray const& array);
 
-		void pop(ArmV7RegisterArray const& array);
+		void popw(ArmV7RegisterArray const& array);
 		void vpop(ArmV7RegisterArray const& array);
 
 		void ldr(ArmV7Register dst, std::string const& label);

@@ -64,9 +64,10 @@ void ThumbV7Assembler::nop() {
 	this->write16(0xbf00);
 }
 
-void ThumbV7Assembler::push(ArmV7RegisterArray const& array) {
-	this->write16(0xb400);
-	this->rwl(0, 8, arrayMaskLow(array));
+void ThumbV7Assembler::pushw(ArmV7RegisterArray const& array) {
+	this->write16(0xe92d);
+	this->write16(0x0000);
+	this->rwl(0, 16, arrayMaskLow(array));
 }
 
 void ThumbV7Assembler::vpush(ArmV7RegisterArray const& array) {
@@ -76,9 +77,10 @@ void ThumbV7Assembler::vpush(ArmV7RegisterArray const& array) {
 	this->rwl(12, 4, val(array[0]));
 }
 
-void ThumbV7Assembler::pop(ArmV7RegisterArray const& array) {
-	this->write16(0xbc00);
-	this->rwl(0, 8, arrayMaskLow(array));
+void ThumbV7Assembler::popw(ArmV7RegisterArray const& array) {
+	this->write16(0xe8bd);
+	this->write16(0x0000);
+	this->rwl(0, 16, arrayMaskLow(array));
 }
 
 void ThumbV7Assembler::vpop(ArmV7RegisterArray const& array) {

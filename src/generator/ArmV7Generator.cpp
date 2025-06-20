@@ -27,7 +27,7 @@ std::vector<uint8_t> ArmV7Generator::handlerBytes(int64_t original, int64_t hand
 	using enum ArmV7Register;
 
 	// preserve registers
-	a.push({R4, R5, R11, LR});
+	a.pushw({R4, R5, R11, LR});
 	a.mov(R11, SP);
 	a.sub(SP, SP, 0x70);
 
@@ -78,7 +78,7 @@ std::vector<uint8_t> ArmV7Generator::handlerBytes(int64_t original, int64_t hand
 
 	// done!
 	a.add(SP, SP, 0x70);
-	a.pop({R4, R5, R11, PC});
+	a.popw({R4, R5, R11, PC});
 
 	a.label("handlerPre");
 	a.write32(reinterpret_cast<uint64_t>(preHandler));

@@ -51,7 +51,6 @@ namespace tulip::hook {
         void handleDataProc(ThumbV7Instruction& instruction);
         void handleB_W(ThumbV7Instruction& instruction);
         void handleBL_W(ThumbV7Instruction& instruction);
-        void handleBLX_W(ThumbV7Instruction& instruction);
         void handleLDRLiteral_W(ThumbV7Instruction& instruction);
         void handleADR_W(ThumbV7Instruction& instruction);
 
