@@ -114,7 +114,12 @@ geode::Result<> Handler::init() {
 	auto target = m_modifiedBytes.size();
 
 	m_originalBytes.insert(m_originalBytes.begin(), m_modifiedBytes.size(), 0);
-	GEODE_UNWRAP(Target::get().writeMemory(m_originalBytes.data(), (void*)realAddress, m_originalBytes.size()));
+	std::memcpy(
+		m_originalBytes.data(),
+		(void*)realAddress,
+		m_modifiedBytes.size()
+	);
+	// GEODE_UNWRAP(Target::get().writeMemory(m_originalBytes.data(), (void*)realAddress, m_originalBytes.size()));
 	// std::cout << m_address << " Original: " << std::endl;
 	// for (auto c : m_originalBytes) {
 	// 	std::cout << std::setw(2) << +c << ' ';
