@@ -128,10 +128,7 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int6
 	error = "";
 
 	GenRelocateCodeAndBranch(const_cast<uint8_t*>(originalBuffer.data()), relocatedBuffer.data(), originMem, relocatedMem, +[](void* dest, void const* src, size_t size) {
-		auto res = Target::get().writeMemory(dest, src, size);
-		if (!res) {
-			error = res.unwrapErr();
-		}
+		std::memcpy(dest, src, size);
 	});
 
 	if (!error.empty()) {
