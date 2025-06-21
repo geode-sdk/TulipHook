@@ -116,7 +116,8 @@ jobs:
 
     - name: Setup QEMU
       uses: docker/setup-qemu-action@v3
-      platforms: matrix.config.qemu_platforms
+      with:
+        platforms: matrix.config.qemu_platforms
       if: matrix.config.qemu_platform != null
 
     - name: Test
