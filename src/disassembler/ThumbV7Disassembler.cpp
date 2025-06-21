@@ -139,5 +139,7 @@ std::unique_ptr<BaseInstruction> ThumbV7Disassembler::disassembleNext() {
     auto instruction = std::make_unique<ThumbV7Instruction>();
     instruction->m_rawInstruction = rawInstruction;
 
+    // Determine the instruction type based on the raw instruction bits
+
     return instruction;
 }

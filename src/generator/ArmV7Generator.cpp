@@ -109,6 +109,10 @@ std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t h
 		// my thumbs will eat me
 		a.write32(handler | 1);
 
+		while (a.m_buffer.size() < size) {
+			a.nop();
+		}
+
 		return std::move(a.m_buffer);
 	}
 	else {
