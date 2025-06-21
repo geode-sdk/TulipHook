@@ -28,4 +28,8 @@ std::unique_ptr<BaseGenerator> PosixArmV8Target::getGenerator() {
 	return std::make_unique<ArmV8Generator>();
 }
 
+std::shared_ptr<CallingConvention> PosixArmV8Target::createConvention(TulipConvention convention) noexcept {
+	return AAPCS64Convention::create();
+}
+
 #endif

@@ -26,4 +26,8 @@ std::unique_ptr<BaseGenerator> MacosIntelTarget::getGenerator() {
 	return std::make_unique<X64Generator>();
 }
 
+std::shared_ptr<CallingConvention> MacosIntelTarget::createConvention(TulipConvention convention) noexcept {
+	return SystemVConvention::create();
+}
+
 #endif

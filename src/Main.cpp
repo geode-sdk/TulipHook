@@ -47,28 +47,7 @@ geode::Result<void*> tulip::hook::createReverseWrapper(void* address, WrapperMet
 }
 
 std::shared_ptr<CallingConvention> tulip::hook::createConvention(TulipConvention convention) noexcept {
-	switch (convention) {
-#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X86)
-		case TulipConvention::Cdecl: return CdeclConvention::create();
-		case TulipConvention::Thiscall: return ThiscallConvention::create();
-		case TulipConvention::Fastcall: return FastcallConvention::create();
-		case TulipConvention::Optcall: return OptcallConvention::create();
-		case TulipConvention::Membercall: return MembercallConvention::create();
-		case TulipConvention::Stdcall: return StdcallConvention::create();
-#endif
-#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
-		case TulipConvention::Thiscall: return Thiscall64Convention::create();
-#endif
-		case TulipConvention::Default:
-		default:
-#if defined(TULIP_HOOK_MACOS) && defined(TULIP_HOOK_X64)
-			return SystemVConvention::create();
-#elif defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
-			return Windows64Convention::create();
-#else
-			return DefaultConvention::create();
-#endif
-	}
+	return Target::get().createConvention(convention);
 }
 
 geode::Result<> tulip::hook::disableRuntimeIntervening(void* commonHandlerSpace) noexcept {
@@ -77,7 +56,7 @@ geode::Result<> tulip::hook::disableRuntimeIntervening(void* commonHandlerSpace)
 
 RelocaledBytesReturn tulip::hook::getRelocatedBytes(int64_t original, int64_t relocated, std::vector<uint8_t> const& originalBuffer) {
 	RelocaledBytesReturn result;
-	if (GEODE_UNWRAP_EITHER(res, err, Target::get().getGenerator()->relocatedBytes(original, relocated, originalBuffer))) {
+	if (GEODE_UNWRAP_EITHER(res, err, Target::get().getGenerator()->relocatedBytes(original, relocated, originalBuffer, originalBuffer.size()))) {
 		result.bytes = std::move(res.bytes);
 		result.offset = res.offset;
 	}
@@ -93,4 +72,8 @@ std::vector<uint8_t> tulip::hook::getCommonHandlerBytes(int64_t handler, ptrdiff
 
 std::vector<uint8_t> tulip::hook::getCommonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset) {
 	return Target::get().getGenerator()->commonIntervenerBytes(original, handler, unique, relocOffset);
+}
+
+void tulip::hook::setLogCallback(std::function<void(std::string_view)> callback) noexcept{
+	Target::get().registerLogCallback(std::move(callback));
 }

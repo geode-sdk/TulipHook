@@ -63,7 +63,7 @@ void AAPCSConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction co
         auto const paddedSize = stackParamSize + (16 - (stackParamSize % 16)) % 16; // pad to 16 bytes
         for (auto i = 0; i < stackParamSize; i += 4) {
             // R11 is the frame pointer, R5 is a saved temporary register
-            a.ldr(R5, R11, 16 + i);
+            a.ldrw(R5, R11, 16 + i);
             a.str(R5, SP, i);
         }
     }

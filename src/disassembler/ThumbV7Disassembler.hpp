@@ -51,11 +51,14 @@ namespace tulip::hook {
         void handleDataProc(ThumbV7Instruction& instruction);
         void handleB_W(ThumbV7Instruction& instruction);
         void handleBL_W(ThumbV7Instruction& instruction);
-        void handleBLX_W(ThumbV7Instruction& instruction);
         void handleLDRLiteral_W(ThumbV7Instruction& instruction);
         void handleADR_W(ThumbV7Instruction& instruction);
 
         std::unique_ptr<BaseInstruction> disassembleNext() override;
+
+        ArmV7Register extractRegister(int startBit, uint32_t instruction);
+
+        ArmV7Register extractRegisterWide(int startBit, uint16_t instruction);
 	};
 	
 }

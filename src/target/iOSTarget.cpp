@@ -32,4 +32,8 @@ uint32_t iOSTarget::getWritableProtection() {
 	return VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY;
 }
 
+std::shared_ptr<CallingConvention> iOSTarget::createConvention(TulipConvention convention) noexcept {
+	return AAPCS64Convention::create();
+}
+
 #endif

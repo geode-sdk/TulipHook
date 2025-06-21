@@ -27,7 +27,7 @@ std::vector<uint8_t> ArmV7Generator::handlerBytes(int64_t original, int64_t hand
 	using enum ArmV7Register;
 
 	// preserve registers
-	a.push({R4, R5, R11, LR});
+	a.pushw({R4, R5, R11, LR});
 	a.mov(R11, SP);
 	a.sub(SP, SP, 0x70);
 
@@ -78,7 +78,7 @@ std::vector<uint8_t> ArmV7Generator::handlerBytes(int64_t original, int64_t hand
 
 	// done!
 	a.add(SP, SP, 0x70);
-	a.pop({R4, R5, R11, PC});
+	a.popw({R4, R5, R11, PC});
 
 	a.label("handlerPre");
 	a.write32(reinterpret_cast<uint64_t>(preHandler));
@@ -99,27 +99,30 @@ std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t h
 	using enum ArmV7Register;
 
 	if (original & 0x1) {
-		// align
-		if (original & 0x2) {
+		// thumb
+		a.ldrw(PC, PC, 0);
+
+		// my thumbs will eat me
+		a.write32(handler | 1);
+
+		while (a.m_buffer.size() < size) {
 			a.nop();
 		}
-		// thumb
-		a.ldrw(PC, PC, -4);
+
+		return std::move(a.m_buffer);
 	}
 	else {
 		// arm
 		aA.ldr(PC, PC, -4);
+
+		// my thumbs are already eating me
+		aA.write32(handler | 1);
+
+		return std::move(a.m_buffer);
 	}
-	
-	// my thumbs will eat me
-	a.write32(handler | 1);
-
-	a.updateLabels();
-
-	return std::move(a.m_buffer);
 }
-geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer) {
-	auto originMem = new CodeMemBlock(original, originalBuffer.size());
+geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer, size_t targetSize) {
+	auto originMem = new CodeMemBlock(Target::get().getRealPtr((void*)original), targetSize);
 	auto relocatedMem = new CodeMemBlock();
 	// idk about arm thumb stuff help me
 	std::array<uint8_t, 0x100> relocatedBuffer;
@@ -127,7 +130,8 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int6
 	static thread_local std::string error;
 	error = "";
 
-	GenRelocateCodeAndBranch(const_cast<uint8_t*>(originalBuffer.data()), relocatedBuffer.data(), originMem, relocatedMem, +[](void* dest, void const* src, size_t size) {
+	// did i ever told you that i hate dobby?
+	GenRelocateCodeAndBranch(const_cast<uint8_t*>(originalBuffer.data()) + 1, relocatedBuffer.data(), originMem, relocatedMem, +[](void* dest, void const* src, size_t size) {
 		std::memcpy(dest, src, size);
 	});
 
@@ -140,5 +144,5 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int6
 	}
 	std::vector<uint8_t> relocatedBufferVec(relocatedMem->size);
 	std::memcpy(relocatedBufferVec.data(), relocatedBuffer.data(), relocatedMem->size);
-	return geode::Ok(RelocateReturn{std::move(relocatedBufferVec), originalBuffer.size()});
+	return geode::Ok(RelocateReturn{std::move(relocatedBufferVec), originMem->size});
 }

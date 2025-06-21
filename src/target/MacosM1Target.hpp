@@ -15,6 +15,8 @@ namespace tulip::hook {
 		geode::Result<csh> openCapstone() override;
 
 		std::unique_ptr<BaseGenerator> getGenerator() override;
+
+		std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept override;
 	};
 }
 

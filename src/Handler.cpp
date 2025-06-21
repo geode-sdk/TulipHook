@@ -10,6 +10,7 @@
 #include <stack>
 #include <iostream>
 #include <iomanip>
+#include <sstream>
 
 using namespace tulip::hook;
 
@@ -33,12 +34,10 @@ geode::Result<> Handler::init() {
 		return geode::Err("Runtime intervening is disabled");
 	}
 
-	// printf("func addr: 0x%" PRIx64 "\n", (uint64_t)m_address);
+	std::stringstream ss;
 
 	auto generator = Target::get().getGenerator();
 	auto realAddress = Target::get().getRealPtr(m_address);
-
-	// std::cout << std::noshowbase << std::setfill('0') << std::hex;
 
 	auto dryHandler = generator->handlerBytes((int64_t)m_address, 0, m_content.get(), m_metadata);
 	std::vector<uint8_t> handler;
@@ -50,35 +49,46 @@ geode::Result<> Handler::init() {
 
 		dryHandler = std::move(handler);
 	} while (true);
-	// std::cout << m_handler << " Handler: " << std::endl;
-	// for (auto c : handler) {
-	// 	std::cout << std::setw(2) << +c << ' ';
-	// }
-	// std::cout << std::endl;
+
+	Target::get().log([&]() {
+		std::stringstream ss;
+		ss << std::noshowbase << std::setfill('0') << std::hex;
+		ss << "Handler: " << m_handler << " (size: " << handler.size() << "): ";
+		for (auto c : handler) {
+			ss << std::setw(2) << +c << ' ';
+		}
+		return ss.str();
+	});
+
 	GEODE_UNWRAP(Target::get().writeMemory(m_handler, handler.data(), handler.size()));
 	m_handlerSize = handler.size();
 
-	auto dryIntervener = generator->intervenerBytes(realAddress, (int64_t)m_handler, 0);
+	auto dryIntervener = generator->intervenerBytes((int64_t)m_address, (int64_t)m_handler, 0);
 
-	std::vector<uint8_t> dryOriginalBytes(dryIntervener.size());
-	// rawWriteMemory that does not handle protections, otherwise destructor might crash
-	GEODE_UNWRAP(Target::get().rawWriteMemory(dryOriginalBytes.data(), m_address, dryIntervener.size()));
+	std::vector<uint8_t> dryOriginalBytes(0x20);
+	std::memcpy(dryOriginalBytes.data(), (void*)realAddress, dryOriginalBytes.size());
 	
-	GEODE_UNWRAP_INTO(auto dryRelocated, generator->relocatedBytes(realAddress, 0, dryOriginalBytes));
+	GEODE_UNWRAP_INTO(auto dryRelocated, generator->relocatedBytes((int64_t)m_address, 0, dryOriginalBytes, dryIntervener.size()));
 	BaseGenerator::RelocateReturn relocated;
 	do {
 		GEODE_UNWRAP_INTO(m_relocated, Target::get().allocateArea(dryRelocated.bytes.size()));
-		GEODE_UNWRAP_INTO(relocated, generator->relocatedBytes(realAddress, (int64_t)m_relocated, dryOriginalBytes));
+		GEODE_UNWRAP_INTO(relocated, generator->relocatedBytes((int64_t)m_address, (int64_t)m_relocated, dryOriginalBytes, dryIntervener.size()));
 
 		if (handler.size() <= dryHandler.size()) break;
 
 		dryHandler = std::move(handler);
 	} while (true);
-	// std::cout << m_relocated << " Relocated: " << std::endl;
-	// for (auto c : relocated.bytes) {
-	// 	std::cout << std::setw(2) << +c << ' ';
-	// }
-	// std::cout << std::endl;
+
+	Target::get().log([&]() {
+		std::stringstream ss;
+		ss << std::noshowbase << std::setfill('0') << std::hex;
+		ss << "Relocated: " << m_relocated << " (size: " << relocated.bytes.size() << ", offset: " << relocated.offset << "): ";
+		for (auto c : relocated.bytes) {
+			ss << std::setw(2) << +c << ' ';
+		}
+		return ss.str();
+	});
+
 	GEODE_UNWRAP(Target::get().writeMemory(m_relocated, relocated.bytes.data(), relocated.bytes.size()));
 
 	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
@@ -92,11 +102,17 @@ geode::Result<> Handler::init() {
 
 			dryWrapped = std::move(wrapped);
 		} while (true);
-		// std::cout << m_trampoline << " Trampoline: " << std::endl;
-		// for (auto c : wrapped) {
-		// 	std::cout << std::setw(2) << +c << ' ';
-		// }
-		// std::cout << std::endl;
+
+		Target::get().log([&]() {
+			std::stringstream ss;
+			ss << std::noshowbase << std::setfill('0') << std::hex;
+			ss << "Trampoline: " << m_trampoline << " (size: " << wrapped.size() << "): ";
+			for (auto c : wrapped) {
+				ss << std::setw(2) << +c << ' ';
+			}
+			return ss.str();
+		});
+
 		GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, wrapped.data(), wrapped.size()));
 		m_trampolineSize = wrapped.size();
 	}
@@ -104,21 +120,30 @@ geode::Result<> Handler::init() {
 		m_trampoline = m_relocated;
 	}
 	
-	m_modifiedBytes = generator->intervenerBytes(realAddress, (int64_t)m_handler, relocated.offset);
-	// std::cout << m_address << " Intervener: " << std::endl;
-	// for (auto c : m_modifiedBytes) {
-	// 	std::cout << std::setw(2) << +c << ' ';
-	// }
-	// std::cout << std::endl;
+	m_modifiedBytes = generator->intervenerBytes((int64_t)m_address, (int64_t)m_handler, relocated.offset);
+
+	Target::get().log([&]() {
+		std::stringstream ss;
+		ss << std::noshowbase << std::setfill('0') << std::hex;
+		ss << "Intervener: " << m_address << " (size: " << m_modifiedBytes.size() << "): ";
+		for (auto c : m_modifiedBytes) {
+			ss << std::setw(2) << +c << ' ';
+		}
+		return ss.str();
+	});
 
 	m_originalBytes.insert(m_originalBytes.begin(), m_modifiedBytes.size(), 0);
-	// rawWriteMemory that does not handle protections, otherwise destructor might crash
-	GEODE_UNWRAP(Target::get().rawWriteMemory(m_originalBytes.data(), (void*)realAddress, m_originalBytes.size()));
-	// std::cout << m_address << " Original: " << std::endl;
-	// for (auto c : m_originalBytes) {
-	// 	std::cout << std::setw(2) << +c << ' ';
-	// }
-	// std::cout << std::endl;
+	std::memcpy(m_originalBytes.data(), (void*)realAddress, m_originalBytes.size());
+
+	Target::get().log([&]() {
+		std::stringstream ss;
+		ss << std::noshowbase << std::setfill('0') << std::hex;
+		ss << "Original: " << m_address << " (size: " << m_originalBytes.size() << "): ";
+		for (auto c : m_originalBytes) {
+			ss << std::setw(2) << +c << ' ';
+		}
+		return ss.str();
+	});
 
 	this->addOriginal();
 

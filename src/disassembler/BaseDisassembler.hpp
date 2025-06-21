@@ -26,5 +26,7 @@ namespace tulip::hook {
 
 		virtual bool hasNext() const;
 		virtual std::unique_ptr<BaseInstruction> disassembleNext() = 0;
+
+		int32_t extractValue(int startBit, int size, uint32_t instruction, bool signExtend = true);
 	};
 }

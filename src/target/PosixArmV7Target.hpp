@@ -18,6 +18,8 @@ namespace tulip::hook {
 
 		int64_t getRealPtr(void* ptr) override;
 		int64_t getRealPtrAs(void* ptr, void* lookup) override;
+
+		std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept override;
 	};
 }
 

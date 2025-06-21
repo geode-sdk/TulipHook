@@ -118,4 +118,16 @@ std::unique_ptr<BaseGenerator> Windows32Target::getGenerator() {
 	return std::make_unique<X86Generator>();
 }
 
+std::shared_ptr<CallingConvention> Windows32Target::createConvention(TulipConvention convention) noexcept {
+	switch (convention) {
+		case TulipConvention::Cdecl: return CdeclConvention::create();
+		case TulipConvention::Thiscall: return ThiscallConvention::create();
+		case TulipConvention::Fastcall: return FastcallConvention::create();
+		case TulipConvention::Optcall: return OptcallConvention::create();
+		case TulipConvention::Membercall: return MembercallConvention::create();
+		case TulipConvention::Stdcall: return StdcallConvention::create();
+		default: return CdeclConvention::create();
+	}
+}
+
 #endif
