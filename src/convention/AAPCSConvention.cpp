@@ -57,7 +57,7 @@ void AAPCSConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction co
     if (stackParamSize > 0) {
         auto& a = static_cast<ThumbV7Assembler&>(a_);
         using enum ArmV7Register;
-        
+
         // a.sub(SP, paddedSize);
         int stackOffset = 0;
         auto const paddedSize = stackParamSize + (16 - (stackParamSize % 16)) % 16; // pad to 16 bytes
@@ -69,16 +69,14 @@ void AAPCSConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction co
     }
 }
 
-void AAPCSConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunction const& function) {
-}
+void AAPCSConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunction const& function) {}
 
-void AAPCSConvention::generateOriginalCleanup(BaseAssembler& a_, AbstractFunction const& function) {
-}
+void AAPCSConvention::generateOriginalCleanup(BaseAssembler& a_, AbstractFunction const& function) {}
 
 bool AAPCSConvention::needsWrapper(AbstractFunction const& function) const {
-	return false;
+    return false;
 }
 
 std::shared_ptr<AAPCSConvention> AAPCSConvention::create() {
-	return std::make_shared<AAPCSConvention>();
+    return std::make_shared<AAPCSConvention>();
 }

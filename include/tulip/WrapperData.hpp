@@ -6,12 +6,12 @@
 #include <memory>
 
 namespace tulip::hook {
-	class CallingConvention;
+    class CallingConvention;
 
-	class WrapperMetadata {
-	public:
-		std::shared_ptr<CallingConvention> m_convention;
+    class WrapperMetadata {
+    public:
+        std::shared_ptr<CallingConvention> m_convention;
 
-		AbstractFunction m_abstract;
-	};
+        AbstractFunction m_abstract;
+    };
 }

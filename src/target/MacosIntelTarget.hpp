@@ -8,16 +8,16 @@
 #include "DarwinTarget.hpp"
 
 namespace tulip::hook {
-	class MacosIntelTarget : public DarwinTarget {
-	public:
-		using DarwinTarget::DarwinTarget;
+    class MacosIntelTarget : public DarwinTarget {
+    public:
+        using DarwinTarget::DarwinTarget;
 
-		geode::Result<csh> openCapstone() override;
+        geode::Result<csh> openCapstone() override;
 
-		std::unique_ptr<BaseGenerator> getGenerator() override;
+        std::unique_ptr<BaseGenerator> getGenerator() override;
 
-		std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept override;
-	};
+        std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept override;
+    };
 }
 
 #endif

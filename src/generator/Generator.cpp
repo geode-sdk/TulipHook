@@ -11,30 +11,39 @@ using namespace tulip::hook;
 // virtual std::vector<uint8_t> commonHandlerBytes(int64_t handler, ptrdiff_t spaceOffset);
 // virtual std::vector<uint8_t> commonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset);
 
-std::vector<uint8_t> BaseGenerator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
-	return std::vector<uint8_t>();
+std::vector<uint8_t> BaseGenerator::handlerBytes(
+    int64_t original, int64_t handler, void* content,
+    HandlerMetadata const& metadata
+) {
+    return std::vector<uint8_t>();
 }
 
 std::vector<uint8_t> BaseGenerator::intervenerBytes(int64_t original, int64_t handler, size_t size) {
-	return std::vector<uint8_t>();
+    return std::vector<uint8_t>();
 }
 
-geode::Result<BaseGenerator::RelocateReturn> BaseGenerator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer, size_t targetSize) {
-	return geode::Ok(RelocateReturn{ std::vector<uint8_t>(), 0 });
+geode::Result<BaseGenerator::RelocateReturn> BaseGenerator::relocatedBytes(
+    int64_t original, int64_t relocated,
+    std::span<uint8_t const> originalBuffer, size_t targetSize
+) {
+    return geode::Ok(RelocateReturn{ std::vector<uint8_t>(), 0 });
 }
 
 std::vector<uint8_t> BaseGenerator::wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata) {
-	return std::vector<uint8_t>();
+    return std::vector<uint8_t>();
 }
 
 std::vector<uint8_t> BaseGenerator::runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t alloc) {
-	return std::vector<uint8_t>();
+    return std::vector<uint8_t>();
 }
 
 std::vector<uint8_t> BaseGenerator::commonHandlerBytes(int64_t handler, ptrdiff_t spaceOffset) {
-	return std::vector<uint8_t>();
+    return std::vector<uint8_t>();
 }
 
-std::vector<uint8_t> BaseGenerator::commonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset) {
-	return std::vector<uint8_t>();
+std::vector<uint8_t> BaseGenerator::commonIntervenerBytes(
+    int64_t original, int64_t handler, size_t unique,
+    ptrdiff_t relocOffset
+) {
+    return std::vector<uint8_t>();
 }

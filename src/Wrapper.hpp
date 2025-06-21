@@ -7,16 +7,16 @@
 #include <unordered_map>
 
 namespace tulip::hook {
-	class Handler;
+    class Handler;
 
-	class Wrapper {
-	public:
-		std::unordered_map<void*, FunctionData> m_wrappers;
-		std::unordered_map<void*, FunctionData> m_reverseWrappers;
+    class Wrapper {
+    public:
+        std::unordered_map<void*, FunctionData> m_wrappers;
+        std::unordered_map<void*, FunctionData> m_reverseWrappers;
 
-		static Wrapper& get();
+        static Wrapper& get();
 
-		geode::Result<void*> createWrapper(void* address, WrapperMetadata const& metadata);
-		geode::Result<void*> createReverseWrapper(void* address, WrapperMetadata const& metadata);
-	};
+        geode::Result<void*> createWrapper(void* address, WrapperMetadata const& metadata);
+        geode::Result<void*> createReverseWrapper(void* address, WrapperMetadata const& metadata);
+    };
 }

@@ -62,7 +62,7 @@ void AAPCS64Convention::generateIntoDefault(BaseAssembler& a_, AbstractFunction 
     if (stackParamSize > 0) {
         auto& a = static_cast<ArmV8Assembler&>(a_);
         using enum ArmV8Register;
-        
+
         int stackOffset = 0;
         auto const paddedSize = stackParamSize + (16 - (stackParamSize % 16)) % 16; // pad to 16 bytes
         for (auto i = 0; i < stackParamSize; i += 16) {
@@ -73,16 +73,14 @@ void AAPCS64Convention::generateIntoDefault(BaseAssembler& a_, AbstractFunction 
     }
 }
 
-void AAPCS64Convention::generateIntoOriginal(BaseAssembler& a_, AbstractFunction const& function) {
-}
+void AAPCS64Convention::generateIntoOriginal(BaseAssembler& a_, AbstractFunction const& function) {}
 
-void AAPCS64Convention::generateOriginalCleanup(BaseAssembler& a_, AbstractFunction const& function) {
-}
+void AAPCS64Convention::generateOriginalCleanup(BaseAssembler& a_, AbstractFunction const& function) {}
 
 bool AAPCS64Convention::needsWrapper(AbstractFunction const& function) const {
-	return false;
+    return false;
 }
 
 std::shared_ptr<AAPCS64Convention> AAPCS64Convention::create() {
-	return std::make_shared<AAPCS64Convention>();
+    return std::make_shared<AAPCS64Convention>();
 }

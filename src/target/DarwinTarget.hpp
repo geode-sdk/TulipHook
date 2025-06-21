@@ -7,20 +7,20 @@
 #include "Target.hpp"
 
 namespace tulip::hook {
-	class DarwinTarget : public Target {
-	public:
-		using Target::Target;
+    class DarwinTarget : public Target {
+    public:
+        using Target::Target;
 
-		geode::Result<> allocatePage() override;
-		geode::Result<uint32_t> getProtection(void* address) override;
-		geode::Result<> protectMemory(void* address, size_t size, uint32_t protection) override;
-		geode::Result<> rawWriteMemory(void* destination, void const* source, size_t size) override;
-		uint32_t getWritableProtection() override;
+        geode::Result<> allocatePage() override;
+        geode::Result<uint32_t> getProtection(void* address) override;
+        geode::Result<> protectMemory(void* address, size_t size, uint32_t protection) override;
+        geode::Result<> rawWriteMemory(void* destination, void const* source, size_t size) override;
+        uint32_t getWritableProtection() override;
 
-	private:
-		void internalProtectMemory(void* address, size_t size, uint32_t protection, int& errorCode);
-		void internalWriteMemory(void* destination, void const* source, size_t size, int& errorCode);
-	};
+    private:
+        void internalProtectMemory(void* address, size_t size, uint32_t protection, int& errorCode);
+        void internalWriteMemory(void* destination, void const* source, size_t size, int& errorCode);
+    };
 }
 
 #endif

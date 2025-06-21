@@ -8,16 +8,16 @@
 
 namespace tulip::hook {
 #if defined(TULIP_HOOK_CDECL_CONV)
-	using PlatformConvention = CdeclConvention;
+    using PlatformConvention = CdeclConvention;
 #elif defined(TULIP_HOOK_SYSTEMV_CONV)
-	using PlatformConvention = SystemVConvention;
+    using PlatformConvention = SystemVConvention;
 #elif defined(TULIP_HOOK_MICROSOFT_X64_CONV)
-	using PlatformConvention = Windows64Convention;
+    using PlatformConvention = Windows64Convention;
 #elif defined(TULIP_HOOK_AAPCS_CONV)
-	using PlatformConvention = AAPCSConvention;
+    using PlatformConvention = AAPCSConvention;
 #elif defined(TULIP_HOOK_AAPCS64_CONV)
-	using PlatformConvention = AAPCS64Convention;
+    using PlatformConvention = AAPCS64Convention;
 #else
-	using PlatformConvention = DefaultConvention;
+    using PlatformConvention = DefaultConvention;
 #endif
 }

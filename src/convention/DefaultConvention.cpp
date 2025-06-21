@@ -16,9 +16,9 @@ void DefaultConvention::generateIntoOriginal(BaseAssembler& a, AbstractFunction 
 void DefaultConvention::generateOriginalCleanup(BaseAssembler& a, AbstractFunction const& function) {}
 
 bool DefaultConvention::needsWrapper(AbstractFunction const& function) const {
-	return false;
+    return false;
 }
 
 std::shared_ptr<DefaultConvention> DefaultConvention::create() {
-	return std::make_shared<DefaultConvention>();
+    return std::make_shared<DefaultConvention>();
 }

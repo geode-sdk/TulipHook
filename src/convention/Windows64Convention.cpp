@@ -66,7 +66,7 @@ void Windows64Convention::generateIntoDefault(BaseAssembler& a_, AbstractFunctio
 }
 
 std::shared_ptr<Windows64Convention> Windows64Convention::create() {
-	return std::make_shared<Windows64Convention>();
+    return std::make_shared<Windows64Convention>();
 }
 
 // Member functions deal with struct return differently, since in the windows x64 convention
@@ -112,9 +112,9 @@ void Thiscall64Convention::generateOriginalCleanup(BaseAssembler& a_, AbstractFu
 }
 
 bool Thiscall64Convention::needsWrapper(AbstractFunction const& function) const {
-	return function.m_return.m_kind == AbstractTypeKind::Other;
+    return function.m_return.m_kind == AbstractTypeKind::Other;
 }
 
 std::shared_ptr<Thiscall64Convention> Thiscall64Convention::create() {
-	return std::make_shared<Thiscall64Convention>();
+    return std::make_shared<Thiscall64Convention>();
 }

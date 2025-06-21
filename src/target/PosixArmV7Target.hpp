@@ -8,19 +8,19 @@
 #include "PosixTarget.hpp"
 
 namespace tulip::hook {
-	class PosixArmV7Target : public PosixTarget {
-	public:
-		using PosixTarget::PosixTarget;
+    class PosixArmV7Target : public PosixTarget {
+    public:
+        using PosixTarget::PosixTarget;
 
-		geode::Result<csh> openCapstone() override;
+        geode::Result<csh> openCapstone() override;
 
-		std::unique_ptr<BaseGenerator> getGenerator() override;
+        std::unique_ptr<BaseGenerator> getGenerator() override;
 
-		int64_t getRealPtr(void* ptr) override;
-		int64_t getRealPtrAs(void* ptr, void* lookup) override;
+        int64_t getRealPtr(void* ptr) override;
+        int64_t getRealPtrAs(void* ptr, void* lookup) override;
 
-		std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept override;
-	};
+        std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept override;
+    };
 }
 
 #endif

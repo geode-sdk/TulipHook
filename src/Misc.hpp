@@ -4,8 +4,8 @@
 
 namespace tulip::hook {
 
-	class Misc {
-	public:
-		static geode::Result<void*> followJumps(void* address);
-	};
+    class Misc {
+    public:
+        static geode::Result<void*> followJumps(void* address);
+    };
 }

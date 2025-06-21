@@ -5,14 +5,14 @@
 #include <memory>
 
 namespace tulip::hook {
-	class CallingConvention;
+    class CallingConvention;
 
-	using HandlerHandle = size_t;
+    using HandlerHandle = size_t;
 
-	class HandlerMetadata {
-	public:
-		std::shared_ptr<CallingConvention> m_convention;
+    class HandlerMetadata {
+    public:
+        std::shared_ptr<CallingConvention> m_convention;
 
-		AbstractFunction m_abstract;
-	};
+        AbstractFunction m_abstract;
+    };
 }

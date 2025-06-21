@@ -9,31 +9,31 @@ using namespace tulip::hook;
 #include <mach/vm_map.h> /* vm_allocate()        */
 
 Target& Target::get() {
-	static iOSTarget ret;
-	return ret;
+    static iOSTarget ret;
+    return ret;
 }
 
 geode::Result<csh> iOSTarget::openCapstone() {
-	// cs_err status;
+    // cs_err status;
 
-	// status = cs_open(CS_ARCH_X86, CS_MODE_64, &m_capstone);
-	// if (status != CS_ERR_OK) {
-		return geode::Err("Couldn't open capstone");
-	// }
+    // status = cs_open(CS_ARCH_X86, CS_MODE_64, &m_capstone);
+    // if (status != CS_ERR_OK) {
+    return geode::Err("Couldn't open capstone");
+    // }
 
-	// return geode::Ok(m_capstone);
+    // return geode::Ok(m_capstone);
 }
 
 std::unique_ptr<BaseGenerator> iOSTarget::getGenerator() {
-	return std::make_unique<ArmV8Generator>();
+    return std::make_unique<ArmV8Generator>();
 }
 
 uint32_t iOSTarget::getWritableProtection() {
-	return VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY;
+    return VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY;
 }
 
 std::shared_ptr<CallingConvention> iOSTarget::createConvention(TulipConvention convention) noexcept {
-	return AAPCS64Convention::create();
+    return AAPCS64Convention::create();
 }
 
 #endif

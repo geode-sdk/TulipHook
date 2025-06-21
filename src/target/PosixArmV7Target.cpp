@@ -10,36 +10,36 @@ using namespace tulip::hook;
 #include <sys/mman.h>
 
 Target& Target::get() {
-	static PosixArmV7Target ret;
-	return ret;
+    static PosixArmV7Target ret;
+    return ret;
 }
 
 geode::Result<csh> PosixArmV7Target::openCapstone() {
-	//cs_err status;
+    //cs_err status;
 
-	//status = cs_open(CS_ARCH_ARM, CS_MODE_32, &m_capstone);
+    //status = cs_open(CS_ARCH_ARM, CS_MODE_32, &m_capstone);
 
-	//if (status != CS_ERR_OK) {
-		return geode::Err("Couldn't open capstone");
-	//}
+    //if (status != CS_ERR_OK) {
+    return geode::Err("Couldn't open capstone");
+    //}
 
-	//return geode::Ok(m_capstone);
+    //return geode::Ok(m_capstone);
 }
 
 std::unique_ptr<BaseGenerator> PosixArmV7Target::getGenerator() {
-	return std::make_unique<ArmV7Generator>();
+    return std::make_unique<ArmV7Generator>();
 }
 
 // Thumb is very fun to deal with!
 int64_t PosixArmV7Target::getRealPtr(void* ptr) {
-	return reinterpret_cast<int64_t>(ptr) & (~1ll);
+    return reinterpret_cast<int64_t>(ptr) & (~1ll);
 }
 int64_t PosixArmV7Target::getRealPtrAs(void* ptr, void* lookup) {
-	return this->getRealPtr(ptr) | (reinterpret_cast<int64_t>(lookup) & 1ll);
+    return this->getRealPtr(ptr) | (reinterpret_cast<int64_t>(lookup) & 1ll);
 }
 
 std::shared_ptr<CallingConvention> PosixArmV7Target::createConvention(TulipConvention convention) noexcept {
-	return AAPCSConvention::create();
+    return AAPCSConvention::create();
 }
 
 #endif

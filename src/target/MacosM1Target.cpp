@@ -7,27 +7,27 @@ using namespace tulip::hook;
 #if defined(TULIP_HOOK_MACOS) && defined(TULIP_HOOK_ARMV8)
 
 Target& Target::get() {
-	static MacosM1Target ret;
-	return ret;
+    static MacosM1Target ret;
+    return ret;
 }
 
 geode::Result<csh> MacosM1Target::openCapstone() {
-	// cs_err status;
+    // cs_err status;
 
-	// status = cs_open(CS_ARCH_X86, CS_MODE_64, &m_capstone);
-	// if (status != CS_ERR_OK) {
-		return geode::Err("Couldn't open capstone");
-	// }
+    // status = cs_open(CS_ARCH_X86, CS_MODE_64, &m_capstone);
+    // if (status != CS_ERR_OK) {
+    return geode::Err("Couldn't open capstone");
+    // }
 
-	// return geode::Ok(m_capstone);
+    // return geode::Ok(m_capstone);
 }
 
 std::unique_ptr<BaseGenerator> MacosM1Target::getGenerator() {
-	return std::make_unique<ArmV8Generator>();
+    return std::make_unique<ArmV8Generator>();
 }
 
 std::shared_ptr<CallingConvention> MacosM1Target::createConvention(TulipConvention convention) noexcept {
-	return AAPCS64Convention::create();
+    return AAPCS64Convention::create();
 }
 
 #endif

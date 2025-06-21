@@ -32,12 +32,12 @@ namespace tulip::hook {
         uint32_t m_rawInstruction = 0;
     };
 
-	class ArmV8Disassembler : public BaseDisassembler {
-	public:
-		ArmV8Disassembler(int64_t baseAddress, std::vector<uint8_t> const& input);
-		ArmV8Disassembler(ArmV8Disassembler const&) = delete;
-		ArmV8Disassembler(ArmV8Disassembler&&) = delete;
-		~ArmV8Disassembler();
+    class ArmV8Disassembler : public BaseDisassembler {
+    public:
+        ArmV8Disassembler(int64_t baseAddress, std::vector<uint8_t> const& input);
+        ArmV8Disassembler(ArmV8Disassembler const&) = delete;
+        ArmV8Disassembler(ArmV8Disassembler&&) = delete;
+        ~ArmV8Disassembler();
 
         void handleB(ArmV8Instruction& instruction);
         void handleBL(ArmV8Instruction& instruction);
@@ -51,6 +51,6 @@ namespace tulip::hook {
         std::unique_ptr<BaseInstruction> disassembleNext() override;
 
         ArmV8Register extractRegister(int startBit, uint32_t instruction);
-	};
-	
+    };
+
 }

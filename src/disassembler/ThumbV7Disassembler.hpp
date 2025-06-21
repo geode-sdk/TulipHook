@@ -35,12 +35,12 @@ namespace tulip::hook {
         uint32_t m_rawWideInstruction = 0;
     };
 
-	class ThumbV7Disassembler : public BaseDisassembler {
-	public:
-		ThumbV7Disassembler(int64_t baseAddress, std::vector<uint8_t> const& input);
-		ThumbV7Disassembler(ThumbV7Disassembler const&) = delete;
-		ThumbV7Disassembler(ThumbV7Disassembler&&) = delete;
-		~ThumbV7Disassembler();
+    class ThumbV7Disassembler : public BaseDisassembler {
+    public:
+        ThumbV7Disassembler(int64_t baseAddress, std::vector<uint8_t> const& input);
+        ThumbV7Disassembler(ThumbV7Disassembler const&) = delete;
+        ThumbV7Disassembler(ThumbV7Disassembler&&) = delete;
+        ~ThumbV7Disassembler();
 
         void handleB(ThumbV7Instruction& instruction);
         void handleBX(ThumbV7Instruction& instruction);
@@ -59,6 +59,6 @@ namespace tulip::hook {
         ArmV7Register extractRegister(int startBit, uint32_t instruction);
 
         ArmV7Register extractRegisterWide(int startBit, uint16_t instruction);
-	};
-	
+    };
+
 }

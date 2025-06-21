@@ -3,24 +3,26 @@
 using namespace tulip::hook;
 
 ArmV8Assembler::ArmV8Assembler(int64_t baseAddress) :
-	BaseAssembler(baseAddress) {}
+    BaseAssembler(baseAddress) {}
 
 ArmV8Assembler::~ArmV8Assembler() {}
 
 void ArmV8Assembler::updateLabels() {
     // Handle LDR
-	for (auto const& update : m_labelUpdates) {
+    for (auto const& update : m_labelUpdates) {
         const auto diff = m_labels[update.m_name] - update.m_address;
         const auto mask = ((1 << update.m_size) - 1) << update.m_offset;
         const auto opc = this->read32(update.m_address) & ~mask;
         const auto offset = ((diff >> 2) << update.m_offset) & mask;
         this->rewrite32(update.m_address, opc | offset);
-	}
+    }
 }
 
 using enum ArmV8Register;
 
-static bool is_simd(ArmV8Register reg) { return static_cast<uint32_t>(reg) >= 0x40; }
+static bool is_simd(ArmV8Register reg) {
+    return static_cast<uint32_t>(reg) >= 0x40;
+}
 
 static uint32_t val(ArmV8Register reg) {
     auto x = static_cast<uint32_t>(reg);
@@ -47,10 +49,13 @@ void ArmV8Assembler::mov(ArmV8Register dst, int32_t imm) {
 
 void ArmV8Assembler::ldr(ArmV8Register dst, std::string const& label) {
     m_labelUpdates.push_back({this->currentAddress(), label, 19, 5});
-	this->write32((0x58ul << 24) | val(dst));
+    this->write32((0x58ul << 24) | val(dst));
 }
 
-void ArmV8Assembler::ldp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register regBase, int16_t imm, ArmV8IndexKind kind) {
+void ArmV8Assembler::ldp(
+    ArmV8Register reg1, ArmV8Register reg2, ArmV8Register regBase, int16_t imm,
+    ArmV8IndexKind kind
+) {
     using enum ArmV8IndexKind;
 
     uint32_t opc = 0;
@@ -75,7 +80,10 @@ void ArmV8Assembler::ldp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register r
     this->write32(opc | reg2Shifted | regBaseShifted | immShifted | val(reg1));
 }
 
-void ArmV8Assembler::stp(ArmV8Register reg1, ArmV8Register reg2, ArmV8Register regBase, int16_t imm, ArmV8IndexKind kind) {
+void ArmV8Assembler::stp(
+    ArmV8Register reg1, ArmV8Register reg2, ArmV8Register regBase, int16_t imm,
+    ArmV8IndexKind kind
+) {
     using enum ArmV8IndexKind;
 
     uint32_t opc = 0;
@@ -192,4 +200,6 @@ void ArmV8Assembler::tbnz(ArmV8Register reg, int32_t bit, int32_t imm) {
     this->write32(0x37000000 | literalShifted | bitShifted | val(reg));
 }
 
-void ArmV8Assembler::nop() { this->write32(0xD503201F); }
+void ArmV8Assembler::nop() {
+    this->write32(0xD503201F);
+}

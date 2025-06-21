@@ -75,16 +75,14 @@ void SystemVConvention::generateIntoDefault(BaseAssembler& a_, AbstractFunction 
     }
 }
 
-void SystemVConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunction const& function) {
-}
+void SystemVConvention::generateIntoOriginal(BaseAssembler& a_, AbstractFunction const& function) {}
 
-void SystemVConvention::generateOriginalCleanup(BaseAssembler& a_, AbstractFunction const& function) {
-}
+void SystemVConvention::generateOriginalCleanup(BaseAssembler& a_, AbstractFunction const& function) {}
 
 bool SystemVConvention::needsWrapper(AbstractFunction const& function) const {
-	return false;
+    return false;
 }
 
 std::shared_ptr<SystemVConvention> SystemVConvention::create() {
-	return std::make_shared<SystemVConvention>();
+    return std::make_shared<SystemVConvention>();
 }
