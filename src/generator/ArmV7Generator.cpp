@@ -7,6 +7,7 @@
 
 #include <CallingConvention.hpp>
 #include <InstructionRelocation/InstructionRelocation.h>
+#include <cstring>
 
 using namespace tulip::hook;
 

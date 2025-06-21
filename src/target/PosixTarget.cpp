@@ -1,6 +1,7 @@
 #include "PosixTarget.hpp"
 
 #include <Platform.hpp>
+#include <cstring>
 #include <stdexcept>
 
 using namespace tulip::hook;
