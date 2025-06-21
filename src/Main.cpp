@@ -61,13 +61,7 @@ std::shared_ptr<CallingConvention> tulip::hook::createConvention(TulipConvention
 #endif
 		case TulipConvention::Default:
 		default:
-#if defined(TULIP_HOOK_MACOS) && defined(TULIP_HOOK_X64)
-			return SystemVConvention::create();
-#elif defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
-			return Windows64Convention::create();
-#else
-			return DefaultConvention::create();
-#endif
+			return PlatformConvention::create();
 	}
 }
 
