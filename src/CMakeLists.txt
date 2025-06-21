@@ -63,8 +63,8 @@ elseif(UNIX)
 		generator/ArmV7Generator.cpp
 		generator/ArmV8Generator.cpp
 		target/PosixTarget.cpp
-		target/PosixX86Target.cpp
 		target/PosixX64Target.cpp
+		target/PosixArmV7Target.cpp
 		target/PosixArmV8Target.cpp
 	)
 else()
