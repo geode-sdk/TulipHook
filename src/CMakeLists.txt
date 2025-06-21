@@ -59,6 +59,7 @@ elseif(UNIX)
 	set(TULIP_HOOK_LINK_DOBBY On)
 	set(TULIP_HOOK_LINK_CAPSTONE On)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
+		generator/X86Generator.cpp
 		generator/X64Generator.cpp
 		generator/ArmV7Generator.cpp
 		generator/ArmV8Generator.cpp
