@@ -5,6 +5,7 @@
 #include <WrapperData.hpp>
 #include <FunctionData.hpp>
 #include <memory>
+#include <functional>
 
 #include <Platform.hpp>
 #if defined(TULIP_HOOK_X86) || defined(TULIP_HOOK_X64)
@@ -22,6 +23,7 @@ namespace tulip::hook {
 		void* m_allocatedPage = nullptr;
 		size_t m_currentOffset = 0;
 		size_t m_remainingOffset = 0;
+		std::function<void(std::string_view)> m_logCallback;
 
 	public:
 		static Target& get();
@@ -48,5 +50,8 @@ namespace tulip::hook {
 		// These just exist because of arm7! fun!
 		virtual int64_t getRealPtr(void* ptr);
 		virtual int64_t getRealPtrAs(void* ptr, void* lookup);
+
+		void log(std::string_view str);
+		void registerLogCallback(std::function<void(std::string_view)> callback);
 	};
 };

@@ -94,3 +94,7 @@ std::vector<uint8_t> tulip::hook::getCommonHandlerBytes(int64_t handler, ptrdiff
 std::vector<uint8_t> tulip::hook::getCommonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset) {
 	return Target::get().getGenerator()->commonIntervenerBytes(original, handler, unique, relocOffset);
 }
+
+void tulip::hook::setLogCallback(std::function<void(std::string_view)> callback) noexcept{
+	Target::get().registerLogCallback(std::move(callback));
+}
