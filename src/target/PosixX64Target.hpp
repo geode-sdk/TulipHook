@@ -2,12 +2,12 @@
 
 #include <Platform.hpp>
 
-#if defined(TULIP_HOOK_POSIX) && defined(TULIP_HOOK_ARMV8)
+#if defined(TULIP_HOOK_POSIX) && defined(TULIP_HOOK_X64)
 
 #include "PosixTarget.hpp"
 
 namespace tulip::hook {
-	class PosixArmV8Target : public PosixTarget {
+	class PosixX64Target : public PosixTarget {
 	public:
 		using PosixTarget::PosixTarget;
 

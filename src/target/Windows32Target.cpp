@@ -18,6 +18,7 @@ Target& Target::get() {
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+#include "../generator/X86Generator.hpp"
 #include "../Pool.hpp"
 #include "../Handler.hpp"
 #include "../Wrapper.hpp"

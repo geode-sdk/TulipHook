@@ -1,11 +1,12 @@
 #include "PosixArmV8Target.hpp"
 
 #include <Platform.hpp>
-#include <stdexcept>
 
 using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_POSIX) && defined(TULIP_HOOK_ARMV8)
+
+#include "../generator/ArmV8Generator.hpp"
 
 Target& Target::get() {
 	static PosixArmV8Target ret;

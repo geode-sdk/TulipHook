@@ -6,6 +6,8 @@ using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_MACOS) && defined(TULIP_HOOK_ARMV8)
 
+#include "../generator/ArmV8Generator.hpp"
+
 Target& Target::get() {
 	static MacosM1Target ret;
 	return ret;

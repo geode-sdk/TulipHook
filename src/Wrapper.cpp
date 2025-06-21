@@ -1,6 +1,7 @@
 #include "Wrapper.hpp"
 
 #include "target/PlatformTarget.hpp"
+#include "generator/Generator.hpp"
 #include <tulip/CallingConvention.hpp>
 
 using namespace tulip::hook;

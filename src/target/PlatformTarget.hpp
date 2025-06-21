@@ -5,4 +5,5 @@
 #include "iOSTarget.hpp"
 #include "PosixArmV7Target.hpp"
 #include "PosixArmV8Target.hpp"
+#include "PosixX64Target.hpp"
 #include "Windows32Target.hpp"

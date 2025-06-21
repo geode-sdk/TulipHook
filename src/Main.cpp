@@ -2,6 +2,7 @@
 #include "Misc.hpp"
 #include "Pool.hpp"
 #include "Wrapper.hpp"
+#include "generator/Generator.hpp"
 #include "target/PlatformTarget.hpp"
 
 #include <TulipHook.hpp>
