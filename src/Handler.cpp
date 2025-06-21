@@ -62,7 +62,7 @@ geode::Result<> Handler::init() {
 
 	std::vector<uint8_t> dryOriginalBytes(0x20);
 	// rawWriteMemory that does not handle protections, otherwise destructor might crash
-	GEODE_UNWRAP(Target::get().rawWriteMemory(dryOriginalBytes.data(), (void*)realAddress, dryOriginalBytes.size()));
+	std::memcpy(dryOriginalBytes.data(), (void*)realAddress, dryOriginalBytes.size());
 	
 	GEODE_UNWRAP_INTO(auto dryRelocated, generator->relocatedBytes((int64_t)m_address, 0, dryOriginalBytes, dryIntervener.size()));
 	BaseGenerator::RelocateReturn relocated;
@@ -113,7 +113,7 @@ geode::Result<> Handler::init() {
 
 	m_originalBytes.insert(m_originalBytes.begin(), m_modifiedBytes.size(), 0);
 	// rawWriteMemory that does not handle protections, otherwise destructor might crash
-	GEODE_UNWRAP(Target::get().rawWriteMemory(m_originalBytes.data(), (void*)realAddress, m_originalBytes.size()));
+	std::memcpy(m_originalBytes.data(), (void*)realAddress, m_originalBytes.size());
 	// std::cout << m_address << " Original: " << std::endl;
 	// for (auto c : m_originalBytes) {
 	// 	std::cout << std::setw(2) << +c << ' ';
