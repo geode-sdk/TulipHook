@@ -112,15 +112,6 @@ void ThumbV7Assembler::ldr(ArmV7Register dst, ArmV7Register src, int32_t offset)
 		this->rwl(8, 3, vall(dst));
 		this->rwl(0, 8, offset >> 2);
 	}
-	else if (offset > 126 || offset < 0 || valh(dst) || valh(src)) {
-		this->padWide();
-		this->write16(0xf850);
-		this->rwl(0, 4, val(src));
-		this->write16(0x0000);
-		this->rwl(0, 8, std::fabs(offset));
-		this->rwl(12, 4, val(dst));
-		if (offset > 0) this->rwl(9, 1, 1);
-	}
 	else {
 		this->write16(0x6800);
 		this->rwl(0, 3, vall(dst));
@@ -162,11 +153,20 @@ void ThumbV7Assembler::vstr(ArmV7Register src, ArmV7Register dst, int32_t offset
 
 void ThumbV7Assembler::ldrw(ArmV7Register dst, ArmV7Register src, int32_t offset) {
 	this->padWide();
-	this->write16(0xf8d0);
-	this->rwl(0, 4, val(dst));
-	this->write16(0x0000);
-	this->rwl(0, 8, offset >> 2);
-	this->rwl(12, 4, val(src));
+	if (offset < 0) {
+		this->write16(0xf850);
+		this->rwl(0, 4, val(src));
+		this->write16(0x0000);
+		this->rwl(0, 8, std::fabs(offset));
+		this->rwl(12, 4, val(dst));
+	}
+	else {
+		this->write16(0xf8d0);
+		this->rwl(0, 4, val(src));
+		this->write16(0x0000);
+		this->rwl(0, 8, offset);
+		this->rwl(12, 4, val(dst));
+	}
 }
 
 void ThumbV7Assembler::strw(ArmV7Register src, ArmV7Register dst, int32_t offset) {
@@ -174,7 +174,7 @@ void ThumbV7Assembler::strw(ArmV7Register src, ArmV7Register dst, int32_t offset
 	this->write16(0xf8c0);
 	this->rwl(0, 4, val(src));
 	this->write16(0x0000);
-	this->rwl(0, 8, offset >> 2);
+	this->rwl(0, 8, offset);
 	this->rwl(12, 4, val(dst));
 }
 

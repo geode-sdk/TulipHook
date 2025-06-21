@@ -38,4 +38,8 @@ int64_t PosixArmV7Target::getRealPtrAs(void* ptr, void* lookup) {
 	return this->getRealPtr(ptr) | (reinterpret_cast<int64_t>(lookup) & 1ll);
 }
 
+std::shared_ptr<CallingConvention> PosixArmV7Target::createConvention(TulipConvention convention) noexcept {
+	return AAPCSConvention::create();
+}
+
 #endif

@@ -100,7 +100,7 @@ std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t h
 
 	if (original & 0x1) {
 		// thumb
-		a.ldr(PC, PC, 0);
+		a.ldrw(PC, PC, 0);
 
 		// my thumbs will eat me
 		a.write32(handler | 1);

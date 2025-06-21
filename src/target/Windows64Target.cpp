@@ -91,4 +91,11 @@ std::unique_ptr<BaseGenerator> Windows64Target::getGenerator() {
 	return std::make_unique<X64Generator>();
 }
 
+std::shared_ptr<CallingConvention> Windows64Target::createConvention(TulipConvention convention) noexcept {
+	switch (convention) {
+		case TulipConvention::Thiscall: return Thiscall64Convention::create();
+		default: return Windows64Convention::create();
+	}
+}
+
 #endif

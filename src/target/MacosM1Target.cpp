@@ -26,4 +26,8 @@ std::unique_ptr<BaseGenerator> MacosM1Target::getGenerator() {
 	return std::make_unique<ArmV8Generator>();
 }
 
+std::shared_ptr<CallingConvention> MacosM1Target::createConvention(TulipConvention convention) noexcept {
+	return AAPCS64Convention::create();
+}
+
 #endif

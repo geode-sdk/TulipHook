@@ -6,6 +6,7 @@
 #include <FunctionData.hpp>
 #include <memory>
 #include <functional>
+#include <TulipHook.hpp>
 
 #include <Platform.hpp>
 #if defined(TULIP_HOOK_X86) || defined(TULIP_HOOK_X64)
@@ -53,5 +54,7 @@ namespace tulip::hook {
 
 		void log(std::string_view str);
 		void registerLogCallback(std::function<void(std::string_view)> callback);
+
+		virtual std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept = 0;
 	};
 };

@@ -21,6 +21,8 @@ namespace tulip::hook {
 		uint32_t getWritableProtection() override;
 
 		std::unique_ptr<BaseGenerator> getGenerator() override;
+
+		std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept override;
 	};
 }
 

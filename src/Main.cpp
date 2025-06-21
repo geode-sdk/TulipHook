@@ -47,22 +47,7 @@ geode::Result<void*> tulip::hook::createReverseWrapper(void* address, WrapperMet
 }
 
 std::shared_ptr<CallingConvention> tulip::hook::createConvention(TulipConvention convention) noexcept {
-	switch (convention) {
-#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X86)
-		case TulipConvention::Cdecl: return CdeclConvention::create();
-		case TulipConvention::Thiscall: return ThiscallConvention::create();
-		case TulipConvention::Fastcall: return FastcallConvention::create();
-		case TulipConvention::Optcall: return OptcallConvention::create();
-		case TulipConvention::Membercall: return MembercallConvention::create();
-		case TulipConvention::Stdcall: return StdcallConvention::create();
-#endif
-#if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
-		case TulipConvention::Thiscall: return Thiscall64Convention::create();
-#endif
-		case TulipConvention::Default:
-		default:
-			return PlatformConvention::create();
-	}
+	return Target::get().createConvention(convention);
 }
 
 geode::Result<> tulip::hook::disableRuntimeIntervening(void* commonHandlerSpace) noexcept {
