@@ -45,13 +45,26 @@ elseif(APPLE)
 		target/MacosM1Target.cpp
 		target/iOSTarget.cpp
 	)
-elseif(ANDROID OR UNIX)
+elseif(ANDROID)
 	set(TULIP_HOOK_LINK_DOBBY On)
 	set(TULIP_HOOK_LINK_CAPSTONE Off)
 	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
 		generator/ArmV7Generator.cpp
 		generator/ArmV8Generator.cpp
 		target/PosixTarget.cpp
+		target/PosixArmV7Target.cpp
+		target/PosixArmV8Target.cpp
+	)
+elseif(UNIX)
+	set(TULIP_HOOK_LINK_DOBBY On)
+	set(TULIP_HOOK_LINK_CAPSTONE On)
+	file(GLOB TULIP_HOOK_PLATFORM_SOURCES
+		generator/X86Generator.cpp
+		generator/X64Generator.cpp
+		generator/ArmV7Generator.cpp
+		generator/ArmV8Generator.cpp
+		target/PosixTarget.cpp
+		target/PosixX64Target.cpp
 		target/PosixArmV7Target.cpp
 		target/PosixArmV8Target.cpp
 	)

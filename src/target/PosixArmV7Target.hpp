@@ -4,7 +4,6 @@
 
 #if defined(TULIP_HOOK_POSIX) && defined(TULIP_HOOK_ARMV7)
 
-#include "../generator/ArmV7Generator.hpp"
 #include "PosixTarget.hpp"
 
 namespace tulip::hook {

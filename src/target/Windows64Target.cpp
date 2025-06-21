@@ -7,6 +7,7 @@ using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_WINDOWS) && defined(TULIP_HOOK_X64)
 
+#include "../generator/X64Generator.hpp"
 #include "../Pool.hpp"
 #include "../Handler.hpp"
 #include "../Wrapper.hpp"

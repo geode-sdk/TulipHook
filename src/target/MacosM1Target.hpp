@@ -4,7 +4,6 @@
 
 #if defined(TULIP_HOOK_MACOS) && defined(TULIP_HOOK_ARMV8)
 
-#include "../generator/ArmV8Generator.hpp"
 #include "DarwinTarget.hpp"
 
 namespace tulip::hook {

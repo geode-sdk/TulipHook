@@ -1,5 +1,7 @@
 #include "ThumbV7Disassembler.hpp"
 
+#include <cstring>
+
 using namespace tulip::hook;
 
 ThumbV7Disassembler::ThumbV7Disassembler(int64_t baseAddress, std::vector<uint8_t> const& input) :

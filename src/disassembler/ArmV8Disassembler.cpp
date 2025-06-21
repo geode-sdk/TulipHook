@@ -1,5 +1,7 @@
 #include "ArmV8Disassembler.hpp"
 
+#include <cstring>
+
 using namespace tulip::hook;
 
 ArmV8Disassembler::ArmV8Disassembler(int64_t baseAddress, std::vector<uint8_t> const& input) :
