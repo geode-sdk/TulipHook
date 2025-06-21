@@ -8,10 +8,11 @@
 #include <tulip/CallingConvention.hpp>
 
 #include <algorithm>
-#include <stack>
-#include <iostream>
+#include <cstring>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
+#include <stack>
 
 using namespace tulip::hook;
 

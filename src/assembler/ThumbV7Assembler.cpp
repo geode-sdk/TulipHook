@@ -1,5 +1,7 @@
 #include "ThumbV7Assembler.hpp"
 
+#include <cmath>
+
 using namespace tulip::hook;
 
 ThumbV7Assembler::ThumbV7Assembler(int64_t baseAddress) :
