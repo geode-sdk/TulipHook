@@ -153,7 +153,15 @@ void ThumbV7Assembler::vstr(ArmV7Register src, ArmV7Register dst, int32_t offset
 
 void ThumbV7Assembler::ldrw(ArmV7Register dst, ArmV7Register src, int32_t offset) {
 	this->padWide();
-	if (offset < 0) {
+	if (src == ArmV7Register::PC) {
+		this->write16(0xf850);
+		this->rwl(0, 4, val(src));
+		if (offset > 0) this->rwl(7, 1, 1);
+		this->write16(0x0000);
+		this->rwl(0, 12, std::fabs(offset));
+		this->rwl(12, 4, val(dst));
+	}
+	else if (offset < 0) {
 		this->write16(0xf850);
 		this->rwl(0, 4, val(src));
 		this->write16(0x0000);
