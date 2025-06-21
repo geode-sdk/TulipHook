@@ -64,13 +64,21 @@ void ThumbV7Assembler::nop() {
 	this->write16(0xbf00);
 }
 
+void ThumbV7Assembler::padWide() {
+	if (m_buffer.size() % 4 != 0) {
+		this->nop();
+	}
+}
+
 void ThumbV7Assembler::pushw(ArmV7RegisterArray const& array) {
+	this->padWide();
 	this->write16(0xe92d);
 	this->write16(0x0000);
 	this->rwl(0, 16, arrayMaskLow(array));
 }
 
 void ThumbV7Assembler::vpush(ArmV7RegisterArray const& array) {
+	this->padWide();
 	this->write16(0xed2d);
 	this->write16(0x0b00);
 	this->rwl(1, 7, array.size());
@@ -78,12 +86,14 @@ void ThumbV7Assembler::vpush(ArmV7RegisterArray const& array) {
 }
 
 void ThumbV7Assembler::popw(ArmV7RegisterArray const& array) {
+	this->padWide();
 	this->write16(0xe8bd);
 	this->write16(0x0000);
 	this->rwl(0, 16, arrayMaskLow(array));
 }
 
 void ThumbV7Assembler::vpop(ArmV7RegisterArray const& array) {
+	this->padWide();
 	this->write16(0xecbd);
 	this->write16(0x0b00);
 	this->rwl(1, 7, array.size());
@@ -103,6 +113,7 @@ void ThumbV7Assembler::ldr(ArmV7Register dst, ArmV7Register src, int32_t offset)
 		this->rwl(0, 8, offset >> 2);
 	}
 	else if (offset > 126 || offset < 0 || valh(dst) || valh(src)) {
+		this->padWide();
 		this->write16(0xf850);
 		this->rwl(0, 4, val(src));
 		this->write16(0x0000);
@@ -132,6 +143,7 @@ void ThumbV7Assembler::str(ArmV7Register src, ArmV7Register dst, int32_t offset)
 }
 
 void ThumbV7Assembler::vldr(ArmV7Register dst, ArmV7Register src, int32_t offset) {
+	this->padWide();
 	this->write16(0xed90);
 	this->rwl(0, 4, val(src));
 	this->write16(0x0b00);
@@ -140,6 +152,7 @@ void ThumbV7Assembler::vldr(ArmV7Register dst, ArmV7Register src, int32_t offset
 }
 
 void ThumbV7Assembler::vstr(ArmV7Register src, ArmV7Register dst, int32_t offset) {
+	this->padWide();
 	this->write16(0xed80);
 	this->rwl(0, 4, val(dst));
 	this->write16(0x0b00);
@@ -148,6 +161,7 @@ void ThumbV7Assembler::vstr(ArmV7Register src, ArmV7Register dst, int32_t offset
 }
 
 void ThumbV7Assembler::ldrw(ArmV7Register dst, ArmV7Register src, int32_t offset) {
+	this->padWide();
 	this->write16(0xf8d0);
 	this->rwl(0, 4, val(dst));
 	this->write16(0x0000);
@@ -156,6 +170,7 @@ void ThumbV7Assembler::ldrw(ArmV7Register dst, ArmV7Register src, int32_t offset
 }
 
 void ThumbV7Assembler::strw(ArmV7Register src, ArmV7Register dst, int32_t offset) {
+	this->padWide();
 	this->write16(0xf8c0);
 	this->rwl(0, 4, val(src));
 	this->write16(0x0000);

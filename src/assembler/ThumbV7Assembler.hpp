@@ -49,6 +49,8 @@ namespace tulip::hook {
 
 		void nop();
 
+		void padWide();
+
 		void pushw(ArmV7RegisterArray const& array);
 		void vpush(ArmV7RegisterArray const& array);
 

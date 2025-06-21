@@ -99,10 +99,6 @@ std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t h
 	using enum ArmV7Register;
 
 	if (original & 0x1) {
-		// align
-		if (original & 0x2) {
-			a.nop();
-		}
 		// thumb
 		a.ldr(PC, PC, 0);
 
