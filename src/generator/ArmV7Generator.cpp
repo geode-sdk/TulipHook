@@ -121,8 +121,8 @@ std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t h
 		return std::move(a.m_buffer);
 	}
 }
-geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer) {
-	auto originMem = new CodeMemBlock(Target::get().getRealPtr((void*)original), originalBuffer.size());
+geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer, size_t targetSize) {
+	auto originMem = new CodeMemBlock(Target::get().getRealPtr((void*)original), targetSize);
 	auto relocatedMem = new CodeMemBlock();
 	// idk about arm thumb stuff help me
 	std::array<uint8_t, 0x100> relocatedBuffer;
@@ -144,5 +144,5 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int6
 	}
 	std::vector<uint8_t> relocatedBufferVec(relocatedMem->size);
 	std::memcpy(relocatedBufferVec.data(), relocatedBuffer.data(), relocatedMem->size);
-	return geode::Ok(RelocateReturn{std::move(relocatedBufferVec), originalBuffer.size()});
+	return geode::Ok(RelocateReturn{std::move(relocatedBufferVec), originMem->size});
 }

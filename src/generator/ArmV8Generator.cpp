@@ -146,7 +146,7 @@ std::vector<uint8_t> ArmV8Generator::intervenerBytes(int64_t original, int64_t h
 
     return std::move(a.m_buffer);
 }
-geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer) {
+geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer, size_t targetSize) {
 	auto address = original;
 	auto trampoline = relocated;
 
@@ -156,7 +156,7 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 
 	size_t idx = 0;
 
-	while (d.hasNext()) {
+	while (d.m_currentIndex < targetSize) {
 		using enum ArmV8InstructionType;
 		auto baseIns = d.disassembleNext();
 		auto ins = static_cast<ArmV8Instruction*>(baseIns.get());
@@ -365,11 +365,11 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 		idx++;
 	}
 
-	auto const newOffset = (address + originalBuffer.size()) - a.currentAddress();
+	auto const newOffset = (address + targetSize) - a.currentAddress();
 	if (canDeltaRange(newOffset, 28)) {
 		a.b(newOffset);
 	} else if (canDeltaRange(newOffset, 33)) {
-		auto const callback = address + originalBuffer.size();
+		auto const callback = address + targetSize;
 		auto const alignedCallback = callback & ~0xFFFll;
 		auto const alignedAddress = a.currentAddress() & ~0xFFFll;
 		a.adrp(X16, alignedCallback - alignedAddress);
@@ -380,12 +380,12 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 		a.br(X16);
 
 		a.label("literal-final");
-		a.write64(address + originalBuffer.size());
+		a.write64(address + targetSize);
 	}
 
 	a.updateLabels();
 
-	return geode::Ok(RelocateReturn{std::move(a.m_buffer), originalBuffer.size()});
+	return geode::Ok(RelocateReturn{std::move(a.m_buffer), targetSize});
 }
 
 std::vector<uint8_t> ArmV8Generator::commonHandlerBytes(int64_t handler, ptrdiff_t spaceOffset) {
