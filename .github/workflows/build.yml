@@ -46,18 +46,23 @@ jobs:
         - name: 'Android Armv7'
           id: android-armv7
           os: ubuntu-latest
-          build_tests: true
-          extra_flags: "-DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI=armeabi-v7a -DANDROID_PLATFORM=android-25 -DANDROID_ARM_NEON=ON"
+          build_tests: false
+          extra_flags: "-DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI=armeabi-v7a -DANDROID_PLATFORM=android-25 -DANDROID_ARM_NEON=ON"
           out_paths: './build/src/libTulipHook.a'
-          qemu_platforms: "arm"
         
         - name: 'Android Arm64'
           id: android-arm64
           os: ubuntu-latest
-          build_tests: true
-          extra_flags: "-DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-25 -DANDROID_ARM_NEON=ON"
+          build_tests: false
+          extra_flags: "-DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-25 -DANDROID_ARM_NEON=ON"
           out_paths: './build/src/libTulipHook.a'
-          qemu_platforms: "aarch64"
+
+        - name: 'Linux Armv7'
+          id: linux-armv7
+          os: ubuntu-latest
+          build_tests: true
+          extra_flags: "-DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-arm-linux-gnueabihf -DCMAKE_C_COMPILER=gcc-arm-linux-gnueabihf -DCMAKE_SYSTEM_PROCESSOR=armv7 -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_FIND_ROOT_PATH=/usr/arm-linux-gnueabihf/ "
+          out_paths: './build/src/libTulipHook.a'
 
         - name: 'iOS'
           id: ios-arm
@@ -97,11 +102,12 @@ jobs:
       uses: seanmiddleditch/gha-setup-ninja@v3
       if: matrix.config.id != 'win-32' && matrix.config.id != 'win-64'
 
-    - name: Setup QEMU
-      uses: dbhi/qus/action@f79aa71b04f5b1bfc98769edbf9a7a10659708fe
-      with:
-        targets: ${{ matrix.config.qemu_platforms }}
-      if: matrix.config.qemu_platforms != null
+    - name: Setup cross compile toolchain
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf binutils-arm-linux-gnueabihf libc6-dev-armhf-cross qemu-user-static libstdc++-14-dev-armhf-cross
+      if: matrix.config.id == 'linux-armv7'
 
     - name: Configure
       shell: bash
