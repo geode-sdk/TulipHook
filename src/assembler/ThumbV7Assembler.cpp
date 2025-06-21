@@ -65,7 +65,7 @@ void ThumbV7Assembler::nop() {
 }
 
 void ThumbV7Assembler::padWide() {
-	if (m_buffer.size() % 4 != 0) {
+	if ((m_baseAddress + m_buffer.size()) % 4 != 0) {
 		this->nop();
 	}
 }
