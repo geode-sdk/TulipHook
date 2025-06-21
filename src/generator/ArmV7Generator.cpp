@@ -122,7 +122,7 @@ std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t h
 	}
 }
 geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer) {
-	auto originMem = new CodeMemBlock(original, originalBuffer.size());
+	auto originMem = new CodeMemBlock(Target::get().getRealPtr(original), originalBuffer.size());
 	auto relocatedMem = new CodeMemBlock();
 	// idk about arm thumb stuff help me
 	std::array<uint8_t, 0x100> relocatedBuffer;
@@ -130,7 +130,8 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int6
 	static thread_local std::string error;
 	error = "";
 
-	GenRelocateCodeAndBranch(const_cast<uint8_t*>(originalBuffer.data()), relocatedBuffer.data(), originMem, relocatedMem, +[](void* dest, void const* src, size_t size) {
+	// did i ever told you that i hate dobby?
+	GenRelocateCodeAndBranch(const_cast<uint8_t*>(originalBuffer.data()) + 1, relocatedBuffer.data(), originMem, relocatedMem, +[](void* dest, void const* src, size_t size) {
 		std::memcpy(dest, src, size);
 	});
 
