@@ -61,7 +61,7 @@ jobs:
           id: ios-arm
           os: macos-14
           build_tests: false
-          extra_flags: "-DTULIP_BUILD_DYNAMIC=ON -DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=iOS"
+          extra_flags: "-DTULIP_BUILD_DYNAMIC=ON -DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64"
           out_paths: './build/src/libTulipHook.dylib'
 
     name: Build and Test ${{ matrix.config.name }}
