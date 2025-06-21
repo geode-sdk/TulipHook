@@ -3,14 +3,16 @@
 #include "Hook.hpp"
 #include "Pool.hpp"
 #include "Wrapper.hpp"
+#include "generator/Generator.hpp"
 #include "target/PlatformTarget.hpp"
 #include <tulip/CallingConvention.hpp>
 
 #include <algorithm>
-#include <stack>
-#include <iostream>
+#include <cstring>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
+#include <stack>
 
 using namespace tulip::hook;
 

@@ -109,9 +109,15 @@
 
 	#if defined(__arm__)
 		#define TULIP_HOOK_ARMV7 1
+		#define TULIP_HOOK_AAPCS_CONV 1
 		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 	#elif defined(__aarch64__)
 		#define TULIP_HOOK_ARMV8 1
+		#define TULIP_HOOK_AAPCS64_CONV 1
+		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
+	#elif defined(__x86_64__)
+		#define TULIP_HOOK_X64 1
+		#define TULIP_HOOK_SYSTEMV_CONV 1
 		#define TULIP_HOOK_SUPPORTED_PLATFORM 1
 	#endif
 

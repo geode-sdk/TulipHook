@@ -10,11 +10,7 @@ namespace zz {
 
 class ExternalReference {
 public:
-  explicit ExternalReference(void *address) : address_(address) {
-#if defined(__APPLE__) && __arm64e__
-    address_ = pac_strip((void *)address_);
-#endif
-  }
+  explicit ExternalReference(void *address) : address_(address) {}
 
   const void *address();
 

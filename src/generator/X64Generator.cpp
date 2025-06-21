@@ -5,8 +5,9 @@
 #include "../target/PlatformTarget.hpp"
 
 #include <CallingConvention.hpp>
-#include <iostream>
+#include <cstring>
 #include <iomanip>
+#include <iostream>
 #include <optional>
 
 using namespace tulip::hook;

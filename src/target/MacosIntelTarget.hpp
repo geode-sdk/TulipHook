@@ -4,7 +4,6 @@
 
 #if defined(TULIP_HOOK_MACOS) && defined(TULIP_HOOK_X64)
 
-#include "../generator/X64Generator.hpp"
 #include "DarwinTarget.hpp"
 
 namespace tulip::hook {

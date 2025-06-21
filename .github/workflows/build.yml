@@ -29,15 +29,15 @@ jobs:
           extra_flags: '-DCMAKE_BUILD_TYPE=Debug'
           out_paths: './build/src/TulipHook.lib'
 
-        - name: 'macOS'
-          id: mac
+        - name: 'macOS (x64)'
+          id: macos-x64
           os: macos-13
           build_tests: true
           extra_flags: "-DCMAKE_BUILD_TYPE=Debug"
           out_paths: './build/src/libTulipHook.a'
 
         - name: 'macOS (m1)'
-          id: mac-arm
+          id: macos-arm64
           os: macos-14
           build_tests: true
           extra_flags: "-DCMAKE_BUILD_TYPE=Debug"
@@ -70,6 +70,13 @@ jobs:
           build_tests: false
           extra_flags: "-DTULIP_BUILD_DYNAMIC=ON -DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=arm64"
           out_paths: './build/src/libTulipHook.dylib'
+
+        - name: 'Linux (x64)'
+          id: linux-x64
+          os: ubuntu-latest
+          build_tests: true
+          extra_flags: "-DCMAKE_BUILD_TYPE=Debug"
+          out_paths: './build/src/libTulipHook.a'
 
     name: Build and Test ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
