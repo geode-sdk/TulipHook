@@ -127,5 +127,17 @@ void ThumbV7Disassembler::handleADR_W(ThumbV7Instruction& instruction) {
 
 
 std::unique_ptr<BaseInstruction> ThumbV7Disassembler::disassembleNext() {
-    return nullptr;
+    if (m_currentIndex >= m_input.size()) {
+        return nullptr; // No more instructions to disassemble
+    }
+
+    uint16_t rawInstruction = 0;
+    std::memcpy(&rawInstruction, &m_input[m_currentIndex], sizeof(rawInstruction));
+    m_currentIndex += sizeof(rawInstruction);
+    m_baseAddress += sizeof(rawInstruction);
+
+    auto instruction = std::make_unique<ThumbV7Instruction>();
+    instruction->m_rawInstruction = rawInstruction;
+
+    return instruction;
 }

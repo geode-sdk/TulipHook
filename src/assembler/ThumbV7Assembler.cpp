@@ -141,10 +141,10 @@ void ThumbV7Assembler::vldr(ArmV7Register dst, ArmV7Register src, int32_t offset
 
 void ThumbV7Assembler::vstr(ArmV7Register src, ArmV7Register dst, int32_t offset) {
 	this->write16(0xed80);
-	this->rwl(0, 4, val(src));
+	this->rwl(0, 4, val(dst));
 	this->write16(0x0b00);
 	this->rwl(0, 8, offset >> 2);
-	this->rwl(12, 4, val(dst));
+	this->rwl(12, 4, val(src));
 }
 
 void ThumbV7Assembler::ldrw(ArmV7Register dst, ArmV7Register src, int32_t offset) {
