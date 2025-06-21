@@ -63,7 +63,8 @@ RelocaledBytesReturn tulip::hook::getRelocatedBytes(
 ) {
     RelocaledBytesReturn result;
     if (GEODE_UNWRAP_EITHER(res, err,
-        Target::get().getGenerator()->relocatedBytes(original, relocated, originalBuffer, originalBuffer.size()))) {
+        Target::get().getGenerator()->relocatedBytes(original, relocated, originalBuffer, originalBuffer.size())
+        )) {
         result.bytes = std::move(res.bytes);
         result.offset = res.offset;
     }
