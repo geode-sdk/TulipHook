@@ -52,8 +52,8 @@ namespace tulip::hook {
 		virtual int64_t getRealPtr(void* ptr);
 		virtual int64_t getRealPtrAs(void* ptr, void* lookup);
 
-		void log(std::string_view str);
 		void registerLogCallback(std::function<void(std::string_view)> callback);
+		void log(std::function<std::string()> callback);
 
 		virtual std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept = 0;
 	};

@@ -58,12 +58,12 @@ int64_t Target::getRealPtrAs(void* ptr, void* lookup) {
 	return (int64_t)ptr;
 }
 
-void Target::log(std::string_view str) {
-	if (m_logCallback) {
-		m_logCallback(str);
-	}
-}
-
 void Target::registerLogCallback(std::function<void(std::string_view)> callback) {
 	m_logCallback = std::move(callback);
+}
+
+void Target::log(std::function<std::string()> callback) {
+	if (m_logCallback) {
+		m_logCallback(callback());
+	}
 }

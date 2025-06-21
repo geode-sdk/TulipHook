@@ -159,8 +159,6 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 
 	size_t idx = 0;
 
-	std::stringstream ss;
-
 	while (d.m_currentIndex < targetSize) {
 		using enum ArmV8InstructionType;
 		auto baseIns = d.disassembleNext();
@@ -173,14 +171,16 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 		auto const alignedAddr = a.currentAddress() & ~0xFFFll;
 		auto const alignedCallback = callback & ~0xFFFll;
 
-		ss.str("");
-		ss << std::noshowbase << std::setfill('0') << std::hex;
-		ss << "newOffset: " << newOffset << ", callback: " << callback
-		   << ", alignedAddr: " << alignedAddr << ", alignedCallback: " << alignedCallback
-		   << ", literal: " << ins->m_literal
-		   << ", immediate: " << ins->m_immediate
-		   << ", disassembledAddress: " << d.m_baseAddress;
-		Target::get().log(ss.str());
+		Target::get().log([&]() {
+			std::stringstream ss;
+			ss << std::noshowbase << std::setfill('0') << std::hex;
+			ss << "newOffset: " << newOffset << ", callback: " << callback
+				<< ", alignedAddr: " << alignedAddr << ", alignedCallback: " << alignedCallback
+				<< ", literal: " << ins->m_literal
+				<< ", immediate: " << ins->m_immediate
+				<< ", disassembledAddress: " << d.m_baseAddress;
+			return ss.str();
+		});
 
 		switch (ins->m_type) {
 			case ArmV8InstructionType::B: {
