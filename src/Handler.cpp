@@ -60,9 +60,9 @@ geode::Result<> Handler::init() {
 
 	auto dryIntervener = generator->intervenerBytes((int64_t)m_address, (int64_t)m_handler, 0);
 
-	std::vector<uint8_t> dryOriginalBytes(dryIntervener.size());
+	std::vector<uint8_t> dryOriginalBytes(dryIntervener.size() + 2);
 	// rawWriteMemory that does not handle protections, otherwise destructor might crash
-	GEODE_UNWRAP(Target::get().rawWriteMemory(dryOriginalBytes.data(), (void*)realAddress, dryIntervener.size()));
+	GEODE_UNWRAP(Target::get().rawWriteMemory(dryOriginalBytes.data(), (void*)realAddress, dryIntervener.size() + 2));
 	
 	GEODE_UNWRAP_INTO(auto dryRelocated, generator->relocatedBytes((int64_t)m_address, 0, dryOriginalBytes));
 	BaseGenerator::RelocateReturn relocated;
