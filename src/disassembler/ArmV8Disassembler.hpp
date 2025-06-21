@@ -49,6 +49,8 @@ namespace tulip::hook {
         void handleCB_(ArmV8Instruction& instruction);
 
         std::unique_ptr<BaseInstruction> disassembleNext() override;
+
+        ArmV8Register extractRegister(int startBit, uint32_t instruction);
 	};
 	
 }

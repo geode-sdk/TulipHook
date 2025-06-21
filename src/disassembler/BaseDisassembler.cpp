@@ -10,3 +10,17 @@ BaseDisassembler::~BaseDisassembler() = default;
 bool BaseDisassembler::hasNext() const {
     return m_currentIndex < m_input.size();
 }
+
+int32_t BaseDisassembler::extractValue(int startBit, int size, uint32_t instruction, bool signExtend) {
+    auto const defaultMask = (1 << size) - 1;
+    auto const offsetValue = (instruction >> startBit);
+    auto const extractedValue = offsetValue & defaultMask;
+    if (signExtend) {
+        auto const signMask = 1 << (size - 1);
+        if (extractedValue & signMask) {
+            auto const negativeMask = ~defaultMask;
+            return extractedValue | negativeMask;
+        }
+    }
+    return extractedValue;
+}

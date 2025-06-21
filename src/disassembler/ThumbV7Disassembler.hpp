@@ -55,6 +55,10 @@ namespace tulip::hook {
         void handleADR_W(ThumbV7Instruction& instruction);
 
         std::unique_ptr<BaseInstruction> disassembleNext() override;
+
+        ArmV7Register extractRegister(int startBit, uint32_t instruction);
+
+        ArmV7Register extractRegisterWide(int startBit, uint16_t instruction);
 	};
 	
 }
