@@ -97,6 +97,12 @@ jobs:
       uses: seanmiddleditch/gha-setup-ninja@v3
       if: matrix.config.id != 'win-32' && matrix.config.id != 'win-64'
 
+    - name: Setup QEMU
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: matrix.config.qemu_platforms
+      if: matrix.config.qemu_platforms != null
+
     - name: Configure
       shell: bash
       run: cmake -G Ninja -B ./build ${{ matrix.config.extra_flags }}
@@ -113,12 +119,6 @@ jobs:
       with:
         name: output-${{ matrix.config.id }}
         path: ${{ github.workspace }}/out
-
-    - name: Setup QEMU
-      uses: docker/setup-qemu-action@v3
-      with:
-        platforms: matrix.config.qemu_platforms
-      if: matrix.config.qemu_platforms != null
 
     - name: Test
       run: ctest --test-dir ./build/test --output-on-failure
