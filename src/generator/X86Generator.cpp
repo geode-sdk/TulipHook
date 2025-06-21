@@ -6,6 +6,7 @@
 
 #include <CallingConvention.hpp>
 #include <capstone/capstone.h>
+#include <cstring>
 
 using namespace tulip::hook;
 
