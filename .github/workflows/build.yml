@@ -61,7 +61,7 @@ jobs:
           id: linux-armv7
           os: ubuntu-latest
           build_tests: true
-          extra_flags: "-DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-arm-linux-gnueabihf -DCMAKE_C_COMPILER=gcc-arm-linux-gnueabihf -DCMAKE_SYSTEM_PROCESSOR=armv7 -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_FIND_ROOT_PATH=/usr/arm-linux-gnueabihf/ "
+          extra_flags: "-DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_SYSTEM_PROCESSOR=armv7 -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_FIND_ROOT_PATH=/usr/arm-linux-gnueabihf/ "
           out_paths: './build/src/libTulipHook.a'
 
         - name: 'iOS'
