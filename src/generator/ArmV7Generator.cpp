@@ -104,7 +104,7 @@ std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t h
 			a.nop();
 		}
 		// thumb
-		a.ldr(PC, PC, -4);
+		a.ldr(PC, PC, 0);
 
 		// my thumbs will eat me
 		a.write32(handler | 1);
@@ -122,7 +122,7 @@ std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t h
 	}
 }
 geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer) {
-	auto originMem = new CodeMemBlock(Target::get().getRealPtr(original), originalBuffer.size());
+	auto originMem = new CodeMemBlock(Target::get().getRealPtr((void*)original), originalBuffer.size());
 	auto relocatedMem = new CodeMemBlock();
 	// idk about arm thumb stuff help me
 	std::array<uint8_t, 0x100> relocatedBuffer;

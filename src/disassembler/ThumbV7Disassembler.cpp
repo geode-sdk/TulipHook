@@ -44,14 +44,14 @@ void ThumbV7Disassembler::handleBLX(ThumbV7Instruction& instruction) {
 
 void ThumbV7Disassembler::handleLDRLiteral(ThumbV7Instruction& instruction) {
     instruction.m_type = ThumbV7InstructionType::LDR_Literal;
-    instruction.m_src1 = extractRegister(8, instruction.m_rawInstruction);
+    instruction.m_dst1 = extractRegister(8, instruction.m_rawInstruction);
     instruction.m_immediate = extractValue(0, 8, instruction.m_rawInstruction, false) << 2;
     instruction.m_literal = (m_baseAddress & ~0x3ll) + (instruction.m_immediate);
 }
 
 void ThumbV7Disassembler::handleADR(ThumbV7Instruction& instruction) {
     instruction.m_type = ThumbV7InstructionType::ADR;
-    instruction.m_src1 = extractRegister(8, instruction.m_rawInstruction);
+    instruction.m_dst1 = extractRegister(8, instruction.m_rawInstruction);
     instruction.m_immediate = extractValue(0, 8, instruction.m_rawInstruction, false) << 2;
     instruction.m_literal = (m_baseAddress & ~0x3ll) + (instruction.m_immediate);
 }
@@ -99,6 +99,18 @@ void ThumbV7Disassembler::handleLDRLiteral_W(ThumbV7Instruction& instruction) {
     if (extractValue(23, 1, instruction.m_rawWideInstruction) == 0) {
         instruction.m_immediate = -instruction.m_immediate;
     }
+}
+
+void ThumbV7Disassembler::handleADR_W(ThumbV7Instruction& instruction) {
+    instruction.m_type = ThumbV7InstructionType::ADR_W;
+    instruction.m_dst1 = extractRegisterWide(8, instruction.m_rawWideInstruction);
+    instruction.m_immediate = extractValue(0, 8, instruction.m_rawWideInstruction, false);
+    instruction.m_immediate |= extractValue(12, 3, instruction.m_rawWideInstruction, false) << 8;
+    instruction.m_immediate |= extractValue(26, 1, instruction.m_rawWideInstruction, false) << 11;
+    if (extractValue(23, 1, instruction.m_rawWideInstruction) == 1) {
+        instruction.m_immediate = -instruction.m_immediate;
+    }
+    instruction.m_literal = m_baseAddress + (instruction.m_immediate);
 }
 
 //  B,
