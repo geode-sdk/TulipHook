@@ -1,4 +1,4 @@
-SET(TARGET thumbv7neon-linux-gnueabi)
+SET(TARGET armv7a-linux-gnueabi)
 
 SET(CMAKE_SYSTEM_PROCESSOR armv7a)
 SET(CMAKE_SYSTEM_NAME Linux)
@@ -9,8 +9,8 @@ SET(CMAKE_C_COMPILER clang)
 SET(CMAKE_C_COMPILER_TARGET ${TARGET})
 SET(CMAKE_LINKER_TYPE LLD)
 
-SET(CMAKE_C_FLAGS "-mthumb -mfloat-abi=softfp")
-SET(CMAKE_CXX_FLAGS "-mthumb -mfloat-abi=softfp")
+SET(CMAKE_C_FLAGS "-mthumb -mfloat-abi=softfp -mfpu=neon")
+SET(CMAKE_CXX_FLAGS "-mthumb -mfloat-abi=softfp -mfpu=neon")
 SET(CMAKE_CXX_STANDARD_LIBRARIES -latomic)
 SET(CMAKE_C_STANDARD_LIBRARIES -latomic)
 
