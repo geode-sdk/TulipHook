@@ -114,7 +114,7 @@ jobs:
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get -y install gcc-arm-linux-gnueabihf gcc-arm-linux-gnueabi g++-arm-linux-gnueabi g++-arm-linux-gnueabihf binutils-arm-linux-gnueabihf binutils-arm-linux-gnueabi libc6-dev-armel-cross libc6-dev-armhf-cross qemu-user-static lld
+        sudo apt-get -y install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi binutils-arm-linux-gnueabi libc6-dev-armel-cross qemu-user-static lld
         echo "QEMU_LD_PREFIX=/usr/arm-linux-gnueabihf/" >> $GITHUB_ENV
       if: matrix.config.id == 'linux-armv7'
 

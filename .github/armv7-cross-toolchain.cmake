@@ -1,4 +1,4 @@
-SET(TARGET thumbv7neon-linux-gnueabihf)
+SET(TARGET thumbv7neon-linux-gnueabi)
 
 SET(CMAKE_SYSTEM_PROCESSOR armv7a)
 SET(CMAKE_SYSTEM_NAME Linux)
