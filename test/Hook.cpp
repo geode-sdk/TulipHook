@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <tulip/TulipHook.hpp>
+#include <iostream>
 
 #define FUNCTION_PARAM_TYPES int, int, int, int, int, int, int, int, int, float, float, float, float, float, float, float, float, float, float
 
@@ -86,24 +87,39 @@ int callFunction() {
 }
 #pragma clang diagnostic pop
 
-TEST(HookTest, NoHandler) {
+
+
+class HookTest : public testing::Test {
+protected:
+	HookTest() {
+		setLogCallback([](const auto& str) {
+			std::cout << str << std::endl;
+		});
+	}
+
+	~HookTest() {
+		setLogCallback(nullptr);
+	}
+};
+
+TEST_F(HookTest, NoHandler) {
 	EXPECT_EQ(callFunction<0>(), 1);
 }
 
-TEST(HookTest, NoHooks) {
+TEST_F(HookTest, NoHooks) {
 	HandlerHandle handlerHandle;
 	makeHandler<1>(handlerHandle);
 	EXPECT_EQ(callFunction<1>(), 1);
 }
 
-TEST(HookTest, MakeWrapper) {
+TEST_F(HookTest, MakeWrapper) {
 	FunctionPtrType unwrapped;
 	makeWrapper<2>(unwrapped);
 	EXPECT_EQ(unwrapped(1, 2, 3, 4, 5, 6, 7, 8, 9, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f, 9.0f, 10.0f), 1);
 }
 
 // hook -> function
-TEST(HookTest, SingleHook) {
+TEST_F(HookTest, SingleHook) {
 	HandlerHandle handlerHandle;
 	makeHandler<3>(handlerHandle);
 
@@ -113,7 +129,7 @@ TEST(HookTest, SingleHook) {
 }
 
 // priorityHook -> hook -> function
-TEST(HookTest, PriorityHook) {
+TEST_F(HookTest, PriorityHook) {
 	HandlerHandle handlerHandle;
 	makeHandler<4>(handlerHandle);
 
@@ -124,7 +140,7 @@ TEST(HookTest, PriorityHook) {
 }
 
 // priorityHook -> function
-TEST(HookTest, RemoveHook) {
+TEST_F(HookTest, RemoveHook) {
 	HandlerHandle handlerHandle;
 	makeHandler<5>(handlerHandle);
 
@@ -136,7 +152,7 @@ TEST(HookTest, RemoveHook) {
 }
 
 // priorityHook -> hook -> function
-TEST(HookTest, ReAddHook) {
+TEST_F(HookTest, ReAddHook) {
 	HandlerHandle handlerHandle;
 	makeHandler<6>(handlerHandle);
 
@@ -149,7 +165,7 @@ TEST(HookTest, ReAddHook) {
 }
 
 // priorityHook -> priorityHook -> priorityHook -> function
-TEST(HookTest, MultiInstance) {
+TEST_F(HookTest, MultiInstance) {
 	HandlerHandle handlerHandle;
 	makeHandler<7>(handlerHandle);
 
@@ -161,7 +177,7 @@ TEST(HookTest, MultiInstance) {
 }
 
 // priorityHook -> priorityHook -> priorityHook -> priorityHook -> hook -> function
-TEST(HookTest, MoreMultiInstance) {
+TEST_F(HookTest, MoreMultiInstance) {
 	HandlerHandle handlerHandle;
 	makeHandler<8>(handlerHandle);
 
@@ -174,7 +190,7 @@ TEST(HookTest, MoreMultiInstance) {
 	EXPECT_EQ(callFunction<8>(), 15);
 }
 
-TEST(HookTest, RemoveHandler) {
+TEST_F(HookTest, RemoveHandler) {
 	HandlerHandle handlerHandle;
 	makeHandler<9>(handlerHandle);
 
@@ -185,7 +201,7 @@ TEST(HookTest, RemoveHandler) {
 	EXPECT_EQ(callFunction<9>(), 1);
 }
 
-TEST(HookTest, RecreateHandler) {
+TEST_F(HookTest, RecreateHandler) {
 	HandlerHandle handlerHandle;
 	makeHandler<10>(handlerHandle);
 
@@ -244,7 +260,7 @@ int checkParamsHook(int a, int b, int c, int d, int e, int f, int g, float h, in
 	return checkParams(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s) + 1;
 }
 
-TEST(HookTest, SingleHookCheckParams) {
+TEST_F(HookTest, SingleHookCheckParams) {
 	HandlerMetadata handlerMetadata;
 	handlerMetadata.m_convention = std::make_unique<PlatformConvention>();
 	handlerMetadata.m_abstract = AbstractFunction::from(&checkParams);
