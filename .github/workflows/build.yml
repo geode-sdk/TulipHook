@@ -57,6 +57,13 @@ jobs:
           extra_flags: "-DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_LATEST_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-25 -DANDROID_ARM_NEON=ON"
           out_paths: './build/src/libTulipHook.a'
 
+        - name: 'Linux Armv7'
+          id: linux-armv7
+          os: ubuntu-latest
+          build_tests: true
+          extra_flags: "-DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$GITHUB_WORKSPACE/.github/armv7-cross-toolchain.cmake"
+          out_paths: './build/src/libTulipHook.a'
+
         - name: 'iOS'
           id: ios-arm
           os: macos-14
@@ -78,6 +85,7 @@ jobs:
       CPM_SOURCE_CACHE: ${{ github.workspace }}/cpm-cache
       CMAKE_C_COMPILER_LAUNCHER: sccache
       CMAKE_CXX_COMPILER_LAUNCHER: sccache
+      GTEST_COLOR: yes
 
     steps:
     - name: Checkout
@@ -101,6 +109,18 @@ jobs:
     - name: Install ninja-build tool
       uses: seanmiddleditch/gha-setup-ninja@v3
       if: matrix.config.id != 'win-32' && matrix.config.id != 'win-64'
+
+    - name: Setup cross compile toolchain
+      shell: bash
+      run: |
+        # disable man to avoid update times
+        echo "set man-db/auto-update false" | sudo debconf-communicate
+        sudo dpkg-reconfigure man-db
+
+        sudo apt-get update
+        sudo apt-get -y install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi binutils-arm-linux-gnueabi libc6-dev-armel-cross qemu-user-static lld
+        echo "QEMU_LD_PREFIX=/usr/arm-linux-gnueabi/" >> $GITHUB_ENV
+      if: matrix.config.id == 'linux-armv7'
 
     - name: Configure
       shell: bash
