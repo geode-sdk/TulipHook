@@ -163,7 +163,7 @@ geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_
 			m_shortBranchRelocations.erase(it);
 		}
 
-		GEODE_UNWRAP(this->relocateInstruction(insn, buffer.data() + bufferOffset, trampolineAddress, originalAddress, relocated, targetSize));
+		GEODE_UNWRAP(this->relocateInstruction(insn, buffer.data() + bufferOffset, trampolineAddress, originalAddress, relocated, targetSize, original));
 	}
 
 	cs_free(insn, 1);
@@ -214,7 +214,7 @@ geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_
 // 	return geode::Ok(area);
 // }
 
-geode::Result<> X86Generator::relocateInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t relocated, size_t originalTarget) {
+geode::Result<> X86Generator::relocateInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t relocated, size_t originalTarget, int64_t original) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -240,7 +240,7 @@ geode::Result<> X86Generator::relocateInstruction(cs_insn* insn, uint8_t* buffer
 		int64_t jmpTargetAddr = static_cast<int64_t>(detail->x86.operands[0].imm) -
 		static_cast<int64_t>(insn->address) + static_cast<int64_t>(originalAddress);
 
-		return this->relocateBranchInstruction(insn, buffer, trampolineAddress, originalAddress, jmpTargetAddr, relocated, originalTarget);
+		return this->relocateBranchInstruction(insn, buffer, trampolineAddress, originalAddress, jmpTargetAddr, relocated, originalTarget, original);
 	}
 
 	if (detail->x86.encoding.disp_offset != 0) {
@@ -287,7 +287,7 @@ geode::Result<> X86Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 	return geode::Ok();
 }
 
-geode::Result<> X86Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget) {
+geode::Result<> X86Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget, int64_t original) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
