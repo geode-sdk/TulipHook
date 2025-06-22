@@ -478,7 +478,7 @@ geode::Result<> X64Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 // 	return std::move(a.m_buffer);
 // }
 
-geode::Result<> X64Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget) {
+geode::Result<> X64Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget, int64_t original) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -486,7 +486,7 @@ geode::Result<> X64Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* 
 	auto const difference = static_cast<int64_t>(trampolineAddress) - static_cast<int64_t>(originalAddress);
 
 	if (difference <= 0x7fffffffll && difference >= -0x80000000ll) {
-		return X86Generator::relocateBranchInstruction(insn, buffer, trampolineAddress, originalAddress, targetAddress, relocated, originalTarget);
+		return X86Generator::relocateBranchInstruction(insn, buffer, trampolineAddress, originalAddress, targetAddress, relocated, originalTarget, original);
 	}
 
 	if (id == X86_INS_JMP) {
@@ -527,7 +527,7 @@ geode::Result<> X64Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* 
 		trampolineAddress += bytes.size();
 		originalAddress += size;
 	}
-	else if (targetAddress - relocated < originalTarget) {
+	else if (targetAddress - original < originalTarget) {
 		// conditional branch that jmps to code we relocated, so we need to keep track of where it jumps to
 		// relocation is later done in X86Generator::relocatedBytes
 		std::memcpy(buffer, insn->bytes, size);
