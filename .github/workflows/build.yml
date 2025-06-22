@@ -114,8 +114,8 @@ jobs:
       shell: bash
       run: |
         # disable man to avoid update times
-        echo "set man-db/auto-update false" | debconf-communicate
-        dpkg-reconfigure man-db
+        echo "set man-db/auto-update false" | sudo debconf-communicate
+        sudo dpkg-reconfigure man-db
 
         sudo apt-get update
         sudo apt-get -y install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi binutils-arm-linux-gnueabi libc6-dev-armel-cross qemu-user-static lld
