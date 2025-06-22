@@ -12,5 +12,5 @@ SET(CMAKE_LINKER_TYPE LLD)
 SET(CMAKE_C_FLAGS "-mthumb -mfloat-abi=softfp")
 SET(CMAKE_CXX_FLAGS "-mthumb -mfloat-abi=softfp")
 
-SET(CMAKE_FIND_ROOT_PATH "/usr/arm-linux-gnueabihf;/usr/arm-linux-gnueabi")
+SET(CMAKE_FIND_ROOT_PATH "/usr/arm-linux-gnueabi")
 SET(CMAKE_CROSSCOMPILING_EMULATOR qemu-arm-static)
