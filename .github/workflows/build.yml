@@ -86,6 +86,7 @@ jobs:
       CMAKE_C_COMPILER_LAUNCHER: sccache
       CMAKE_CXX_COMPILER_LAUNCHER: sccache
       GTEST_COLOR: yes
+      GTEST_STACK_TRACE_DEPTH: 16
 
     steps:
     - name: Checkout
@@ -136,5 +137,5 @@ jobs:
         path: ${{ github.workspace }}/out
 
     - name: Test
-      run: ctest --test-dir ./build/test --output-on-failure
+      run: ctest --test-dir ./build/test --output-on-failure -V
       if: matrix.config.build_tests == true
