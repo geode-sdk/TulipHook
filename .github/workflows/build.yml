@@ -61,7 +61,7 @@ jobs:
           id: linux-armv7
           os: ubuntu-latest
           build_tests: true
-          extra_flags: "-DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_COMPILER_TARGET=arm-linux-gnueabihf -DCMAKE_C_COMPILER=clang -DCMAKE_C_COMPILER_TARGET=arm-linux-gnueabihf -DCMAKE_SYSTEM_PROCESSOR=armv7 -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_FIND_ROOT_PATH=/usr/arm-linux-gnueabihf/"
+          extra_flags: "-DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_COMPILER_TARGET=thumbv7-linux-gnueabihf -DCMAKE_C_COMPILER=clang -DCMAKE_C_COMPILER_TARGET=thumbv7-linux-gnueabihf -DCMAKE_SYSTEM_PROCESSOR=armv7a -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_FIND_ROOT_PATH=/usr/arm-linux-gnueabihf/"
           out_paths: './build/src/libTulipHook.a'
 
         - name: 'iOS'
@@ -86,7 +86,6 @@ jobs:
       CMAKE_C_COMPILER_LAUNCHER: sccache
       CMAKE_CXX_COMPILER_LAUNCHER: sccache
       GTEST_COLOR: yes
-      GTEST_STACK_TRACE_DEPTH: 16
 
     steps:
     - name: Checkout
@@ -137,5 +136,5 @@ jobs:
         path: ${{ github.workspace }}/out
 
     - name: Test
-      run: ctest --test-dir ./build/test --output-on-failure -V
+      run: ctest --test-dir ./build/test --output-on-failure
       if: matrix.config.build_tests == true
