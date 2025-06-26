@@ -34,7 +34,7 @@ PVOID __declspec(dllexport) GeodeFunctionTableAccess64(HANDLE hProcess, DWORD64 
 				<< " Function End: " << function->m_endAddress;
 			return ss.str();
 		});
-		return static_cast<PRUNTIME_FUNCTION>(function->m_runtimeInfo);
+		return function->m_runtimeInfo;
 	}
 	return nullptr;
 }
