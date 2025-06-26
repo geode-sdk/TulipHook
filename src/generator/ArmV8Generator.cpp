@@ -496,8 +496,8 @@ std::vector<uint8_t> ArmV8Generator::commonIntervenerBytes(int64_t original, int
 	a.mov(X12, relocOffset);
 
 	const auto callback = handler;
-	const int64_t alignedAddr = a.currentAddress() & ~0xFFF;
-	const int64_t alignedCallback = callback & ~0xFFF;
+	const int64_t alignedAddr = a.currentAddress() & ~0xFFFll;
+	const int64_t alignedCallback = callback & ~0xFFFll;
 	const int64_t delta = callback - a.currentAddress();
 
 	if (canDeltaRange(delta, 28)) {
