@@ -167,10 +167,12 @@ namespace {
 }
 #endif
 
-std::vector<uint8_t> X64Generator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
+BaseGenerator::HandlerReturn X64Generator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
 	X64Assembler a(handler);
 	RegMem64 m;
 	using enum X64Register;
+
+	HandlerReturn ret;
 
 #ifdef TULIP_HOOK_WINDOWS
 	constexpr auto FIRST_PARAM = RCX;
@@ -246,13 +248,19 @@ std::vector<uint8_t> X64Generator::handlerBytes(int64_t original, int64_t handle
 
 	a.updateLabels();
 
+	a.align16();
+
+	ret.functionSize = a.buffer().size();
+
 	auto runtimeInfo = this->runtimeInfoBytes(handler, a.buffer().size(), a.getLabel("handler-push"), a.getLabel("handler-alloc-mid"));
 
 	a.writeBuffer({runtimeInfo.begin(), runtimeInfo.end()});
 
 	a.align16();
 
-	return std::move(a.m_buffer);
+	ret.bytes = std::move(a.m_buffer);
+
+	return ret;
 }
 
 std::vector<uint8_t> X64Generator::intervenerBytes(int64_t original, int64_t handler, size_t size) {

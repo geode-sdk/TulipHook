@@ -24,7 +24,7 @@ namespace {
 	}
 }
 
-std::vector<uint8_t> ArmV8Generator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
+BaseGenerator::HandlerReturn ArmV8Generator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
 	ArmV8Assembler a(handler);
     using enum ArmV8Register;
 	using enum ArmV8IndexKind;
@@ -103,7 +103,7 @@ std::vector<uint8_t> ArmV8Generator::handlerBytes(int64_t original, int64_t hand
 
 	a.updateLabels();
 
-	return std::move(a.m_buffer);	
+	return {std::move(a.m_buffer);}
 }
 namespace {
 	bool canDeltaRange(int64_t delta, int64_t range) {
@@ -234,7 +234,7 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 					a.write64(ins->m_literal);
 
 					a.label("jump-" + idxLabel);
-				} 
+				}
 				break;
 			}
 			case ArmV8InstructionType::ADR: {

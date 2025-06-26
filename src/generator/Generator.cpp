@@ -11,8 +11,8 @@ using namespace tulip::hook;
 // virtual std::vector<uint8_t> commonHandlerBytes(int64_t handler, ptrdiff_t spaceOffset);
 // virtual std::vector<uint8_t> commonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset);
 
-std::vector<uint8_t> BaseGenerator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
-	return std::vector<uint8_t>();
+BaseGenerator::HandlerReturn BaseGenerator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
+	return {};
 }
 
 std::vector<uint8_t> BaseGenerator::intervenerBytes(int64_t original, int64_t handler, size_t size) {

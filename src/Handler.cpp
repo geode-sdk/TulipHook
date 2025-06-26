@@ -43,13 +43,17 @@ geode::Result<> Handler::init() {
 
 	auto dryHandler = generator->handlerBytes((int64_t)m_address, 0, m_content.get(), m_metadata);
 	std::vector<uint8_t> handler;
+	size_t functionSize;
 	do {
-		GEODE_UNWRAP_INTO(m_handler, Target::get().allocateArea(dryHandler.size()));
-		handler = generator->handlerBytes((int64_t)m_address, (int64_t)m_handler, m_content.get(), m_metadata);
+		GEODE_UNWRAP_INTO(m_handler, Target::get().allocateArea(dryHandler.bytes.size()));
+		auto hret = generator->handlerBytes((int64_t)m_address, (int64_t)m_handler, m_content.get(), m_metadata);
+		handler = std::move(hret.bytes);
+		functionSize = hret.functionSize;
 
-		if (handler.size() <= dryHandler.size()) break;
+		if (handler.size() <= dryHandler.bytes.size()) break;
 
-		dryHandler = std::move(handler);
+		dryHandler.bytes = std::move(hret.bytes);
+		dryHandler.functionSize = hret.functionSize;
 	} while (true);
 
 	Target::get().log([&]() {
@@ -63,22 +67,22 @@ geode::Result<> Handler::init() {
 	});
 
 	GEODE_UNWRAP(Target::get().writeMemory(m_handler, handler.data(), handler.size()));
-	m_handlerSize = handler.size();
+	m_handlerSize = functionSize;
 
 	auto dryIntervener = generator->intervenerBytes((int64_t)m_address, (int64_t)m_handler, 0);
 
 	std::vector<uint8_t> dryOriginalBytes(0x20);
 	std::memcpy(dryOriginalBytes.data(), (void*)realAddress, dryOriginalBytes.size());
-	
+
 	GEODE_UNWRAP_INTO(auto dryRelocated, generator->relocatedBytes((int64_t)m_address, 0, dryOriginalBytes, dryIntervener.size()));
 	BaseGenerator::RelocateReturn relocated;
 	do {
 		GEODE_UNWRAP_INTO(m_relocated, Target::get().allocateArea(dryRelocated.bytes.size()));
 		GEODE_UNWRAP_INTO(relocated, generator->relocatedBytes((int64_t)m_address, (int64_t)m_relocated, dryOriginalBytes, dryIntervener.size()));
 
-		if (handler.size() <= dryHandler.size()) break;
+		if (handler.size() <= dryHandler.bytes.size()) break;
 
-		dryHandler = std::move(handler);
+		dryHandler.bytes = std::move(handler);
 	} while (true);
 
 	Target::get().log([&]() {
@@ -97,7 +101,7 @@ geode::Result<> Handler::init() {
 		auto dryWrapped = generator->wrapperBytes((int64_t)m_relocated, 0, m_wrapperMetadata);
 		std::vector<uint8_t> wrapped;
 		do {
-			GEODE_UNWRAP_INTO(m_trampoline, Target::get().allocateArea(dryHandler.size()));
+			GEODE_UNWRAP_INTO(m_trampoline, Target::get().allocateArea(dryHandler.bytes.size()));
 			wrapped = generator->wrapperBytes((int64_t)m_relocated, (int64_t)m_trampoline, m_wrapperMetadata);
 
 			if (wrapped.size() <= dryWrapped.size()) break;
@@ -121,7 +125,7 @@ geode::Result<> Handler::init() {
 	else {
 		m_trampoline = m_relocated;
 	}
-	
+
 	m_modifiedBytes = generator->intervenerBytes((int64_t)m_address, (int64_t)m_handler, relocated.offset);
 
 	Target::get().log([&]() {

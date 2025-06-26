@@ -42,16 +42,16 @@ geode::Result<> Windows64Target::allocatePage() {
 				auto tramplineEnd = tramplineBegin + handler->m_trampolineSize;
 
 				if (controlPc >= handlerBegin && controlPc < handlerEnd) {
-					// std::stringstream ss;
-					// ss << "Control PC: " << std::hex << controlPc << " Handler Begin: " << handlerBegin << " Handler End: " << handlerEnd;
-					// MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
+					std::stringstream ss;
+					ss << "Control PC: " << std::hex << controlPc << " Handler Begin: " << handlerBegin << " Handler End: " << handlerEnd;
+					MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
 					return reinterpret_cast<PRUNTIME_FUNCTION>(handlerEnd);
 				}
 
 				if (controlPc >= tramplineBegin && controlPc < tramplineEnd) {
-					// std::stringstream ss;
-					// ss << "Control PC: " << std::hex << controlPc << " Trampline Begin: " << tramplineBegin << " Trampline End: " << tramplineEnd;
-					// MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
+					std::stringstream ss;
+					ss << "Control PC: " << std::hex << controlPc << " Trampline Begin: " << tramplineBegin << " Trampline End: " << tramplineEnd;
+					MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
 					return reinterpret_cast<PRUNTIME_FUNCTION>(tramplineEnd);
 				}
 			}
@@ -61,9 +61,9 @@ geode::Result<> Windows64Target::allocatePage() {
 				auto wrapperEnd = wrapperBegin + wrapper.m_size;
 
 				if (controlPc >= wrapperBegin && controlPc < wrapperEnd) {
-					// std::stringstream ss;
-					// ss << "Control PC: " << std::hex << controlPc << " Wrapper Begin: " << wrapperBegin << " Wrapper End: " << wrapperEnd;
-					// MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
+					std::stringstream ss;
+					ss << "Control PC: " << std::hex << controlPc << " Wrapper Begin: " << wrapperBegin << " Wrapper End: " << wrapperEnd;
+					MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
 					return reinterpret_cast<PRUNTIME_FUNCTION>(wrapperEnd);
 				}
 			}
