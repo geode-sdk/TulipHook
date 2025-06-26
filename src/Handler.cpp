@@ -45,7 +45,7 @@ geode::Result<> Handler::init() {
 	BaseGenerator::HandlerReturn handler;
 	do {
 		GEODE_UNWRAP_INTO(m_handler, Target::get().allocateArea(dryHandler.bytes.size()));
-		auto handler = generator->handlerBytes((int64_t)m_address, (int64_t)m_handler, m_content.get(), m_metadata);
+		handler = generator->handlerBytes((int64_t)m_address, (int64_t)m_handler, m_content.get(), m_metadata);
 
 		if (handler.bytes.size() <= dryHandler.bytes.size()) break;
 
