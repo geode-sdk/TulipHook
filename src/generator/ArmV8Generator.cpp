@@ -103,7 +103,10 @@ BaseGenerator::HandlerReturn ArmV8Generator::handlerBytes(int64_t original, int6
 
 	a.updateLabels();
 
-	return {std::move(a.m_buffer);}
+	return HandlerReturn{
+		.bytes = std::move(a.m_buffer),
+		.runtimeInfo = nullptr,
+	};
 }
 namespace {
 	bool canDeltaRange(int64_t delta, int64_t range) {
@@ -117,8 +120,8 @@ std::vector<uint8_t> ArmV8Generator::intervenerBytes(int64_t original, int64_t h
     using enum ArmV8Register;
 
 	const auto callback = handler;
-	const int64_t alignedAddr = original & ~0xFFF;
-	const int64_t alignedCallback = callback & ~0xFFF;
+	const int64_t alignedAddr = original & ~0xFFFll;
+	const int64_t alignedCallback = callback & ~0xFFFll;
 	const int64_t delta = callback - original;
 
 	// Delta can be encoded in 28 bits or less -> use branch.

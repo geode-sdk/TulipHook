@@ -34,40 +34,18 @@ geode::Result<> Windows64Target::allocatePage() {
 		reinterpret_cast<DWORD64>(m_allocatedPage),
 		0x10000,
 		+[](DWORD64 controlPc, PVOID context) -> PRUNTIME_FUNCTION {
-			for (auto& [handle, handler] : Pool::get().m_handlers) {
-				auto handlerBegin = reinterpret_cast<uintptr_t>(handler->m_handler);
-				auto handlerEnd = handlerBegin + handler->m_handlerSize;
-
-				auto tramplineBegin = reinterpret_cast<uintptr_t>(handler->m_trampoline);
-				auto tramplineEnd = tramplineBegin + handler->m_trampolineSize;
-
-				if (controlPc >= handlerBegin && controlPc < handlerEnd) {
+			auto const pc = reinterpret_cast<void*>(controlPc);
+			auto const function = Target::get().getRegisteredFunction(pc);
+			if (function) {
+				Target::get().log([&]() {
 					std::stringstream ss;
-					ss << "Control PC: " << std::hex << controlPc << " Handler Begin: " << handlerBegin << " Handler End: " << handlerEnd;
-					MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
-					return reinterpret_cast<PRUNTIME_FUNCTION>(handlerEnd);
-				}
-
-				if (controlPc >= tramplineBegin && controlPc < tramplineEnd) {
-					std::stringstream ss;
-					ss << "Control PC: " << std::hex << controlPc << " Trampline Begin: " << tramplineBegin << " Trampline End: " << tramplineEnd;
-					MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
-					return reinterpret_cast<PRUNTIME_FUNCTION>(tramplineEnd);
-				}
+					ss << "Control PC: " << std::hex << controlPc
+						<< " Function Begin: " << function->m_address
+						<< " Function End: " << function->m_endAddress;
+					return ss.str();
+				});
+				return static_cast<PRUNTIME_FUNCTION>(function->m_runtimeInfo);
 			}
-
-			for (auto& [handle, wrapper] : Wrapper::get().m_wrappers) {
-				auto wrapperBegin = reinterpret_cast<uintptr_t>(wrapper.m_address);
-				auto wrapperEnd = wrapperBegin + wrapper.m_size;
-
-				if (controlPc >= wrapperBegin && controlPc < wrapperEnd) {
-					std::stringstream ss;
-					ss << "Control PC: " << std::hex << controlPc << " Wrapper Begin: " << wrapperBegin << " Wrapper End: " << wrapperEnd;
-					MessageBoxA(nullptr, ss.str().c_str(), "Error Loading Geode", MB_ICONERROR);
-					return reinterpret_cast<PRUNTIME_FUNCTION>(wrapperEnd);
-				}
-			}
-
 			return nullptr;
 		},
 		nullptr,

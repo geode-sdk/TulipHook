@@ -42,32 +42,30 @@ geode::Result<> Handler::init() {
 	auto realAddress = Target::get().getRealPtr(m_address);
 
 	auto dryHandler = generator->handlerBytes((int64_t)m_address, 0, m_content.get(), m_metadata);
-	std::vector<uint8_t> handler;
-	size_t functionSize;
+	BaseGenerator::HandlerReturn handler;
 	do {
 		GEODE_UNWRAP_INTO(m_handler, Target::get().allocateArea(dryHandler.bytes.size()));
-		auto hret = generator->handlerBytes((int64_t)m_address, (int64_t)m_handler, m_content.get(), m_metadata);
-		handler = std::move(hret.bytes);
-		functionSize = hret.functionSize;
+		auto handler = generator->handlerBytes((int64_t)m_address, (int64_t)m_handler, m_content.get(), m_metadata);
 
-		if (handler.size() <= dryHandler.bytes.size()) break;
+		if (handler.bytes.size() <= dryHandler.bytes.size()) break;
 
-		dryHandler.bytes = std::move(hret.bytes);
-		dryHandler.functionSize = hret.functionSize;
+		dryHandler = std::move(handler);
 	} while (true);
 
 	Target::get().log([&]() {
 		std::stringstream ss;
 		ss << std::noshowbase << std::setfill('0') << std::hex;
-		ss << "Handler: " << m_handler << " (size: " << handler.size() << "): ";
-		for (auto c : handler) {
+		ss << "Handler: " << m_handler << " (size: " << handler.bytes.size() << " runtimeInfo: " << handler.runtimeInfo << "): ";
+		for (auto c : handler.bytes) {
 			ss << std::setw(2) << +c << ' ';
 		}
 		return ss.str();
 	});
 
-	GEODE_UNWRAP(Target::get().writeMemory(m_handler, handler.data(), handler.size()));
-	m_handlerSize = functionSize;
+	GEODE_UNWRAP(Target::get().writeMemory(m_handler, handler.bytes.data(), handler.bytes.size()));
+	if (handler.runtimeInfo) {
+		Target::get().registerFunction(m_handler, handler.bytes.size(), handler.runtimeInfo);
+	}
 
 	auto dryIntervener = generator->intervenerBytes((int64_t)m_address, (int64_t)m_handler, 0);
 
@@ -80,9 +78,9 @@ geode::Result<> Handler::init() {
 		GEODE_UNWRAP_INTO(m_relocated, Target::get().allocateArea(dryRelocated.bytes.size()));
 		GEODE_UNWRAP_INTO(relocated, generator->relocatedBytes((int64_t)m_address, (int64_t)m_relocated, dryOriginalBytes, dryIntervener.size()));
 
-		if (handler.size() <= dryHandler.bytes.size()) break;
+		if (relocated.bytes.size() <= dryRelocated.bytes.size()) break;
 
-		dryHandler.bytes = std::move(handler);
+		dryRelocated = std::move(relocated);
 	} while (true);
 
 	Target::get().log([&]() {
@@ -99,12 +97,12 @@ geode::Result<> Handler::init() {
 
 	if (m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
 		auto dryWrapped = generator->wrapperBytes((int64_t)m_relocated, 0, m_wrapperMetadata);
-		std::vector<uint8_t> wrapped;
+		BaseGenerator::WrapperReturn wrapped;
 		do {
 			GEODE_UNWRAP_INTO(m_trampoline, Target::get().allocateArea(dryHandler.bytes.size()));
 			wrapped = generator->wrapperBytes((int64_t)m_relocated, (int64_t)m_trampoline, m_wrapperMetadata);
 
-			if (wrapped.size() <= dryWrapped.size()) break;
+			if (wrapped.bytes.size() <= dryWrapped.bytes.size()) break;
 
 			dryWrapped = std::move(wrapped);
 		} while (true);
@@ -112,15 +110,17 @@ geode::Result<> Handler::init() {
 		Target::get().log([&]() {
 			std::stringstream ss;
 			ss << std::noshowbase << std::setfill('0') << std::hex;
-			ss << "Trampoline: " << m_trampoline << " (size: " << wrapped.size() << "): ";
-			for (auto c : wrapped) {
+			ss << "Trampoline: " << m_trampoline << " (size: " << wrapped.bytes.size() << " runtimeInfo: " << wrapped.runtimeInfo << "): ";
+			for (auto c : wrapped.bytes) {
 				ss << std::setw(2) << +c << ' ';
 			}
 			return ss.str();
 		});
 
-		GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, wrapped.data(), wrapped.size()));
-		m_trampolineSize = wrapped.size();
+		GEODE_UNWRAP(Target::get().writeMemory(m_trampoline, wrapped.bytes.data(), wrapped.bytes.size()));
+		if (wrapped.runtimeInfo) {
+			Target::get().registerFunction(m_trampoline, wrapped.bytes.size(), wrapped.runtimeInfo);
+		}
 	}
 	else {
 		m_trampoline = m_relocated;

@@ -12,7 +12,7 @@ using namespace tulip::hook;
 // virtual std::vector<uint8_t> commonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset);
 
 BaseGenerator::HandlerReturn BaseGenerator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
-	return {};
+	return HandlerReturn{ std::vector<uint8_t>(), nullptr };
 }
 
 std::vector<uint8_t> BaseGenerator::intervenerBytes(int64_t original, int64_t handler, size_t size) {
@@ -23,8 +23,8 @@ geode::Result<BaseGenerator::RelocateReturn> BaseGenerator::relocatedBytes(int64
 	return geode::Ok(RelocateReturn{ std::vector<uint8_t>(), 0 });
 }
 
-std::vector<uint8_t> BaseGenerator::wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata) {
-	return std::vector<uint8_t>();
+BaseGenerator::WrapperReturn BaseGenerator::wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata) {
+	return WrapperReturn{ std::vector<uint8_t>(), nullptr };
 }
 
 std::vector<uint8_t> BaseGenerator::runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t alloc) {

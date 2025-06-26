@@ -172,8 +172,6 @@ BaseGenerator::HandlerReturn X64Generator::handlerBytes(int64_t original, int64_
 	RegMem64 m;
 	using enum X64Register;
 
-	HandlerReturn ret;
-
 #ifdef TULIP_HOOK_WINDOWS
 	constexpr auto FIRST_PARAM = RCX;
 	constexpr auto SECOND_PARAM = RDX;
@@ -246,11 +244,10 @@ BaseGenerator::HandlerReturn X64Generator::handlerBytes(int64_t original, int64_
 	a.label("original");
 	a.write64(original);
 
-	a.updateLabels();
-
 	a.align16();
+	a.label("handler-runtime-info");
 
-	ret.functionSize = a.buffer().size();
+	a.updateLabels();
 
 	auto runtimeInfo = this->runtimeInfoBytes(handler, a.buffer().size(), a.getLabel("handler-push"), a.getLabel("handler-alloc-mid"));
 
@@ -258,9 +255,10 @@ BaseGenerator::HandlerReturn X64Generator::handlerBytes(int64_t original, int64_
 
 	a.align16();
 
-	ret.bytes = std::move(a.m_buffer);
-
-	return ret;
+	return HandlerReturn{
+		.bytes = std::move(a.m_buffer),
+		.runtimeInfo = reinterpret_cast<void*>(a.getLabel("handler-runtime-info")),
+	};
 }
 
 std::vector<uint8_t> X64Generator::intervenerBytes(int64_t original, int64_t handler, size_t size) {
@@ -288,7 +286,7 @@ std::vector<uint8_t> X64Generator::intervenerBytes(int64_t original, int64_t han
 	return std::move(a.m_buffer);
 }
 
-std::vector<uint8_t> X64Generator::wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata) {
+BaseGenerator::WrapperReturn X64Generator::wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata) {
 	// if (!metadata.m_convention->needsWrapper(metadata.m_abstract)) {
 	// 	return BaseGenerator::wrapperBytes(original, wrapper, metadata);
 	// }
@@ -324,6 +322,9 @@ std::vector<uint8_t> X64Generator::wrapperBytes(int64_t original, int64_t wrappe
 	a.label("address");
 	a.write64(original);
 
+	a.align16();
+	a.label("wrapper-runtime-info");
+
 	a.updateLabels();
 
 	auto runtimeInfo = this->runtimeInfoBytes(wrapper, a.buffer().size(), a.getLabel("wrapper-push"), a.getLabel("wrapper-alloc-mid"));
@@ -332,7 +333,10 @@ std::vector<uint8_t> X64Generator::wrapperBytes(int64_t original, int64_t wrappe
 
 	a.align16();
 
-	return std::move(a.m_buffer);
+	return WrapperReturn{
+		.bytes = std::move(a.m_buffer),
+		.runtimeInfo = reinterpret_cast<void*>(a.getLabel("wrapper-runtime-info")),
+	};
 }
 
 std::vector<uint8_t> X64Generator::runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t alloc) {

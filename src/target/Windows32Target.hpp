@@ -11,6 +11,8 @@ namespace tulip::hook {
 	public:
 		using Target::Target;
 
+		void* getRuntimeInfo(void* pointer);
+
 		geode::Result<csh> openCapstone() override;
 
 		geode::Result<> allocatePage() override;
