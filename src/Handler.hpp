@@ -31,10 +31,8 @@ namespace tulip::hook {
 		std::unique_ptr<HandlerContent> m_content;
 
 		void* m_trampoline = nullptr;
-		size_t m_trampolineSize = 0;
 
 		void* m_handler = nullptr;
-		size_t m_handlerSize = 0;
 
 		void* m_relocated = nullptr;
 

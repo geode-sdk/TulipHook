@@ -7,6 +7,7 @@
 #include <memory>
 #include <functional>
 #include <TulipHook.hpp>
+#include <map>
 
 #include <Platform.hpp>
 #if defined(TULIP_HOOK_X86) || defined(TULIP_HOOK_X64)
@@ -17,6 +18,11 @@ typedef size_t csh;
 
 namespace tulip::hook {
 	class BaseGenerator;
+	struct RegisteredFunction {
+		void* m_address;
+		void* m_endAddress;
+		void* m_runtimeInfo;
+	};
 	class Target {
 	protected:
 		csh m_capstone = 0;
@@ -25,6 +31,8 @@ namespace tulip::hook {
 		size_t m_currentOffset = 0;
 		size_t m_remainingOffset = 0;
 		std::function<void(std::string_view)> m_logCallback;
+
+		std::map<void*, RegisteredFunction> m_registeredFunctions;
 
 	public:
 		static Target& get();
@@ -51,6 +59,10 @@ namespace tulip::hook {
 		// These just exist because of arm7! fun!
 		virtual int64_t getRealPtr(void* ptr);
 		virtual int64_t getRealPtrAs(void* ptr, void* lookup);
+
+		// And this exists because of windows!
+		virtual void registerFunction(void* address, size_t size, void* runtimeInfo);
+		std::optional<RegisteredFunction> getRegisteredFunction(void* pointer);
 
 		void registerLogCallback(std::function<void(std::string_view)> callback);
 		void log(std::function<std::string()> callback);

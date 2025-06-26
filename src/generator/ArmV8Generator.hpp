@@ -10,7 +10,7 @@ namespace tulip::hook {
 	public:
 		using BaseGenerator::BaseGenerator;
 
-		std::vector<uint8_t> handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) override;
+		HandlerReturn handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) override;
 		std::vector<uint8_t> intervenerBytes(int64_t original, int64_t handler, size_t size) override;
 		geode::Result<RelocateReturn> relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer, size_t targetSize) override;
 

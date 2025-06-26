@@ -23,7 +23,7 @@ namespace {
 	}
 }
 
-std::vector<uint8_t> ArmV7Generator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
+BaseGenerator::HandlerReturn ArmV7Generator::handlerBytes(int64_t original, int64_t handler, void* content, HandlerMetadata const& metadata) {
 	ThumbV7Assembler a((uint64_t)Target::get().getRealPtr((void*)handler));
 	using enum ArmV7Register;
 
@@ -92,7 +92,10 @@ std::vector<uint8_t> ArmV7Generator::handlerBytes(int64_t original, int64_t hand
 
 	a.updateLabels();
 
-	return std::move(a.m_buffer);
+	return HandlerReturn{
+		.bytes = std::move(a.m_buffer),
+		.runtimeInfo = nullptr,
+	};
 }
 std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t handler, size_t size) {
 	ThumbV7Assembler a((uint64_t)Target::get().getRealPtr((void*)original));

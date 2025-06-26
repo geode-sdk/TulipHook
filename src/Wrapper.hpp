@@ -9,10 +9,15 @@
 namespace tulip::hook {
 	class Handler;
 
+	struct WrapperData {
+		void* m_address = nullptr;
+		void* m_runtimeInfo = nullptr;
+	};
+
 	class Wrapper {
 	public:
-		std::unordered_map<void*, FunctionData> m_wrappers;
-		std::unordered_map<void*, FunctionData> m_reverseWrappers;
+		std::unordered_map<void*, WrapperData> m_wrappers;
+		std::unordered_map<void*, WrapperData> m_reverseWrappers;
 
 		static Wrapper& get();
 

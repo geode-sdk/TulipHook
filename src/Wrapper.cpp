@@ -21,16 +21,16 @@ geode::Result<void*> Wrapper::createWrapper(void* address, WrapperMetadata const
 		}
 
 		auto dry = generator->wrapperBytes((int64_t)address, 0, metadata);
-		GEODE_UNWRAP_INTO(auto wrapper, Target::get().allocateArea(dry.size()));
+		GEODE_UNWRAP_INTO(auto wrapper, Target::get().allocateArea(dry.bytes.size()));
 		auto wrapped = generator->wrapperBytes((int64_t)address, (int64_t)wrapper, metadata);
 
-		if (dry.size() != wrapped.size()) {
+		if (dry.bytes.size() != wrapped.bytes.size()) {
 			// There is something wrong? i think?
 		}
 
-		GEODE_UNWRAP(Target::get().writeMemory(wrapper, wrapped.data(), wrapped.size()));
+		GEODE_UNWRAP(Target::get().writeMemory(wrapper, wrapped.bytes.data(), wrapped.bytes.size()));
 
-		m_wrappers[address] = { wrapper, wrapped.size() };
+		m_wrappers[address] = { wrapper, reinterpret_cast<void*>(wrapped.runtimeInfo) };
 	}
 
 	return geode::Ok(m_wrappers[address].m_address);

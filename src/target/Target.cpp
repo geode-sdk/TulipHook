@@ -67,3 +67,16 @@ void Target::log(std::function<std::string()> callback) {
 		m_logCallback(callback());
 	}
 }
+
+void Target::registerFunction(void* address, size_t size, void* runtimeInfo) {
+	void* endAddress = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(address) + size);
+	m_registeredFunctions[endAddress] = { address, endAddress, runtimeInfo };
+}
+
+std::optional<RegisteredFunction> Target::getRegisteredFunction(void* pointer) {
+	auto it = m_registeredFunctions.upper_bound(pointer);
+	if (it != m_registeredFunctions.end() && it->second.m_address <= pointer && pointer < it->second.m_endAddress) {
+		return it->second;
+	}
+	return std::nullopt;
+}
