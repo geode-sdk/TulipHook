@@ -27,7 +27,7 @@ BaseGenerator::WrapperReturn BaseGenerator::wrapperBytes(int64_t original, int64
 	return WrapperReturn{ std::vector<uint8_t>(), nullptr };
 }
 
-std::vector<uint8_t> BaseGenerator::runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t alloc) {
+std::vector<uint8_t> BaseGenerator::runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t move, int64_t alloc) {
 	return std::vector<uint8_t>();
 }
 

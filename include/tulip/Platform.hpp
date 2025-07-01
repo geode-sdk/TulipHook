@@ -10,7 +10,7 @@
 	#if defined(WIN64) || defined(_WIN64) || defined(__WIN64) && !defined(__CYGWIN__)
 		#define TULIP_HOOK_X64 1
 		#define TULIP_HOOK_MICROSOFT_X64_CONV 1
-		#define TULIP_HOOK_DEFAULT_CONV 
+		#define TULIP_HOOK_DEFAULT_CONV __cdecl
 	#else
 		#define TULIP_HOOK_X86 1
 		#define TULIP_HOOK_CDECL_CONV 1

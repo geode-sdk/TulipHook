@@ -34,7 +34,7 @@ namespace tulip::hook {
 		virtual std::vector<uint8_t> intervenerBytes(int64_t original, int64_t handler, size_t size);
 		virtual geode::Result<RelocateReturn> relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer, size_t targetSize);
 		virtual WrapperReturn wrapperBytes(int64_t original, int64_t wrapper, WrapperMetadata const& metadata);
-		virtual std::vector<uint8_t> runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t alloc);
+		virtual std::vector<uint8_t> runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t move, int64_t alloc);
 		virtual std::vector<uint8_t> commonHandlerBytes(int64_t handler, ptrdiff_t spaceOffset);
 		virtual std::vector<uint8_t> commonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset);
 	};

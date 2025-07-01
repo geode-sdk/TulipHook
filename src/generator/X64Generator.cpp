@@ -187,6 +187,7 @@ BaseGenerator::HandlerReturn X64Generator::handlerBytes(int64_t original, int64_
 	a.push(RBP);
 	a.label("handler-push");
 	a.mov(RBP, RSP);
+	a.label("handler-frame-move");
 	// shadow space
 	a.sub(RSP, 0xc0);
 	a.label("handler-alloc-mid");
@@ -249,7 +250,9 @@ BaseGenerator::HandlerReturn X64Generator::handlerBytes(int64_t original, int64_
 
 	a.updateLabels();
 
-	auto runtimeInfo = this->runtimeInfoBytes(handler, a.buffer().size(), a.getLabel("handler-push"), a.getLabel("handler-alloc-mid"));
+	auto runtimeInfo = this->runtimeInfoBytes(handler, a.buffer().size(), 
+		a.getLabel("handler-push"), a.getLabel("handler-frame-move"), a.getLabel("handler-alloc-mid")
+	);
 
 	a.writeBuffer({runtimeInfo.begin(), runtimeInfo.end()});
 
@@ -297,6 +300,7 @@ BaseGenerator::WrapperReturn X64Generator::wrapperBytes(int64_t original, int64_
 	a.push(RBP);
 	a.label("wrapper-push");
 	a.mov(RBP, RSP);
+	a.label("wrapper-frame-move");
 
 	// shadow space
 	a.sub(RSP, 0xc0);
@@ -327,7 +331,9 @@ BaseGenerator::WrapperReturn X64Generator::wrapperBytes(int64_t original, int64_
 
 	a.updateLabels();
 
-	auto runtimeInfo = this->runtimeInfoBytes(wrapper, a.buffer().size(), a.getLabel("wrapper-push"), a.getLabel("wrapper-alloc-mid"));
+	auto runtimeInfo = this->runtimeInfoBytes(wrapper, a.buffer().size(), 
+		a.getLabel("wrapper-push"), a.getLabel("wrapper-frame-move"), a.getLabel("wrapper-alloc-mid")
+	);
 
 	a.writeBuffer({runtimeInfo.begin(), runtimeInfo.end()});
 
@@ -339,7 +345,7 @@ BaseGenerator::WrapperReturn X64Generator::wrapperBytes(int64_t original, int64_
 	};
 }
 
-std::vector<uint8_t> X64Generator::runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t alloc) {
+std::vector<uint8_t> X64Generator::runtimeInfoBytes(int64_t function, size_t size, int64_t push, int64_t move, int64_t alloc) {
 	X64Assembler a(function);
 #ifdef TULIP_HOOK_WINDOWS
 
@@ -348,8 +354,9 @@ std::vector<uint8_t> X64Generator::runtimeInfoBytes(int64_t function, size_t siz
 		auto const offsetBegin = function & 0xffff;
 		auto const offsetEnd = (function + size) & 0xffff;
 
-		auto const pushOffset = push & 0xffff;
-		auto const allocOffset = alloc & 0xffff;
+		auto const pushOffset = (push - function) & 0xffff;
+		auto const moveOffset = (move - function) & 0xffff;
+		auto const allocOffset = (alloc - function) & 0xffff;
 
 		auto const prologSize = allocOffset;
 
@@ -367,23 +374,34 @@ std::vector<uint8_t> X64Generator::runtimeInfoBytes(int64_t function, size_t siz
 		);
 		a.write8(prologSize); // SizeOfProlog
 		a.write8(3); // CountOfUnwindCodes
+		// couldnt figure this one out so oh well
+		// a.write8(
+		// 	0x5 | // FrameRegister : 4
+		// 	0xc0  // FrameOffset : 4
+		// );
 		a.write8(
 			0x0 | // FrameRegister : 4
-			0x0  // FrameOffset : 4
+			0x00  // FrameOffset : 4
 		);
 
 		// UNWIND_CODE[]
 		a.write8(allocOffset); // CodeOffset
 		a.write8(
-			0x0 | // UnwindOp : 4
-			0x1  // OpInfo : 4
+			0x1 | // UnwindOp : 4
+			0x00  // OpInfo : 4
 		);
 		a.write16(0xc0 >> 3); // UWOP_ALLOC_LARGE continuation
 
+		// a.write8(moveOffset); // CodeOffset
+		// a.write8(
+		// 	0x3 | // UnwindOp : 4
+		// 	0x00  // OpInfo : 4
+		// );
+
 		a.write8(pushOffset); // CodeOffset
 		a.write8(
-			0x50 | // UnwindOp : 4
-			0x0  // OpInfo : 4
+			0x0 | // UnwindOp : 4
+			0x50  // OpInfo : 4
 		);
 	}
 
