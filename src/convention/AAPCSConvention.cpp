@@ -26,6 +26,19 @@ namespace {
                 } else {
                     stackParamSize += 4;
                 }
+            } else if (param.m_kind == AbstractTypeKind::Other) {
+                // floor + add one slot to align to an 8 byte boundary
+                auto slotsNeeded = (param.m_size + 3) / 4 + 1;
+
+                auto remainingRegs = gprCount > 4 ? 0 : 4 - gprCount;
+                if (slotsNeeded < remainingRegs) {
+                    gprCount += slotsNeeded;
+                } else {
+                    gprCount += remainingRegs;
+                    slotsNeeded -= remainingRegs;
+                }
+
+                stackParamSize += slotsNeeded * 4;
             } else {
                 if (gprCount < 4) {
                     gprCount++;

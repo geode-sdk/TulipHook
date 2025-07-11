@@ -2,6 +2,7 @@
 
 #include <tulip/TulipHook.hpp>
 #include <iostream>
+#include <cstdint>
 
 #define FUNCTION_PARAM_TYPES int, int, int, int, int, int, int, int, int, float, float, float, float, float, float, float, float, float, float
 
@@ -276,4 +277,118 @@ TEST_F(HookTest, SingleHookCheckParams) {
 
 	// hook->original
 	EXPECT_EQ(checkParams(1, 2, 3, 4, 5, 6, 7, 8.0f, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19), 12);
+}
+
+struct CheckParamsStruct {
+	int a;
+	int b;
+	int c;
+	int d;
+	double e;
+	int f;
+	int g;
+	float h;
+	int i;
+	int j;
+	int k;
+	int l;
+	std::int64_t m;
+	int n;
+	int o;
+	int p;
+	int q;
+	int r;
+	int s;
+};
+
+int checkStructParams(int a, CheckParamsStruct s) {
+	EXPECT_EQ(a, -1);
+	EXPECT_EQ(s.a, 1);
+	EXPECT_EQ(s.b, 2);
+	EXPECT_EQ(s.c, 3);
+	EXPECT_EQ(s.d, 4);
+	EXPECT_EQ(s.e, 123456789.1234);
+	EXPECT_EQ(s.f, 6);
+	EXPECT_EQ(s.g, 7);
+	EXPECT_EQ(s.h, 8.0f);
+	EXPECT_EQ(s.i, 9);
+	EXPECT_EQ(s.j, 10);
+	EXPECT_EQ(s.k, 11);
+	EXPECT_EQ(s.l, 12);
+	EXPECT_EQ(s.m, 123456789123456789ll);
+	EXPECT_EQ(s.n, 14);
+	EXPECT_EQ(s.o, 15);
+	EXPECT_EQ(s.p, 16);
+	EXPECT_EQ(s.q, 17);
+	EXPECT_EQ(s.r, 18);
+	EXPECT_EQ(s.s, 19);
+
+	return 4;
+}
+
+int checkStructParamsHook(int a, CheckParamsStruct s) {
+	EXPECT_EQ(a, -1);
+	EXPECT_EQ(s.a, 1);
+	EXPECT_EQ(s.b, 2);
+	EXPECT_EQ(s.c, 3);
+	EXPECT_EQ(s.d, 4);
+	EXPECT_EQ(s.e, 123456789.1234);
+	EXPECT_EQ(s.f, 6);
+	EXPECT_EQ(s.g, 7);
+	EXPECT_EQ(s.h, 8.0f);
+	EXPECT_EQ(s.i, 9);
+	EXPECT_EQ(s.j, 10);
+	EXPECT_EQ(s.k, 11);
+	EXPECT_EQ(s.l, 12);
+	EXPECT_EQ(s.m, 123456789123456789ll);
+	EXPECT_EQ(s.n, 14);
+	EXPECT_EQ(s.o, 15);
+	EXPECT_EQ(s.p, 16);
+	EXPECT_EQ(s.q, 17);
+	EXPECT_EQ(s.r, 18);
+	EXPECT_EQ(s.s, 19);
+
+	return checkStructParams(a, s) + 1;
+}
+
+TEST_F(HookTest, SingleHookCheckStructParams) {
+#if defined(TULIP_HOOK_X64) && defined(TULIP_HOOK_SYSTEMV_CONV)
+	GTEST_SKIP() << "test fails on x64 SysV :(";
+#endif
+
+	HandlerMetadata handlerMetadata;
+	handlerMetadata.m_convention = std::make_unique<PlatformConvention>();
+	handlerMetadata.m_abstract = AbstractFunction::from(&checkStructParams);
+
+	auto handleRes = createHandler(reinterpret_cast<void*>(&checkStructParams), handlerMetadata);
+
+	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr();
+
+	auto handle = handleRes.unwrap();
+
+	HookMetadata metadata;
+	createHook(handle, reinterpret_cast<void*>(&checkStructParamsHook), metadata);
+
+	// hook->original
+	EXPECT_EQ(checkStructParams(-1, {
+		1,
+		2,
+		3,
+		4,
+		123456789.1234,
+		6,
+		7,
+		8.0f,
+		9,
+		10,
+		11,
+		12,
+		123456789123456789ll,
+		14,
+		15,
+		16,
+		17,
+		18,
+		19
+	}), 5);
 }
