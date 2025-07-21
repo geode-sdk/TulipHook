@@ -20,9 +20,12 @@ geode::Result<HandlerHandle> Pool::createHandler(void* address, HandlerMetadata 
 
 		if (!m_runtimeInterveningDisabled) {
 			GEODE_UNWRAP(m_handlers[handle]->init());
-			GEODE_UNWRAP(m_handlers[handle]->interveneFunction());
 		}
-	}	
+	}
+
+	if (!m_runtimeInterveningDisabled) {
+		GEODE_UNWRAP(m_handlers[handle]->interveneFunction());
+	}
 
 	return geode::Ok(std::move(handle));
 }
