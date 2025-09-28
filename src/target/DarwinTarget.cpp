@@ -13,37 +13,12 @@ using namespace tulip::hook;
 #include <mach/task.h>
 
 #if defined(TARGET_OS_IPHONE) && defined(TULIP_HOOK_ARMV8)
-// TXM (iOS 26) workaround, having the debug server do all the allocating and patching
-
-// x0 (addr), x1 (bytes)
-__attribute__((noinline,optnone,naked))
-void BreakMarkJITMapping(uint64_t addr, size_t bytes) {
-    asm("brk #0x69 \n"
-        "ret");
-}
-
-// x0 (dest), x1 (src), x2 (bytes)
-__attribute__((noinline,optnone,naked))
-void BreakJITWrite(uint64_t dest, uint64_t src, size_t bytes) {
-    asm("brk #0x70 \n"
-        "ret");
-}
-static const bool useTxmJIT = getenv("TXM_JIT");
-#else
-__attribute__((noinline,optnone,naked))
-void BreakMarkJITMapping(uint64_t addr, size_t bytes) {}
-
-__attribute__((noinline,optnone,naked))
-void BreakJITWrite(uint64_t dest, uint64_t src, size_t bytes) {}
-static const bool useTxmJIT = false;
-#endif
 
 geode::Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;
 	vm_address_t ret;
 
 	status = vm_allocate(mach_task_self(), &ret, static_cast<vm_size_t>(0x10000), VM_FLAGS_ANYWHERE);
-
 	if (status != KERN_SUCCESS) {
 		return geode::Err("Couldn't allocate page");
 	}
@@ -51,15 +26,8 @@ geode::Result<> DarwinTarget::allocatePage() {
 	m_allocatedPage = reinterpret_cast<void*>(ret);
 	m_currentOffset = 0;
 	m_remainingOffset = 0x10000;
-	
-	this->internalProtectMemory(m_allocatedPage, 0x10000, VM_PROT_READ | VM_PROT_EXECUTE, status);
-	if (status != KERN_SUCCESS) {
-		return geode::Err("Couldn't protect memory as RX");
-	}
-	if (useTxmJIT) {
-		BreakMarkJITMapping(ret, 0x10000);
-	}
-	return geode::Ok();
+
+	return this->protectMemory(m_allocatedPage, 0x10000, VM_PROT_READ | VM_PROT_EXECUTE);
 }
 
 geode::Result<uint32_t> DarwinTarget::getProtection(void* address) {
@@ -106,13 +74,6 @@ void DarwinTarget::internalWriteMemory(void* destination, void const* source, si
 }
 
 geode::Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protection) {
-	if (useTxmJIT) {
-		GEODE_UNWRAP_INTO(auto currentProtection, this->getProtection(address));
-		// You cant protect whats already executable
-		if ((currentProtection & VM_PROT_EXECUTE) && (protection & VM_PROT_WRITE)) {
-			return geode::Ok();
-		}
-	}
 	kern_return_t status;
 
 	this->internalProtectMemory(address, size, protection, status);
@@ -124,13 +85,7 @@ geode::Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t
 
 geode::Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	kern_return_t status;
-	if (useTxmJIT) {
-		GEODE_UNWRAP_INTO(auto currentProtection, this->getProtection(destination));
-		if ((currentProtection & VM_PROT_EXECUTE)) {
-			BreakJITWrite(reinterpret_cast<uint64_t>(destination), reinterpret_cast<uint64_t>(source), size);
-			return geode::Ok();
-		}
-	}
+
 	this->internalWriteMemory(destination, source, size, status);
 	if (status != KERN_SUCCESS) {
 		return geode::Err("Couldn't write memory: " + std::to_string(status));
