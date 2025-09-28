@@ -4,7 +4,7 @@
 
 using namespace tulip::hook;
 
-#if defined(TARGET_PLATFORM_IOS) && !defined(TARGET_PLATFORM_MAC)
+#if defined(TULIP_HOOK_IOS) && defined(TULIP_HOOK_ARMV8)
 
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/mach_init.h> /* mach_task_self()     */
