@@ -4,8 +4,7 @@
 
 using namespace tulip::hook;
 
-#if defined(TULIP_HOOK_IOS) && defined(TULIP_HOOK_ARMV8)
-#pragma message("Compiling with iOSTarget")
+#if defined(TARGET_OS_IPHONE) && defined(TULIP_HOOK_ARMV8)
 
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/mach_init.h> /* mach_task_self()     */
