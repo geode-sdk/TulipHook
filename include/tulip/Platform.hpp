@@ -35,7 +35,7 @@
 
 	#include <TargetConditionals.h>
 
-	#if defined(TARGET_OS_MAC) && !defined(TARGET_OS_IPHONE)
+	#if TARGET_OS_MAC
 
 		#define TULIP_HOOK_MACOS 1
 

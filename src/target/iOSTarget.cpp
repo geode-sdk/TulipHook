@@ -5,6 +5,7 @@
 using namespace tulip::hook;
 
 #if defined(TULIP_HOOK_IOS) && defined(TULIP_HOOK_ARMV8)
+#pragma message("Compiling with iOSTarget")
 
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/mach_init.h> /* mach_task_self()     */
@@ -52,7 +53,7 @@ geode::Result<> iOSTarget::allocatePage() {
 	return geode::Ok();
 }
 geode::Result<> iOSTarget::protectMemory(void* address, size_t size, uint32_t protection) {
-	if (useTxmJIT) {
+	if (m_useTxmJIT) {
 		GEODE_UNWRAP_INTO(auto currentProtection, this->getProtection(address));
 		// You cant protect whats already executable
 		if ((currentProtection & VM_PROT_EXECUTE) && (protection & VM_PROT_WRITE)) {
