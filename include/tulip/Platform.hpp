@@ -35,7 +35,7 @@
 
 	#include <TargetConditionals.h>
 
-	#if TARGET_OS_MAC
+	#if TARGET_PLATFORM_MAC
 
 		#define TULIP_HOOK_MACOS 1
 
@@ -57,11 +57,8 @@
 			#define TULIP_HOOK_DLL
 		#endif
 
-	#endif
+	#elif TARGET_PLATFORM_IOS
 
-	#ifdef TARGET_OS_IPHONE
-
-		#undef TULIP_HOOK_MACOS
 		#define TULIP_HOOK_IOS 1
 
 		#define TULIP_HOOK_DEFAULT_CONV
