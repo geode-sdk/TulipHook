@@ -28,12 +28,14 @@ void BreakJITWrite(uint64_t dest, uint64_t src, size_t bytes) {
     asm("brk #0x70 \n"
         "ret");
 }
+static const bool useTxmJIT = getenv("TXM_JIT");
 #else
 __attribute__((noinline,optnone,naked))
 void BreakMarkJITMapping(uint64_t addr, size_t bytes) {}
 
 __attribute__((noinline,optnone,naked))
 void BreakJITWrite(uint64_t dest, uint64_t src, size_t bytes) {}
+static const bool useTxmJIT = false;
 #endif
 
 geode::Result<> DarwinTarget::allocatePage() {
@@ -54,7 +56,7 @@ geode::Result<> DarwinTarget::allocatePage() {
 	if (status != KERN_SUCCESS) {
 		return geode::Err("Couldn't protect memory as RX");
 	}
-	if (getenv("TXM_JIT")) {
+	if (useTxmJIT) {
 		BreakMarkJITMapping(ret, 0x10000);
 	}
 	return geode::Ok();
@@ -104,10 +106,12 @@ void DarwinTarget::internalWriteMemory(void* destination, void const* source, si
 }
 
 geode::Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t protection) {
-	GEODE_UNWRAP_INTO(auto currentProtection, this->getProtection(address));
-	// You cant protect whats already executable
-	if ((currentProtection & VM_PROT_EXECUTE) && (protection & VM_PROT_WRITE) && getenv("TXM_JIT")) {
-		return geode::Ok();
+	if (useTxmJIT) {
+		GEODE_UNWRAP_INTO(auto currentProtection, this->getProtection(address));
+		// You cant protect whats already executable
+		if ((currentProtection & VM_PROT_EXECUTE) && (protection & VM_PROT_WRITE)) {
+			return geode::Ok();
+		}
 	}
 	kern_return_t status;
 
@@ -120,11 +124,12 @@ geode::Result<> DarwinTarget::protectMemory(void* address, size_t size, uint32_t
 
 geode::Result<> DarwinTarget::rawWriteMemory(void* destination, void const* source, size_t size) {
 	kern_return_t status;
-
-	GEODE_UNWRAP_INTO(auto currentProtection, this->getProtection(destination));
-	if ((currentProtection & VM_PROT_EXECUTE) && getenv("TXM_JIT")) {
-		BreakJITWrite(reinterpret_cast<uint64_t>(destination), reinterpret_cast<uint64_t>(source), size);
-		return geode::Ok();
+	if (useTxmJIT) {
+		GEODE_UNWRAP_INTO(auto currentProtection, this->getProtection(destination));
+		if ((currentProtection & VM_PROT_EXECUTE)) {
+			BreakJITWrite(reinterpret_cast<uint64_t>(destination), reinterpret_cast<uint64_t>(source), size);
+			return geode::Ok();
+		}
 	}
 	this->internalWriteMemory(destination, source, size, status);
 	if (status != KERN_SUCCESS) {
