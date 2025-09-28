@@ -12,13 +12,12 @@ using namespace tulip::hook;
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/task.h>
 
-#if defined(TARGET_OS_IPHONE) && defined(TULIP_HOOK_ARMV8)
-
 geode::Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;
 	vm_address_t ret;
 
 	status = vm_allocate(mach_task_self(), &ret, static_cast<vm_size_t>(0x10000), VM_FLAGS_ANYWHERE);
+
 	if (status != KERN_SUCCESS) {
 		return geode::Err("Couldn't allocate page");
 	}
