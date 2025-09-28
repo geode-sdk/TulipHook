@@ -57,8 +57,11 @@
 			#define TULIP_HOOK_DLL
 		#endif
 
-	#elif TARGET_OS_IPHONE
+	#endif
 
+	#ifdef TARGET_OS_IPHONE
+
+		#undef TULIP_HOOK_MACOS
 		#define TULIP_HOOK_IOS 1
 
 		#define TULIP_HOOK_DEFAULT_CONV
