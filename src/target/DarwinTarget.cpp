@@ -12,6 +12,7 @@ using namespace tulip::hook;
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/task.h>
 
+#if defined(TARGET_OS_IPHONE) && defined(TULIP_HOOK_ARMV8)
 // TXM (iOS 26) workaround, having the debug server do all the allocating and patching
 
 // x0 (addr), x1 (bytes)
@@ -27,6 +28,13 @@ void BreakJITWrite(uint64_t dest, uint64_t src, size_t bytes) {
     asm("brk #0x70 \n"
         "ret");
 }
+#else
+__attribute__((noinline,optnone,naked))
+void BreakMarkJITMapping(uint64_t addr, size_t bytes) {}
+
+__attribute__((noinline,optnone,naked))
+void BreakJITWrite(uint64_t dest, uint64_t src, size_t bytes) {}
+#endif
 
 geode::Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;
