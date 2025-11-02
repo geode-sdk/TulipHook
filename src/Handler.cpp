@@ -157,6 +157,9 @@ geode::Result<> Handler::init() {
 }
 
 void Handler::addOriginal() {
+	if (Pool::get().m_runtimeInterveningDisabled) {
+		return geode::Err("Runtime intervening is disabled");
+	}
 	auto metadata = HookMetadata{
 		.m_priority = INT32_MAX,
 	};
