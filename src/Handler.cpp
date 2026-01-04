@@ -195,11 +195,32 @@ void Handler::removeHook(HookHandle const& hook) {
 }
 
 void Handler::clearHooks() {
-	m_hooks.clear();
-	m_handles.clear();
-	m_content->m_functions.clear();
+	if (Pool::get().m_runtimeInterveningDisabled) {
+		// keep only the last hook (original func)
+		auto& vec = m_content->m_functions;
+		if (vec.size() > 1) {
+			vec.erase(vec.begin(), vec.end() - 1);
+		}
 
-	this->addOriginal();
+		// this is so awful
+		if (!m_content->m_functions.empty()) {
+			auto addr = m_content->m_functions.back();
+
+			auto handle = std::move(m_handles.at(addr));
+			m_handles.clear();
+			m_handles.insert({addr, handle});
+
+			auto hook = std::move(m_hooks.at(handle));
+			m_hooks.clear();
+			m_hooks.insert({handle, std::move(hook)});
+		}
+	} else {
+		m_hooks.clear();
+		m_handles.clear();
+		m_content->m_functions.clear();
+		this->addOriginal();
+	}
+
 }
 
 void Handler::updateHookMetadata(HookHandle const& hook, HookMetadata const& metadata) {
