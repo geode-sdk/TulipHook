@@ -31,14 +31,14 @@ jobs:
 
         - name: 'macOS (x64)'
           id: macos-x64
-          os: macos-13
+          os: macos-15-intel
           build_tests: true
           extra_flags: "-DCMAKE_BUILD_TYPE=Debug"
           out_paths: './build/src/libTulipHook.a'
 
         - name: 'macOS (m1)'
           id: macos-arm64
-          os: macos-14
+          os: macos-latest
           build_tests: true
           extra_flags: "-DCMAKE_BUILD_TYPE=Debug"
           out_paths: './build/src/libTulipHook.a'
@@ -66,7 +66,7 @@ jobs:
 
         - name: 'iOS'
           id: ios-arm
-          os: macos-14
+          os: macos-latest
           build_tests: false
           extra_flags: "-DTULIP_BUILD_DYNAMIC=ON -DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=iOS"
           out_paths: './build/src/libTulipHook.dylib'
