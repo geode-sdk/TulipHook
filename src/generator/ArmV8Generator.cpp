@@ -300,24 +300,40 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 				}
 				break;
 			}
-			case ArmV8InstructionType::CB_: {
-				if (canDeltaRange(newOffset, 19)) {
+			case ArmV8InstructionType::CBZ: {
+				if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, alignedCallback - alignedAddr);
 					a.add(X16, X16, callback & 0xFFF);
-					a.write32(
-						(ins->m_rawInstruction & 0xFFFFE01F) | // Preserve the real bits
-						(2 << 5)
-					);
+					a.cbz(ins->m_src1, 8);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
 
 					a.label("jump-" + idxLabel);
 				} else {
 					a.ldr(X16, "literal-" + idxLabel);
-					a.write32(
-						(ins->m_rawInstruction & 0xFFFFE01F) | // Preserve the real bits
-						(2 << 5)
-					);
+					a.cbz(ins->m_src1, 8);
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("literal-" + idxLabel);
+					a.write64(ins->m_literal);
+
+					a.label("jump-" + idxLabel);
+				}
+				break;
+			}
+			case ArmV8InstructionType::CBNZ: {
+				if (canDeltaRange(newOffset, 33)) {
+					a.adrp(X16, alignedCallback - alignedAddr);
+					a.add(X16, X16, callback & 0xFFF);
+					a.cbnz(ins->m_src1, 8);
+					a.b("jump-" + idxLabel);
+					a.br(X16);
+
+					a.label("jump-" + idxLabel);
+				} else {
+					a.ldr(X16, "literal-" + idxLabel);
+					a.cbnz(ins->m_src1, 8);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
 

@@ -66,9 +66,9 @@ void ArmV8Disassembler::handleTB_Z(ArmV8Instruction& instruction) {
 }
 
 void ArmV8Disassembler::handleCB_(ArmV8Instruction& instruction) {
-    instruction.m_type = ArmV8InstructionType::CB_;
+    instruction.m_type = this->extractValue(24, 1, instruction.m_rawInstruction) == 0 ? ArmV8InstructionType::CBZ : ArmV8InstructionType::CBNZ;
     instruction.m_src1 = this->extractRegister(0, instruction.m_rawInstruction);
-    instruction.m_immediate = this->extractValue(5, 9, instruction.m_rawInstruction) << 2;
+    instruction.m_immediate = this->extractValue(5, 19, instruction.m_rawInstruction) << 2;
     instruction.m_literal = m_baseAddress + (instruction.m_immediate);
 }
 

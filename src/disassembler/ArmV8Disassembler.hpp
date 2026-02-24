@@ -12,7 +12,8 @@ namespace tulip::hook {
         ADR,
         ADRP,
         B_Cond,
-        CB_,
+        CBZ,
+        CBNZ,
         TBZ,
         TBNZ,
     };
