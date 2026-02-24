@@ -301,7 +301,7 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 				break;
 			}
 			case ArmV8InstructionType::CB_: {
-				if (canDeltaRange(newOffset, 33)) {
+				if (canDeltaRange(newOffset, 19)) {
 					a.adrp(X16, alignedCallback - alignedAddr);
 					a.add(X16, X16, callback & 0xFFF);
 					a.write32(
