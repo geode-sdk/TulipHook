@@ -102,9 +102,9 @@ namespace tulip::hook {
 		void add(ArmV8Register dst, ArmV8Register src, uint16_t imm);
 		void sub(ArmV8Register dst, ArmV8Register src, uint16_t imm);
 		void add(ArmV8Register dst, ArmV8Register src, ArmV8Register src2);
-		void b(uint32_t imm);
+		void b(int32_t imm);
 		void b(std::string const& label);
-		void bl(uint32_t imm);
+		void bl(int32_t imm);
 		void br(ArmV8Register reg);
 		void blr(ArmV8Register reg);
 		void nop();
@@ -117,6 +117,8 @@ namespace tulip::hook {
 
 		void cbz(ArmV8Register reg, int32_t imm);
 		void cbnz(ArmV8Register reg, int32_t imm);
+
+		void bcond(int32_t imm, uint32_t cond);
 
 		/* Pseudo instructions */
 

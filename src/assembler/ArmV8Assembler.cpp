@@ -130,7 +130,7 @@ void ArmV8Assembler::add(ArmV8Register dst, ArmV8Register src, ArmV8Register src
     this->write32(0x8B000000 | srcShifted | src2Shifted | val(dst));
 }
 
-void ArmV8Assembler::b(uint32_t imm) {
+void ArmV8Assembler::b(int32_t imm) {
     this->write32(0x14000000 | ((imm >> 2) & 0x3FFFFFF));
 }
 
@@ -139,7 +139,7 @@ void ArmV8Assembler::b(std::string const& label) {
     this->write32(0x14000000);
 }
 
-void ArmV8Assembler::bl(uint32_t imm) {
+void ArmV8Assembler::bl(int32_t imm) {
     this->write32(0x94000000 | ((imm >> 2) & 0x3FFFFFF));
 }
 
@@ -200,6 +200,11 @@ void ArmV8Assembler::cbz(ArmV8Register reg, int32_t imm) {
 void ArmV8Assembler::cbnz(ArmV8Register reg, int32_t imm) {
     const auto literalShifted = ((imm >> 2) & 0x3FFFF) << 5;
     this->write32(0xb5000000 | literalShifted | val(reg));
+}
+
+void ArmV8Assembler::bcond(int32_t imm, uint32_t cond) {
+    const auto literalShifted = ((imm >> 2) & 0x3FFFF) << 5;
+    this->write32(0x54000000 | literalShifted | (cond & 0xF));
 }
 
 void ArmV8Assembler::nop() { this->write32(0xD503201F); }

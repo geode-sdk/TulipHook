@@ -275,10 +275,7 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 				if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, alignedCallback - alignedAddr);
 					a.add(X16, X16, callback & 0xFFF);
-					a.write32(
-						(ins->m_rawInstruction & 0xFF00001F) | // Preserve the condition bits
-						(2 << 5)
-					);
+					a.bcond(8, ins->m_other);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
 
@@ -286,10 +283,7 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 				}
 				else {
 					a.ldr(X16, "literal-" + idxLabel);
-					a.write32(
-						(ins->m_rawInstruction & 0xFF00001F) | // Preserve the condition bits
-						(2 << 5)
-					);
+					a.bcond(8, ins->m_other);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
 
