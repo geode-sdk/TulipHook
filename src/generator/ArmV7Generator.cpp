@@ -69,12 +69,14 @@ BaseGenerator::HandlerReturn ArmV7Generator::handlerBytes(int64_t original, int6
 
 	// preserve the return values
 	a.str(R0, SP, 0x00);
+	a.str(R1, SP, 0x04);
 
 	// call the post handler, decrementing
 	a.ldr(R0, "handlerPost");
 	a.blx(R0);
 
 	// recover the return values
+	a.ldr(R1, SP, 0x04);
 	a.ldr(R0, SP, 0x00);
 
 	// done!

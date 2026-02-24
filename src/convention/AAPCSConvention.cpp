@@ -15,18 +15,7 @@ namespace {
             gprCount += 1;
         }
         for (auto& param : function.m_parameters) {
-            if (param.m_kind == AbstractTypeKind::Primitive && param.m_size == 8) {
-                if (gprCount < 4) {
-                    gprCount++;
-                } else {
-                    stackParamSize += 4;
-                }
-                if (gprCount < 4) {
-                    gprCount++;
-                } else {
-                    stackParamSize += 4;
-                }
-            } else if (param.m_kind == AbstractTypeKind::Other) {
+            if (param.m_kind == AbstractTypeKind::Other) {
                 // floor + add one slot to align to an 8 byte boundary
                 auto slotsNeeded = (param.m_size + 3) / 4 + 1;
 
@@ -39,6 +28,17 @@ namespace {
                 }
 
                 stackParamSize += slotsNeeded * 4;
+            } else if (param.m_size == 8) { //primitive: func ptr, floating point: double
+                if (gprCount < 4) {
+                    gprCount++;
+                } else {
+                    stackParamSize += 4;
+                }
+                if (gprCount < 4) {
+                    gprCount++;
+                } else {
+                    stackParamSize += 4;
+                }
             } else {
                 if (gprCount < 4) {
                     gprCount++;
