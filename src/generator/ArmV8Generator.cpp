@@ -81,7 +81,7 @@ BaseGenerator::HandlerReturn ArmV8Generator::handlerBytes(int64_t original, int6
 	a.blr(X0);
 
 	// recover the return values
-	a.ldp(X1, X1, SP, 0x30, SignedOffset);
+	a.ldr(X1, SP, 0x30);
 	a.ldp(D0, D1, SP, 0x20, SignedOffset);
 	a.ldp(X0, X8, SP, 0x10, SignedOffset);
 
