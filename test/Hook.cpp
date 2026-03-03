@@ -422,14 +422,14 @@ TEST_F(HookTest, SmallStruct128Return) {
 	createHook(handle, reinterpret_cast<void*>(&checkSmallStruct128Hook), metadata);
 
 	auto val = checkSmallStruct128();
-	EXPECT_EQ(val.a, 19);
-	EXPECT_EQ(val.b, 20);
+	EXPECT_EQ(val.x, 19);
+	EXPECT_EQ(val.y, 20);
 }
 
 // should be passed either in one register (ARM64) or two (ARMv7)
 struct CheckSmallStruct64 {
-	std::uint32_t x;
-	std::uint32_t y;
+	std::uint32_t a;
+	std::uint32_t b;
 };
 
 CheckSmallStruct64 checkSmallStruct64() {
