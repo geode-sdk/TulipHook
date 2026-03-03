@@ -392,3 +392,69 @@ TEST_F(HookTest, SingleHookCheckStructParams) {
 		19
 	}), 5);
 }
+
+// should be passed through X0-X1 on ARM64
+struct CheckSmallStruct128 {
+	std::uint64_t x;
+	std::uint64_t y;
+};
+
+CheckSmallStruct128 checkSmallStruct128() {
+	return {17, 18};
+}
+
+CheckSmallStruct128 checkSmallStruct128Hook() {
+	return {19, 20};
+} 
+
+TEST_F(HookTest, SmallStruct128Return) {
+	HandlerMetadata handlerMetadata;
+	handlerMetadata.m_convention = std::make_unique<PlatformConvention>();
+	handlerMetadata.m_abstract = AbstractFunction::from(&checkSmallStruct128);
+
+	auto handleRes = createHandler(reinterpret_cast<void*>(&checkSmallStruct128), handlerMetadata);
+
+	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr();
+
+	auto handle = handleRes.unwrap();
+
+	HookMetadata metadata;
+	createHook(handle, reinterpret_cast<void*>(&checkSmallStruct128Hook), metadata);
+
+	auto val = checkSmallStruct128();
+	EXPECT_EQ(val.a, 19);
+	EXPECT_EQ(val.b, 20);
+}
+
+// should be passed either in one register (ARM64) or two (ARMv7)
+struct CheckSmallStruct64 {
+	std::uint32_t x;
+	std::uint32_t y;
+};
+
+CheckSmallStruct64 checkSmallStruct64() {
+	return {4, 5};
+}
+
+CheckSmallStruct64 checkSmallStruct64Hook() {
+	return {5, 6};
+} 
+
+TEST_F(HookTest, SmallStruct64Return) {
+	HandlerMetadata handlerMetadata;
+	handlerMetadata.m_convention = std::make_unique<PlatformConvention>();
+	handlerMetadata.m_abstract = AbstractFunction::from(&checkSmallStruct64);
+
+	auto handleRes = createHandler(reinterpret_cast<void*>(&checkSmallStruct64), handlerMetadata);
+
+	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr();
+
+	auto handle = handleRes.unwrap();
+
+	HookMetadata metadata;
+	createHook(handle, reinterpret_cast<void*>(&checkSmallStruct64Hook), metadata);
+
+	auto val = checkSmallStruct64();
+	EXPECT_EQ(val.a, 5);
+	EXPECT_EQ(val.b, 6);
+}
