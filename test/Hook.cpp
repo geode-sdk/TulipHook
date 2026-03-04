@@ -399,11 +399,17 @@ struct CheckSmallStruct128 {
 	std::uint64_t y;
 };
 
-CheckSmallStruct128 checkSmallStruct128() {
+CheckSmallStruct128 checkSmallStruct128(CheckSmallStruct128 s) {
+	EXPECT_EQ(s.x, 10);
+	EXPECT_EQ(s.y, 11);
+
 	return {17, 18};
 }
 
-CheckSmallStruct128 checkSmallStruct128Hook() {
+CheckSmallStruct128 checkSmallStruct128Hook(CheckSmallStruct128 s) {
+	EXPECT_EQ(s.x, 10);
+	EXPECT_EQ(s.y, 11);
+
 	return {19, 20};
 } 
 
@@ -421,7 +427,7 @@ TEST_F(HookTest, SmallStruct128Return) {
 	HookMetadata metadata;
 	createHook(handle, reinterpret_cast<void*>(&checkSmallStruct128Hook), metadata);
 
-	auto val = checkSmallStruct128();
+	auto val = checkSmallStruct128({10, 11});
 	EXPECT_EQ(val.x, 19);
 	EXPECT_EQ(val.y, 20);
 }
@@ -432,11 +438,18 @@ struct CheckSmallStruct64 {
 	std::uint32_t b;
 };
 
-CheckSmallStruct64 checkSmallStruct64() {
+CheckSmallStruct64 checkSmallStruct64(CheckSmallStruct64 s) {
+	// add some useless checks here to make the function larger
+	EXPECT_EQ(s.a, 8);
+	EXPECT_EQ(s.b, 9);
+
 	return {4, 5};
 }
 
-CheckSmallStruct64 checkSmallStruct64Hook() {
+CheckSmallStruct64 checkSmallStruct64Hook(CheckSmallStruct64 s) {
+	EXPECT_EQ(s.a, 8);
+	EXPECT_EQ(s.b, 9);
+
 	return {5, 6};
 } 
 
@@ -458,7 +471,7 @@ TEST_F(HookTest, SmallStruct64Return) {
 	HookMetadata metadata;
 	createHook(handle, reinterpret_cast<void*>(&checkSmallStruct64Hook), metadata);
 
-	auto val = checkSmallStruct64();
+	auto val = checkSmallStruct64({8,9});
 	EXPECT_EQ(val.a, 5);
 	EXPECT_EQ(val.b, 6);
 }
