@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cstdint>
 
+#include "hooksdef/HooksDef.hpp"
+
 #define FUNCTION_PARAM_TYPES int, int, int, int, int, int, int, int, int, float, float, float, float, float, float, float, float, float, float
 
 template <int N>
@@ -215,29 +217,6 @@ TEST_F(HookTest, RecreateHandler) {
 	EXPECT_EQ(callFunction<10>(), 1);
 }
 
-int checkParams(int a, int b, int c, int d, int e, int f, int g, float h, int i, int j, int k, int l, int m, int n, int o, int p, int q, int r, int s) {
-	EXPECT_EQ(a, 1);
-	EXPECT_EQ(b, 2);
-	EXPECT_EQ(c, 3);
-	EXPECT_EQ(d, 4);
-	EXPECT_EQ(e, 5);
-	EXPECT_EQ(f, 6);
-	EXPECT_EQ(g, 7);
-	EXPECT_EQ(h, 8.0f);
-	EXPECT_EQ(i, 9);
-	EXPECT_EQ(j, 10);
-	EXPECT_EQ(k, 11);
-	EXPECT_EQ(l, 12);
-	EXPECT_EQ(m, 13);
-	EXPECT_EQ(n, 14);
-	EXPECT_EQ(o, 15);
-	EXPECT_EQ(p, 16);
-	EXPECT_EQ(q, 17);
-	EXPECT_EQ(r, 18);
-	EXPECT_EQ(s, 19);
-	return 11;
-}
-
 int checkParamsHook(int a, int b, int c, int d, int e, int f, int g, float h, int i, int j, int k, int l, int m, int n, int o, int p, int q, int r, int s) {
 	EXPECT_EQ(a, 1);
 	EXPECT_EQ(b, 2);
@@ -277,53 +256,6 @@ TEST_F(HookTest, SingleHookCheckParams) {
 
 	// hook->original
 	EXPECT_EQ(checkParams(1, 2, 3, 4, 5, 6, 7, 8.0f, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19), 12);
-}
-
-struct CheckParamsStruct {
-	int a;
-	int b;
-	int c;
-	int d;
-	double e;
-	int f;
-	int g;
-	float h;
-	int i;
-	int j;
-	int k;
-	int l;
-	std::int64_t m;
-	int n;
-	int o;
-	int p;
-	int q;
-	int r;
-	int s;
-};
-
-int checkStructParams(int a, CheckParamsStruct s) {
-	EXPECT_EQ(a, -1);
-	EXPECT_EQ(s.a, 1);
-	EXPECT_EQ(s.b, 2);
-	EXPECT_EQ(s.c, 3);
-	EXPECT_EQ(s.d, 4);
-	EXPECT_EQ(s.e, 123456789.1234);
-	EXPECT_EQ(s.f, 6);
-	EXPECT_EQ(s.g, 7);
-	EXPECT_EQ(s.h, 8.0f);
-	EXPECT_EQ(s.i, 9);
-	EXPECT_EQ(s.j, 10);
-	EXPECT_EQ(s.k, 11);
-	EXPECT_EQ(s.l, 12);
-	EXPECT_EQ(s.m, 123456789123456789ll);
-	EXPECT_EQ(s.n, 14);
-	EXPECT_EQ(s.o, 15);
-	EXPECT_EQ(s.p, 16);
-	EXPECT_EQ(s.q, 17);
-	EXPECT_EQ(s.r, 18);
-	EXPECT_EQ(s.s, 19);
-
-	return 4;
 }
 
 int checkStructParamsHook(int a, CheckParamsStruct s) {
@@ -393,25 +325,12 @@ TEST_F(HookTest, SingleHookCheckStructParams) {
 	}), 5);
 }
 
-// should be passed through X0-X1 on ARM64
-struct CheckSmallStruct128 {
-	std::uint64_t x;
-	std::uint64_t y;
-};
-
-CheckSmallStruct128 checkSmallStruct128(CheckSmallStruct128 s) {
-	EXPECT_EQ(s.x, 10);
-	EXPECT_EQ(s.y, 11);
-
-	return {17, 18};
-}
-
 CheckSmallStruct128 checkSmallStruct128Hook(CheckSmallStruct128 s) {
 	EXPECT_EQ(s.x, 10);
 	EXPECT_EQ(s.y, 11);
 
 	return {19, 20};
-} 
+}
 
 TEST_F(HookTest, SmallStruct128Return) {
 	HandlerMetadata handlerMetadata;
@@ -432,26 +351,12 @@ TEST_F(HookTest, SmallStruct128Return) {
 	EXPECT_EQ(val.y, 20);
 }
 
-// should be passed either in one register (ARM64) or two (ARMv7)
-struct CheckSmallStruct64 {
-	std::uint32_t a;
-	std::uint32_t b;
-};
-
-CheckSmallStruct64 checkSmallStruct64(CheckSmallStruct64 s) {
-	// add some useless checks here to make the function larger
-	EXPECT_EQ(s.a, 8);
-	EXPECT_EQ(s.b, 9);
-
-	return {4, 5};
-}
-
 CheckSmallStruct64 checkSmallStruct64Hook(CheckSmallStruct64 s) {
 	EXPECT_EQ(s.a, 8);
 	EXPECT_EQ(s.b, 9);
 
 	return {5, 6};
-} 
+}
 
 TEST_F(HookTest, SmallStruct64Return) {
 #if defined(TULIP_HOOK_X86) && defined(TULIP_HOOK_WINDOWS)
