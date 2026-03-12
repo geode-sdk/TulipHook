@@ -8,8 +8,10 @@ CPMAddPackage("gh:google/googletest#f8d7d77")
 
 enable_testing()
 
+add_subdirectory("hooksdef")
+
 add_executable(${PROJECT_NAME} AssemblerArmV8.cpp Assembler86.cpp Assembler64.cpp Hook.cpp)
-target_link_libraries(${PROJECT_NAME} PUBLIC GTest::gtest_main TulipHook)
+target_link_libraries(${PROJECT_NAME} PUBLIC GTest::gtest_main TulipHook TulipHookHooks)
 
 if(WIN32)
 	if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
@@ -29,13 +31,6 @@ if(WIN32)
 		add_library(TestMod SHARED misc/Mod.cpp)
 		target_link_libraries(TestMod PUBLIC TulipHook)
 	endif()
-endif()
-
-if (APPLE)
-	add_subdirectory("hooksdef")
-	target_link_libraries(${PROJECT_NAME} PUBLIC TulipHookHooks)
-else()
-	target_sources(${PROJECT_NAME} PRIVATE hooksdef/HooksDef.cpp)
 endif()
 
 include(GoogleTest)
