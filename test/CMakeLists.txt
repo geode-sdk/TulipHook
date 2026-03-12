@@ -34,4 +34,4 @@ if(WIN32)
 endif()
 
 include(GoogleTest)
-gtest_discover_tests(${PROJECT_NAME})
+gtest_discover_tests(${PROJECT_NAME} DISCOVERY_MODE PRE_TEST)
