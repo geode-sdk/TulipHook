@@ -8,8 +8,6 @@ CPMAddPackage("gh:google/googletest#f8d7d77")
 
 enable_testing()
 
-add_subdirectory("hooksdef")
-
 add_executable(${PROJECT_NAME} AssemblerArmV8.cpp Assembler86.cpp Assembler64.cpp Hook.cpp)
 target_link_libraries(${PROJECT_NAME} PUBLIC GTest::gtest_main TulipHook)
 
@@ -33,7 +31,12 @@ if(WIN32)
 	endif()
 endif()
 
+if (APPLE)
+	add_subdirectory("hooksdef")
+	target_link_libraries(${PROJECT_NAME} PUBLIC TulipHookHooks)
+else()
+	target_sources(${PROJECT_NAME} PRIVATE hooksdef/HooksDef.cpp)
+endif()
+
 include(GoogleTest)
 gtest_discover_tests(${PROJECT_NAME})
-
-target_link_libraries(${PROJECT_NAME} PUBLIC TulipHookHooks)
