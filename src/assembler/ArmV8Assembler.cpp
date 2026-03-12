@@ -171,7 +171,7 @@ void ArmV8Assembler::pop(ArmV8RegisterArray const& array) {
 
 void ArmV8Assembler::ldr(ArmV8Register dst, ArmV8Register src, int32_t imm) {
     const auto srcShifted = val(src) << 5;
-    const auto offsetShifted = ((imm >> 2) & 0x3FFF) << 10;
+    const auto offsetShifted = ((imm >> 3) & 0xFFF) << 10;
     const auto simdShifted = is_simd(dst) << 26;
     this->write32(0xf9400000 | srcShifted | offsetShifted | val(dst) | simdShifted);
 }

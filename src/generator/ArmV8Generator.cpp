@@ -74,12 +74,14 @@ BaseGenerator::HandlerReturn ArmV8Generator::handlerBytes(int64_t original, int6
 	// preserve the return values
 	a.stp(X0, X8, SP, 0x10, SignedOffset);
 	a.stp(D0, D1, SP, 0x20, SignedOffset);
+	a.stp(X1, X1, SP, 0x30, SignedOffset); // i'm not writing str
 
 	// call the post handler, decrementing
 	a.ldr(X0, "handlerPost");
 	a.blr(X0);
 
 	// recover the return values
+	a.ldr(X1, SP, 0x30);
 	a.ldp(D0, D1, SP, 0x20, SignedOffset);
 	a.ldp(X0, X8, SP, 0x10, SignedOffset);
 
