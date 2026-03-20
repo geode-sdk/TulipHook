@@ -62,6 +62,7 @@ geode::Result<> Handler::init() {
 		return ss.str();
 	});
 
+	m_handlerSize = handler.bytes.size();
 	GEODE_UNWRAP(Target::get().writeMemory(m_handler, handler.bytes.data(), handler.bytes.size()));
 	if (handler.runtimeInfo) {
 		Target::get().registerFunction(m_handler, handler.bytes.size(), handler.runtimeInfo);
@@ -83,6 +84,7 @@ geode::Result<> Handler::init() {
 		dryRelocated = std::move(relocated);
 	} while (true);
 
+	m_relocatedSize = relocated.bytes.size();
 	Target::get().log([&]() {
 		std::stringstream ss;
 		ss << std::noshowbase << std::setfill('0') << std::hex;
@@ -107,6 +109,7 @@ geode::Result<> Handler::init() {
 			dryWrapped = std::move(wrapped);
 		} while (true);
 
+		m_trampolineSize = wrapped.bytes.size();
 		Target::get().log([&]() {
 			std::stringstream ss;
 			ss << std::noshowbase << std::setfill('0') << std::hex;
@@ -124,6 +127,7 @@ geode::Result<> Handler::init() {
 	}
 	else {
 		m_trampoline = m_relocated;
+		m_trampolineSize = m_relocatedSize;
 	}
 
 	m_modifiedBytes = generator->intervenerBytes((int64_t)m_address, (int64_t)m_handler, relocated.offset);
@@ -258,6 +262,34 @@ geode::Result<> Handler::restoreFunction() {
 		static_cast<void*>(m_originalBytes.data()),
 		m_originalBytes.size()
 	);
+}
+
+std::optional<FunctionInformationReturn> Handler::getFunctionInformation(void* address) noexcept {
+	auto const val = reinterpret_cast<uintptr_t>(address);
+	auto const handlerVal = reinterpret_cast<uintptr_t>(m_handler);
+	auto const relocatedVal = reinterpret_cast<uintptr_t>(m_relocated);
+	auto const trampolineVal = reinterpret_cast<uintptr_t>(m_trampoline);
+	auto const intervenerVal = reinterpret_cast<uintptr_t>(m_address);
+	auto const handlerEndVal = handlerVal + m_handlerSize;
+	auto const relocatedEndVal = relocatedVal + m_relocatedSize;
+	auto const trampolineEndVal = trampolineVal + m_trampolineSize;
+	auto const intervenerEndVal = intervenerVal + m_modifiedBytes.size();
+
+	if (val >= handlerVal && val < handlerEndVal) {
+		return FunctionInformationReturn{m_handler, (void*)handlerEndVal, FunctionInformationReturn::Type::Handler};
+	}
+	else if (val >= relocatedVal && val < relocatedEndVal) {
+		return FunctionInformationReturn{m_relocated, (void*)relocatedEndVal, FunctionInformationReturn::Type::Relocated};
+	}
+	else if (val >= trampolineVal && val < trampolineEndVal) {
+		return FunctionInformationReturn{m_trampoline, (void*)trampolineEndVal, FunctionInformationReturn::Type::Trampoline};
+	}
+	else if (val >= intervenerVal && val < intervenerEndVal) {
+		return FunctionInformationReturn{m_address, (void*)intervenerEndVal, FunctionInformationReturn::Type::Intervener};
+	}
+	else {
+		return std::nullopt;
+	}
 }
 
 static thread_local std::stack<size_t> s_indexStack;

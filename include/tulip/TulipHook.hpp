@@ -8,6 +8,7 @@
 #include "HookData.hpp"
 #include "Platform.hpp"
 #include <Geode/Result.hpp>
+#include <optional>
 #include "WrapperData.hpp"
 #include "platform/PlatformConvention.hpp"
 
@@ -61,4 +62,20 @@ namespace tulip::hook {
 	TULIP_HOOK_DLL std::vector<uint8_t> getCommonIntervenerBytes(int64_t original, int64_t handler, size_t unique, ptrdiff_t relocOffset);
 
 	TULIP_HOOK_DLL void setLogCallback(std::function<void(std::string_view)> callback) noexcept;
+
+	struct FunctionInformationReturn {
+		void* start;
+		void* end;
+		enum class Type {
+			Handler = 0, // the main handler
+			Relocated = 1, // relocated function
+			Trampoline = 2, // relocated function wrapped in a trampoline
+			Intervener = 32, // the function that jumps to handler
+			RuntimeInfo = 33, // runtime information
+		};
+		Type type;
+	};
+
+	TULIP_HOOK_DLL std::optional<FunctionInformationReturn> getFunctionInformation(void* address) noexcept;
+
 }

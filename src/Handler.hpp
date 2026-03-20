@@ -5,6 +5,7 @@
 #include <HookData.hpp>
 #include <Platform.hpp>
 #include <Geode/Result.hpp>
+#include <TulipHook.hpp>
 #include <array>
 #include <memory>
 #include <unordered_map>
@@ -31,10 +32,13 @@ namespace tulip::hook {
 		std::unique_ptr<HandlerContent> m_content;
 
 		void* m_trampoline = nullptr;
+		size_t m_trampolineSize = 0;
 
 		void* m_handler = nullptr;
+		size_t m_handlerSize = 0;
 
 		void* m_relocated = nullptr;
+		size_t m_relocatedSize = 0;
 
 		std::vector<uint8_t> m_originalBytes;
 		std::vector<uint8_t> m_modifiedBytes;
@@ -64,5 +68,7 @@ namespace tulip::hook {
 
 		geode::Result<> interveneFunction();
 		geode::Result<> restoreFunction();
+
+		std::optional<FunctionInformationReturn> getFunctionInformation(void* address) noexcept;
 	};
 }

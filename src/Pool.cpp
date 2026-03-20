@@ -98,3 +98,13 @@ geode::Result<> Pool::disableRuntimeIntervening(void* commonHandlerSpace) {
 	
 	return geode::Ok();
 }
+
+std::optional<FunctionInformationReturn> Pool::getFunctionInformation(void* address) noexcept {
+	for (auto& [_, handler] : m_handlers) {
+		auto info = handler->getFunctionInformation(address);
+		if (info.has_value()) {
+			return info;
+		}
+	}
+	return std::nullopt;
+}

@@ -78,3 +78,7 @@ std::vector<uint8_t> tulip::hook::getCommonIntervenerBytes(int64_t original, int
 void tulip::hook::setLogCallback(std::function<void(std::string_view)> callback) noexcept{
 	Target::get().registerLogCallback(std::move(callback));
 }
+
+std::optional<FunctionInformationReturn> tulip::hook::getFunctionInformation(void* address) noexcept {
+	return Pool::get().getFunctionInformation(address);
+}
