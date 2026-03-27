@@ -45,14 +45,19 @@ Handler& Pool::getHandler(HandlerHandle const& handle) {
 	return *m_handlers.at(handle);
 }
 
+static thread_local std::vector<Handler*> s_handlerList;
+
 void* Pool::getCommonHandler(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType) {
 	if (handlerType == 1) {
 		Handler::decrementIndex();
 		return nullptr;
 	}
 
-	if (m_handlerList.size() <= uniqueIndex || m_handlerList[uniqueIndex] == nullptr) {
-		m_handlerList.resize(uniqueIndex + 1, nullptr);
+	if (s_handlerList.size() <= uniqueIndex || s_handlerList[uniqueIndex] == nullptr) {
+		s_handlerList.resize(uniqueIndex + 1, nullptr);
+		bool shouldCreateTrampoline = false;
+
+		std::unique_lock lock(m_handlerMutex);
 
 		auto handle = reinterpret_cast<HandlerHandle>(originalFunction);
 		if (m_handlers.find(handle) == m_handlers.end()) {
@@ -61,18 +66,21 @@ void* Pool::getCommonHandler(void* originalFunction, size_t uniqueIndex, ptrdiff
 				.m_abstract = AbstractFunction::from<void(void)>()
 			});
 			m_handlers.emplace(handle, std::move(handler));
+			shouldCreateTrampoline = true;
 		}
-		m_handlerList[uniqueIndex] = m_handlers[handle].get();
+		s_handlerList[uniqueIndex] = m_handlers[handle].get();
 
-		auto trampoline = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(commonHandler) + trampolineOffset);
+		if (shouldCreateTrampoline) {
+			auto trampoline = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(commonHandler) + trampolineOffset);
 
-		auto metadata = HookMetadata{
-			.m_priority = INT_MAX,
-		};
-		m_handlerList[uniqueIndex]->createHook(trampoline, metadata);
+			auto metadata = HookMetadata{
+				.m_priority = INT_MAX,
+			};
+			s_handlerList[uniqueIndex]->createHook(trampoline, metadata);
+		}
 	}
 
-	auto handler = m_handlerList[uniqueIndex];
+	auto handler = s_handlerList[uniqueIndex];
 	auto content = handler->m_content.get();
 	Handler::incrementIndex(content);
 	return Handler::getNextFunction(content);

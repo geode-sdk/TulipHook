@@ -5,6 +5,7 @@
 #include <TulipHook.hpp>
 #include <memory>
 #include <unordered_map>
+#include <mutex>
 
 namespace tulip::hook {
 	class Handler;
@@ -12,7 +13,7 @@ namespace tulip::hook {
 	class Pool {
 	public:
 		std::unordered_map<HandlerHandle, std::unique_ptr<Handler>> m_handlers;
-		std::vector<Handler*> m_handlerList;
+		std::mutex m_handlerMutex;
 		bool m_runtimeInterveningDisabled = false;
 
 		static void* getCommonHandlerStatic(void* originalFunction, size_t uniqueIndex, ptrdiff_t trampolineOffset, void* commonHandler, int handlerType);
