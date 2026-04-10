@@ -74,7 +74,7 @@ void ArmV8Disassembler::handleCB_(ArmV8Instruction& instruction) {
 
 std::unique_ptr<BaseInstruction> ArmV8Disassembler::disassembleNext() {
     if (m_currentIndex >= m_input.size()) {
-        return nullptr; // No more instructions to disassemble
+        return nullptr;
     }
 
     uint32_t rawInstruction = 0;
@@ -98,11 +98,11 @@ std::unique_ptr<BaseInstruction> ArmV8Disassembler::disassembleNext() {
         } else {
             this->handleADR(*instruction);
         }
-    } else if ((rawInstruction & 0x7E000000) == 0x74000000) { // CB_
+    } else if ((rawInstruction & 0x7E000000) == 0x34000000) { // CBZ, CBNZ
         this->handleCB_(*instruction);
     } else if ((rawInstruction & 0xFE000000) == 0x54000000) { // B_Cond
         this->handleBCond(*instruction);
-    } else if ((rawInstruction & 0x7E000000) == 0x36000000) { // TB_Z
+    } else if ((rawInstruction & 0x7E000000) == 0x36000000) { // TBZ, TBNZ
         this->handleTB_Z(*instruction);
     }
 
