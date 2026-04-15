@@ -46,7 +46,7 @@ void ArmV8Disassembler::handleADRP(ArmV8Instruction& instruction) {
     instruction.m_dst1 = this->extractRegister(0, instruction.m_rawInstruction);
     instruction.m_immediate = this->extractValue(29, 2, instruction.m_rawInstruction, false) << 12;
     instruction.m_immediate |= this->extractValue(5, 19, instruction.m_rawInstruction) << 14;
-    instruction.m_literal = (m_baseAddress + (instruction.m_immediate)) & ~0xFFFll;
+    instruction.m_literal = (m_baseAddress + (instruction.m_immediate)); // & ~0xFFFll;
 }
 
 void ArmV8Disassembler::handleBCond(ArmV8Instruction& instruction) {
