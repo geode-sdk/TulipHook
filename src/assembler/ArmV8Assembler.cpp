@@ -109,6 +109,13 @@ void ArmV8Assembler::adr(ArmV8Register dst, int64_t imm) {
 void ArmV8Assembler::adrp(ArmV8Register dst, int64_t imm) {
     const auto immlo = ((imm >> 12) & 3ll) << 29;
     const auto immhi = ((imm >> 14) & 0x7ffffll) << 5;
+	Target::get().log([&]() {
+		std::stringstream ss;
+		ss << std::noshowbase << std::setfill('0') << std::hex;
+		ss << "immlo: " << immlo << ", immhi: " << immhi
+			<< ", imm: " << imm << ", dst: " << val(dst);
+		return ss.str();
+	});
     this->write32(0x90000000 | immlo | immhi | val(dst));
 }
 
