@@ -1,4 +1,5 @@
 #include "ArmV8Assembler.hpp"
+#include "../target/PlatformTarget.hpp"
 
 using namespace tulip::hook;
 
