@@ -10,7 +10,7 @@ ArmV8Disassembler::ArmV8Disassembler(int64_t baseAddress, std::vector<uint8_t> c
 ArmV8Disassembler::~ArmV8Disassembler() = default;
 
 ArmV8Register ArmV8Disassembler::extractRegister(int startBit, uint32_t instruction) {
-    return static_cast<ArmV8Register>(this->extractValue(startBit, 5, instruction));
+    return static_cast<ArmV8Register>(this->extractValue(startBit, 5, instruction, false));
 }
 
 void ArmV8Disassembler::handleB(ArmV8Instruction& instruction) {
