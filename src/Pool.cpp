@@ -55,7 +55,6 @@ void* Pool::getCommonHandler(void* originalFunction, size_t uniqueIndex, ptrdiff
 
 	if (s_handlerList.size() <= uniqueIndex || s_handlerList[uniqueIndex] == nullptr) {
 		s_handlerList.resize(uniqueIndex + 1, nullptr);
-		bool shouldCreateTrampoline = false;
 
 		std::unique_lock lock(m_handlerMutex);
 
@@ -66,18 +65,15 @@ void* Pool::getCommonHandler(void* originalFunction, size_t uniqueIndex, ptrdiff
 				.m_abstract = AbstractFunction::from<void(void)>()
 			});
 			m_handlers.emplace(handle, std::move(handler));
-			shouldCreateTrampoline = true;
 		}
 		s_handlerList[uniqueIndex] = m_handlers[handle].get();
 
-		if (shouldCreateTrampoline) {
-			auto trampoline = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(commonHandler) + trampolineOffset);
+		auto trampoline = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(commonHandler) + trampolineOffset);
 
-			auto metadata = HookMetadata{
-				.m_priority = INT_MAX,
-			};
-			s_handlerList[uniqueIndex]->createHook(trampoline, metadata);
-		}
+		auto metadata = HookMetadata{
+			.m_priority = INT_MAX,
+		};
+		s_handlerList[uniqueIndex]->createHook(trampoline, metadata);
 	}
 
 	auto handler = s_handlerList[uniqueIndex];
@@ -103,7 +99,7 @@ geode::Result<> Pool::disableRuntimeIntervening(void* commonHandlerSpace) {
 	GEODE_UNWRAP(Target::get().writeMemory(commonHandlerSpace, &handler, sizeof(handler)));
 
 	m_runtimeInterveningDisabled = true;
-	
+
 	return geode::Ok();
 }
 
