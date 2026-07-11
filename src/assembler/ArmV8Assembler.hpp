@@ -115,8 +115,8 @@ namespace tulip::hook {
 		void tbz(ArmV8Register reg, int32_t bit, int32_t imm);
 		void tbnz(ArmV8Register reg, int32_t bit, int32_t imm);
 
-		void cbz(ArmV8Register reg, int32_t imm);
-		void cbnz(ArmV8Register reg, int32_t imm);
+		void cbz(ArmV8Register reg, int32_t imm, bool is64Bit = true);
+		void cbnz(ArmV8Register reg, int32_t imm, bool is64Bit = true);
 
 		void bcond(int32_t imm, uint32_t cond);
 
@@ -125,5 +125,5 @@ namespace tulip::hook {
 		void push(ArmV8RegisterArray const& array);
 		void pop(ArmV8RegisterArray const& array);
 	};
-	
+
 }

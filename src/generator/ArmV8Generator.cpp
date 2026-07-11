@@ -187,8 +187,16 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 			return ss.str();
 		});
 
+		auto shouldSkipBranch = [&] {
+			bool should = ins->m_literal >= address && ins->m_literal < address + targetSize;
+			if (should) a.write32(ins->m_rawInstruction);
+			return should;
+		};
+
 		switch (ins->m_type) {
 			case ArmV8InstructionType::B: {
+				if (shouldSkipBranch()) break;
+
 				if (canDeltaRange(newOffset, 28)) {
 					a.b(newOffset);
 				} else if (canDeltaRange(newOffset, 33)) {
@@ -205,6 +213,8 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 				break;
 			}
 			case ArmV8InstructionType::BL: {
+				if (shouldSkipBranch()) break;
+
 				if (canDeltaRange(newOffset, 28)) {
 					a.bl(newOffset);
 				} else if (canDeltaRange(newOffset, 33)) {
@@ -274,6 +284,8 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 				break;
 			}
 			case ArmV8InstructionType::B_Cond: {
+				if (shouldSkipBranch()) break;
+
 				if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, alignedCallback - alignedAddr);
 					a.add(X16, X16, callback & 0xFFF);
@@ -297,17 +309,21 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 				break;
 			}
 			case ArmV8InstructionType::CBZ: {
+				if (shouldSkipBranch()) break;
+
+				bool sf = (ins->m_rawInstruction >> 31) & 1;
+
 				if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, alignedCallback - alignedAddr);
 					a.add(X16, X16, callback & 0xFFF);
-					a.cbz(ins->m_src1, 8);
+					a.cbz(ins->m_src1, 8, sf);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
 
 					a.label("jump-" + idxLabel);
 				} else {
 					a.ldr(X16, "literal-" + idxLabel);
-					a.cbz(ins->m_src1, 8);
+					a.cbz(ins->m_src1, 8, sf);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
 
@@ -319,17 +335,21 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 				break;
 			}
 			case ArmV8InstructionType::CBNZ: {
+				if (shouldSkipBranch()) break;
+
+				bool sf = (ins->m_rawInstruction >> 31) & 1;
+
 				if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, alignedCallback - alignedAddr);
 					a.add(X16, X16, callback & 0xFFF);
-					a.cbnz(ins->m_src1, 8);
+					a.cbnz(ins->m_src1, 8, sf);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
 
 					a.label("jump-" + idxLabel);
 				} else {
 					a.ldr(X16, "literal-" + idxLabel);
-					a.cbnz(ins->m_src1, 8);
+					a.cbnz(ins->m_src1, 8, sf);
 					a.b("jump-" + idxLabel);
 					a.br(X16);
 
@@ -341,6 +361,8 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 				break;
 			}
 			case ArmV8InstructionType::TBZ: {
+				if (shouldSkipBranch()) break;
+
 				if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, alignedCallback - alignedAddr);
 					a.add(X16, X16, callback & 0xFFF);
@@ -365,6 +387,8 @@ geode::Result<BaseGenerator::RelocateReturn> ArmV8Generator::relocatedBytes(int6
 				break;
 			}
 			case ArmV8InstructionType::TBNZ: {
+				if (shouldSkipBranch()) break;
+
 				if (canDeltaRange(newOffset, 33)) {
 					a.adrp(X16, alignedCallback - alignedAddr);
 					a.add(X16, X16, callback & 0xFFF);
