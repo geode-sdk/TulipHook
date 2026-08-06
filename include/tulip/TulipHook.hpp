@@ -30,6 +30,8 @@ namespace tulip::hook {
 
 	TULIP_HOOK_DLL geode::Result<void, std::string> writeMemory(void* destination, void const* source, size_t size) noexcept;
 
+	TULIP_HOOK_DLL geode::Result<void, std::string> restoreMemory(void* destination) noexcept;
+
 	TULIP_HOOK_DLL geode::Result<void*, std::string> followJumps(void* address) noexcept;
 
 	// wraps a cdecl function into given convention

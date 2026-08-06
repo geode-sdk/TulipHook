@@ -35,6 +35,10 @@ geode::Result<> tulip::hook::writeMemory(void* destination, void const* source, 
 	return Target::get().writeMemory(destination, source, size);
 }
 
+geode::Result<> tulip::hook::restoreMemory(void* destination) noexcept {
+	return Target::get().restoreMemory(destination);
+}
+
 geode::Result<void*> tulip::hook::followJumps(void* address) noexcept {
 	return Misc::followJumps(address);
 }
