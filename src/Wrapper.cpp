@@ -12,6 +12,8 @@ Wrapper& Wrapper::get() {
 }
 
 geode::Result<void*> Wrapper::createWrapper(void* address, WrapperMetadata const& metadata) {
+	std::lock_guard lock(m_mutex);
+
 	if (m_wrappers.count(address) == 0) {
 		auto generator = Target::get().getGenerator();
 

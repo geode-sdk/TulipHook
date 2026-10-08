@@ -4,6 +4,7 @@
 #include <Geode/Result.hpp>
 #include <WrapperData.hpp>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 
 namespace tulip::hook {
@@ -18,6 +19,7 @@ namespace tulip::hook {
 	public:
 		std::unordered_map<void*, WrapperData> m_wrappers;
 		std::unordered_map<void*, WrapperData> m_reverseWrappers;
+		std::mutex m_mutex;
 
 		static Wrapper& get();
 
