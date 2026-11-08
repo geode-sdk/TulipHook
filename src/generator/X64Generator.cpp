@@ -250,7 +250,7 @@ BaseGenerator::HandlerReturn X64Generator::handlerBytes(int64_t original, int64_
 
 	a.updateLabels();
 
-	auto runtimeInfo = this->runtimeInfoBytes(handler, a.buffer().size(), 
+	auto runtimeInfo = this->runtimeInfoBytes(handler, a.buffer().size(),
 		a.getLabel("handler-push"), a.getLabel("handler-frame-move"), a.getLabel("handler-alloc-mid")
 	);
 
@@ -331,7 +331,7 @@ BaseGenerator::WrapperReturn X64Generator::wrapperBytes(int64_t original, int64_
 
 	a.updateLabels();
 
-	auto runtimeInfo = this->runtimeInfoBytes(wrapper, a.buffer().size(), 
+	auto runtimeInfo = this->runtimeInfoBytes(wrapper, a.buffer().size(),
 		a.getLabel("wrapper-push"), a.getLabel("wrapper-frame-move"), a.getLabel("wrapper-alloc-mid")
 	);
 
@@ -445,7 +445,8 @@ geode::Result<> X64Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		a.write64(*reinterpret_cast<uint64_t*>(absolute));
 	}
 	else if (detail->x86.encoding.modrm_offset > 0 && ((detail->x86.modrm & 0b11000111) == 5)) {
-		bool shouldPush = !(operand0.type == X86_OP_REG && operand0.reg == X86_REG_RAX);
+		bool isAx = (operand0.reg == X86_REG_RAX || operand0.reg == X86_REG_EAX || operand0.reg == X86_REG_AX || operand0.reg == X86_REG_AL);
+		bool shouldPush = !(operand0.type == X86_OP_REG && isAx);
 
 		// Trying to catch via modrm instructions
 		if (shouldPush) {
