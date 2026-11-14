@@ -31,6 +31,6 @@ std::string tulip::hook::Error::toString() const {
             return "Failed to write to memory";
         case CapstoneError:
             if (m_message.size()) return "Capstone error: " + m_message;
-            return "Capstone error"
+            return "Capstone error";
     }
 }
