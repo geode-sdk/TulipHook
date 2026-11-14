@@ -13,7 +13,7 @@ using namespace tulip::hook;
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/task.h>
 
-e::Result<> DarwinTarget::allocatePage() {
+Result<> DarwinTarget::allocatePage() {
 	kern_return_t status;
 	vm_address_t ret;
 

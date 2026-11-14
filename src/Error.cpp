@@ -33,4 +33,5 @@ std::string tulip::hook::Error::toString() const {
             if (m_message.size()) return "Capstone error: " + m_message;
             return "Capstone error";
     }
+    return "";
 }
