@@ -130,7 +130,7 @@ BaseGenerator::WrapperReturn X86Generator::wrapperBytes(int64_t original, int64_
 	};
 }
 
-geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer, size_t targetSize) {
+Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer, size_t targetSize) {
 	X86Assembler a(relocated);
 	RegMem32 m;
 	using enum X86Register;
@@ -185,7 +185,7 @@ geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_
 
 	a.align16();
 
-	return geode::Ok(RelocateReturn{
+	return Ok(RelocateReturn{
 		.bytes = std::move(a.m_buffer),
 		.offset = (size_t)originalOffset,
 	});
@@ -203,9 +203,9 @@ geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_
 // 	return std::move(a.m_buffer);
 // }
 
-// geode::Result<void*> X86WrapperGenerator::generateReverseWrapper() {
+// Result<void*> X86WrapperGenerator::generateReverseWrapper() {
 // 	if (!m_metadata.m_convention->needsWrapper(m_metadata.m_abstract)) {
-// 		return geode::Ok(m_address);
+// 		return Ok(m_address);
 // 	}
 
 // 	// this is silly, butt
@@ -217,10 +217,10 @@ geode::Result<BaseGenerator::RelocateReturn> X86Generator::relocatedBytes(int64_
 
 // 	GEODE_UNWRAP(Target::get().writeMemory(area, code.data(), codeSize));
 
-// 	return geode::Ok(area);
+// 	return Ok(area);
 // }
 
-geode::Result<> X86Generator::relocateInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t relocated, size_t originalTarget, int64_t original) {
+Result<> X86Generator::relocateInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t relocated, size_t originalTarget, int64_t original) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -266,10 +266,10 @@ geode::Result<> X86Generator::relocateInstruction(cs_insn* insn, uint8_t* buffer
 
 	trampolineAddress += size;
 	originalAddress += size;
-	return geode::Ok();
+	return Ok();
 }
 
-geode::Result<> X86Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
+Result<> X86Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -277,7 +277,7 @@ geode::Result<> X86Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 	auto difference = static_cast<int64_t>(trampolineAddress) - static_cast<int64_t>(originalAddress);
 
 	if (difference > 0x7fffffffll || difference < -0x80000000ll) {
-		return geode::Err("rip displacement too large");
+		return Err(Error{Error::FailedToRelocate, "rip displacement too large"});
 	}
 
 	// std::cout << "short disp: " << disp << std::endl;
@@ -290,10 +290,10 @@ geode::Result<> X86Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 
 	trampolineAddress += size;
 	originalAddress += size;
-	return geode::Ok();
+	return Ok();
 }
 
-geode::Result<> X86Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget, int64_t original) {
+Result<> X86Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget, int64_t original) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -301,7 +301,7 @@ geode::Result<> X86Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* 
 	auto difference = static_cast<int64_t>(trampolineAddress) - static_cast<int64_t>(originalAddress);
 
 	if (difference > 0x7fffffffll || difference < -0x80000000ll) {
-		return geode::Err("branch displacement too large");
+		return Err(Error{Error::FailedToRelocate, "branch displacement too large"});
 	}
 
 	if (id == X86_INS_JMP) {
@@ -340,5 +340,5 @@ geode::Result<> X86Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* 
 	}
 
 	originalAddress += size;
-	return geode::Ok();
+	return Ok();
 }

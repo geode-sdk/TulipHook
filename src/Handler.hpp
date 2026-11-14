@@ -4,7 +4,7 @@
 #include <WrapperData.hpp>
 #include <HookData.hpp>
 #include <Platform.hpp>
-#include <Geode/Result.hpp>
+#include <Error.hpp>
 #include <TulipHook.hpp>
 #include <array>
 #include <memory>
@@ -46,7 +46,7 @@ namespace tulip::hook {
 		static std::unique_ptr<Handler> create(void* address, HandlerMetadata const& metadata);
 		~Handler();
 
-		geode::Result<> init();
+		Result<> init();
 
 		HookHandle createHook(void* address, HookMetadata m_metadata);
 		void removeHook(HookHandle const& hook);
@@ -66,8 +66,8 @@ namespace tulip::hook {
 		static void* popData();
 		static void pushData(void* data);
 
-		geode::Result<> interveneFunction();
-		geode::Result<> restoreFunction();
+		Result<> interveneFunction();
+		Result<> restoreFunction();
 
 		std::optional<FunctionInformationReturn> getFunctionInformation(void* address) noexcept;
 	};

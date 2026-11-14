@@ -12,11 +12,11 @@ namespace tulip::hook {
 	public:
 		using DarwinTarget::DarwinTarget;
 
-		geode::Result<> allocatePage() override;
-		geode::Result<> rawWriteMemory(void* destination, void const* source, size_t size) override;
-		geode::Result<> protectMemory(void* address, size_t size, uint32_t protection) override;
+		Result<> allocatePage() override;
+		Result<> rawWriteMemory(void* destination, void const* source, size_t size) override;
+		Result<> protectMemory(void* address, size_t size, uint32_t protection) override;
 
-		geode::Result<csh> openCapstone() override;
+		Result<csh> openCapstone() override;
 
 		std::unique_ptr<BaseGenerator> getGenerator() override;
 

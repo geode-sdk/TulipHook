@@ -250,7 +250,7 @@ BaseGenerator::HandlerReturn X64Generator::handlerBytes(int64_t original, int64_
 
 	a.updateLabels();
 
-	auto runtimeInfo = this->runtimeInfoBytes(handler, a.buffer().size(), 
+	auto runtimeInfo = this->runtimeInfoBytes(handler, a.buffer().size(),
 		a.getLabel("handler-push"), a.getLabel("handler-frame-move"), a.getLabel("handler-alloc-mid")
 	);
 
@@ -331,7 +331,7 @@ BaseGenerator::WrapperReturn X64Generator::wrapperBytes(int64_t original, int64_
 
 	a.updateLabels();
 
-	auto runtimeInfo = this->runtimeInfoBytes(wrapper, a.buffer().size(), 
+	auto runtimeInfo = this->runtimeInfoBytes(wrapper, a.buffer().size(),
 		a.getLabel("wrapper-push"), a.getLabel("wrapper-frame-move"), a.getLabel("wrapper-alloc-mid")
 	);
 
@@ -410,7 +410,7 @@ std::vector<uint8_t> X64Generator::runtimeInfoBytes(int64_t function, size_t siz
 	return std::move(a.m_buffer);
 }
 
-geode::Result<> X64Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
+Result<> X64Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t disp) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -474,7 +474,7 @@ geode::Result<> X64Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 		a.write64(absolute);
 	}
 	else {
-		return geode::Err("Could not relocate rip instruction");
+		return Err(Error{Error::FailedToRelocate, "could not relocate rip instruction"});
 	}
 
 	a.label("skip-pointer");
@@ -486,7 +486,7 @@ geode::Result<> X64Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 
 	trampolineAddress += bytes.size();
 	originalAddress += size;
-	return geode::Ok();
+	return Ok();
 }
 
 // std::vector<uint8_t> X64WrapperGenerator::reverseWrapperBytes(uint64_t address) {
@@ -508,7 +508,7 @@ geode::Result<> X64Generator::relocateRIPInstruction(cs_insn* insn, uint8_t* buf
 // 	return std::move(a.m_buffer);
 // }
 
-geode::Result<> X64Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget, int64_t original) {
+Result<> X64Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* buffer, uint64_t& trampolineAddress, uint64_t& originalAddress, int64_t targetAddress, int64_t relocated, size_t originalTarget, int64_t original) {
 	auto const id = insn->id;
 	auto const detail = insn->detail;
 	auto const address = insn->address;
@@ -606,5 +606,5 @@ geode::Result<> X64Generator::relocateBranchInstruction(cs_insn* insn, uint8_t* 
 		trampolineAddress += bytes.size();
 		originalAddress += size;
 	}
-	return geode::Ok();
+	return Ok();
 }

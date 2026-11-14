@@ -11,13 +11,13 @@ Wrapper& Wrapper::get() {
 	return ret;
 }
 
-geode::Result<void*> Wrapper::createWrapper(void* address, WrapperMetadata const& metadata) {
+Result<void*> Wrapper::createWrapper(void* address, WrapperMetadata const& metadata) {
 	if (m_wrappers.count(address) == 0) {
 		auto generator = Target::get().getGenerator();
 
 		if (!metadata.m_convention->needsWrapper(metadata.m_abstract)) {
 			m_wrappers[address] = { address, 0 };
-			return geode::Ok(address);
+			return Ok(address);
 		}
 
 		auto dry = generator->wrapperBytes((int64_t)address, 0, metadata);
@@ -33,9 +33,9 @@ geode::Result<void*> Wrapper::createWrapper(void* address, WrapperMetadata const
 		m_wrappers[address] = { wrapper, reinterpret_cast<void*>(wrapped.runtimeInfo) };
 	}
 
-	return geode::Ok(m_wrappers[address].m_address);
+	return Ok(m_wrappers[address].m_address);
 }
 
-geode::Result<void*> Wrapper::createReverseWrapper(void* address, WrapperMetadata const& metadata) {
-	return geode::Err("Deprecated");
+Result<void*> Wrapper::createReverseWrapper(void* address, WrapperMetadata const& metadata) {
+	return Err(Error{Error::NotImplemented, "createReverseWrapper"});
 }

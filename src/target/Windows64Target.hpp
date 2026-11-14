@@ -11,9 +11,9 @@ namespace tulip::hook {
 	public:
 		using Windows32Target::Windows32Target;
 
-		geode::Result<csh> openCapstone() override;
+		Result<csh> openCapstone() override;
 
-		geode::Result<> allocatePage() override;
+		Result<> allocatePage() override;
 		std::unique_ptr<BaseGenerator> getGenerator() override;
 
 		std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept override;

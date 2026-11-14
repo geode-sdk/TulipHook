@@ -9,11 +9,11 @@
 
 using namespace tulip::hook;
 
-geode::Result<HandlerHandle> tulip::hook::createHandler(void* address, HandlerMetadata const& metadata) noexcept {
+Result<HandlerHandle> tulip::hook::createHandler(void* address, HandlerMetadata const& metadata) noexcept {
 	return Pool::get().createHandler(address, metadata);
 }
 
-geode::Result<> tulip::hook::removeHandler(HandlerHandle const& handler) noexcept {
+Result<> tulip::hook::removeHandler(HandlerHandle const& handler) noexcept {
 	return Pool::get().removeHandler(handler);
 }
 
@@ -31,19 +31,19 @@ void tulip::hook::updateHookMetadata(
 	return Pool::get().getHandler(handler).updateHookMetadata(hook, metadata);
 }
 
-geode::Result<> tulip::hook::writeMemory(void* destination, void const* source, size_t size) noexcept {
+Result<> tulip::hook::writeMemory(void* destination, void const* source, size_t size) noexcept {
 	return Target::get().writeMemory(destination, source, size);
 }
 
-geode::Result<void*> tulip::hook::followJumps(void* address) noexcept {
+Result<void*> tulip::hook::followJumps(void* address) noexcept {
 	return Misc::followJumps(address);
 }
 
-geode::Result<void*> tulip::hook::createWrapper(void* address, WrapperMetadata const& metadata) noexcept {
+Result<void*> tulip::hook::createWrapper(void* address, WrapperMetadata const& metadata) noexcept {
 	return Wrapper::get().createWrapper(address, metadata);
 }
 
-geode::Result<void*> tulip::hook::createReverseWrapper(void* address, WrapperMetadata const& metadata) noexcept {
+Result<void*> tulip::hook::createReverseWrapper(void* address, WrapperMetadata const& metadata) noexcept {
 	return Wrapper::get().createReverseWrapper(address, metadata);
 }
 
@@ -51,7 +51,7 @@ std::shared_ptr<CallingConvention> tulip::hook::createConvention(TulipConvention
 	return Target::get().createConvention(convention);
 }
 
-geode::Result<> tulip::hook::disableRuntimeIntervening(void* commonHandlerSpace) noexcept {
+Result<> tulip::hook::disableRuntimeIntervening(void* commonHandlerSpace) noexcept {
 	return Pool::get().disableRuntimeIntervening(commonHandlerSpace);
 }
 

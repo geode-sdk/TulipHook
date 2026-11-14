@@ -1,24 +1,20 @@
 #pragma once
 
-#include "AbstractFunction.hpp"
-#include "AbstractType.hpp"
 #include "CallingConvention.hpp"
-#include "FunctionData.hpp"
+#include "Error.hpp"
 #include "HandlerData.hpp"
 #include "HookData.hpp"
 #include "Platform.hpp"
-#include <Geode/Result.hpp>
 #include <optional>
 #include "WrapperData.hpp"
 #include "platform/PlatformConvention.hpp"
 
-#include <system_error>
 #include <functional>
 
 namespace tulip::hook {
-	TULIP_HOOK_DLL geode::Result<HandlerHandle> createHandler(void* address, HandlerMetadata const& metadata) noexcept;
+	TULIP_HOOK_DLL Result<HandlerHandle> createHandler(void* address, HandlerMetadata const& metadata) noexcept;
 
-	TULIP_HOOK_DLL geode::Result<void, std::string> removeHandler(HandlerHandle const& handler) noexcept;
+	TULIP_HOOK_DLL Result<void> removeHandler(HandlerHandle const& handler) noexcept;
 
 	TULIP_HOOK_DLL HookHandle createHook(HandlerHandle const& handler, void* address, HookMetadata const& metadata) noexcept;
 
@@ -28,15 +24,15 @@ namespace tulip::hook {
 		HandlerHandle const& handler, HookHandle const& hook, HookMetadata const& metadata
 	) noexcept;
 
-	TULIP_HOOK_DLL geode::Result<void, std::string> writeMemory(void* destination, void const* source, size_t size) noexcept;
+	TULIP_HOOK_DLL Result<void> writeMemory(void* destination, void const* source, size_t size) noexcept;
 
-	TULIP_HOOK_DLL geode::Result<void*, std::string> followJumps(void* address) noexcept;
+	TULIP_HOOK_DLL Result<void*> followJumps(void* address) noexcept;
 
 	// wraps a cdecl function into given convention
-	TULIP_HOOK_DLL geode::Result<void*, std::string> createWrapper(void* address, WrapperMetadata const& metadata) noexcept;
+	TULIP_HOOK_DLL Result<void*> createWrapper(void* address, WrapperMetadata const& metadata) noexcept;
 
 	// wraps a function in given convention into cdecl
-	TULIP_HOOK_DLL geode::Result<void*, std::string> createReverseWrapper(void* address, WrapperMetadata const& metadata) noexcept;
+	TULIP_HOOK_DLL Result<void*> createReverseWrapper(void* address, WrapperMetadata const& metadata) noexcept;
 
 	enum class TulipConvention {
 		Default,
@@ -50,7 +46,7 @@ namespace tulip::hook {
 
 	TULIP_HOOK_DLL std::shared_ptr<CallingConvention> createConvention(TulipConvention convention) noexcept;
 
-	TULIP_HOOK_DLL geode::Result<void, std::string> disableRuntimeIntervening(void* commonHandlerSpace) noexcept;
+	TULIP_HOOK_DLL Result<void> disableRuntimeIntervening(void* commonHandlerSpace) noexcept;
 
 	struct RelocaledBytesReturn {
 		std::vector<uint8_t> bytes;
