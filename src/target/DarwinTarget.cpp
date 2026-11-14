@@ -9,7 +9,7 @@ using namespace tulip::hook;
 #include <mach/mach.h>
 #include <mach/mach_init.h> /* mach_task_self()     */
 #include <mach/mach_port.h>
-#include <mach/error.h>
+#include <mach/mach_error.h>
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/task.h>
 
