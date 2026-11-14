@@ -193,13 +193,13 @@ void ArmV8Assembler::tbnz(ArmV8Register reg, int32_t bit, int32_t imm) {
     this->write32(0x37000000 | literalShifted | bitShifted | val(reg));
 }
 
-void ArmV8Assembler::cbz(ArmV8Register reg, int32_t imm) {
+void ArmV8Assembler::cbz(ArmV8Register reg, int32_t imm, bool is64Bit) {
     const auto literalShifted = ((imm >> 2) & 0x3FFFF) << 5;
-    this->write32(0xb4000000 | literalShifted | val(reg));
+    this->write32((is64Bit ? 0xb4000000 : 0x34000000) | literalShifted | val(reg));
 }
-void ArmV8Assembler::cbnz(ArmV8Register reg, int32_t imm) {
+void ArmV8Assembler::cbnz(ArmV8Register reg, int32_t imm, bool is64Bit) {
     const auto literalShifted = ((imm >> 2) & 0x3FFFF) << 5;
-    this->write32(0xb5000000 | literalShifted | val(reg));
+    this->write32((is64Bit ? 0xb5000000 : 0x35000000) | literalShifted | val(reg));
 }
 
 void ArmV8Assembler::bcond(int32_t imm, uint32_t cond) {

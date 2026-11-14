@@ -10,7 +10,7 @@ ArmV8Disassembler::ArmV8Disassembler(int64_t baseAddress, std::vector<uint8_t> c
 ArmV8Disassembler::~ArmV8Disassembler() = default;
 
 ArmV8Register ArmV8Disassembler::extractRegister(int startBit, uint32_t instruction) {
-    return static_cast<ArmV8Register>(this->extractValue(startBit, 5, instruction));
+    return static_cast<ArmV8Register>(this->extractValue(startBit, 5, instruction, false));
 }
 
 void ArmV8Disassembler::handleB(ArmV8Instruction& instruction) {
@@ -74,7 +74,7 @@ void ArmV8Disassembler::handleCB_(ArmV8Instruction& instruction) {
 
 std::unique_ptr<BaseInstruction> ArmV8Disassembler::disassembleNext() {
     if (m_currentIndex >= m_input.size()) {
-        return nullptr; // No more instructions to disassemble
+        return nullptr;
     }
 
     uint32_t rawInstruction = 0;
@@ -98,11 +98,11 @@ std::unique_ptr<BaseInstruction> ArmV8Disassembler::disassembleNext() {
         } else {
             this->handleADR(*instruction);
         }
-    } else if ((rawInstruction & 0x7E000000) == 0x74000000) { // CB_
+    } else if ((rawInstruction & 0x7E000000) == 0x34000000) { // CBZ, CBNZ
         this->handleCB_(*instruction);
     } else if ((rawInstruction & 0xFE000000) == 0x54000000) { // B_Cond
         this->handleBCond(*instruction);
-    } else if ((rawInstruction & 0x7E000000) == 0x36000000) { // TB_Z
+    } else if ((rawInstruction & 0x7E000000) == 0x36000000) { // TBZ, TBNZ
         this->handleTB_Z(*instruction);
     }
 
