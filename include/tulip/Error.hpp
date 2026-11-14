@@ -20,7 +20,7 @@ namespace tulip::hook {
             CapstoneError,
         };
 
-        decltype(Unknown) m_value;
+        decltype(Unknown) m_value = Unknown;
         std::string m_message;
 
         constexpr ~Error() = default;
