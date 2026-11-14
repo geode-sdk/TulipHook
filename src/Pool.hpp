@@ -1,7 +1,7 @@
 #pragma once
 
 #include <HandlerData.hpp>
-#include <Geode/Result.hpp>
+#include <Error.hpp>
 #include <TulipHook.hpp>
 #include <memory>
 #include <unordered_map>
@@ -21,12 +21,12 @@ namespace tulip::hook {
 
 		static Pool& get();
 
-		geode::Result<HandlerHandle> createHandler(void* address, HandlerMetadata const& metadata);
-		geode::Result<> removeHandler(HandlerHandle const& handler);
+		Result<HandlerHandle> createHandler(void* address, HandlerMetadata const& metadata);
+		Result<> removeHandler(HandlerHandle const& handler);
 
 		Handler& getHandler(HandlerHandle const& handler);
 
-		geode::Result<> disableRuntimeIntervening(void* commonHandlerSpace);
+		Result<> disableRuntimeIntervening(void* commonHandlerSpace);
 
 		std::optional<FunctionInformationReturn> getFunctionInformation(void* address) noexcept;
 	};

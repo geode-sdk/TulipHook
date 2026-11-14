@@ -11,7 +11,7 @@ Pool& Pool::get() {
 	return ret;
 }
 
-geode::Result<HandlerHandle> Pool::createHandler(void* address, HandlerMetadata const& metadata) {
+Result<HandlerHandle> Pool::createHandler(void* address, HandlerMetadata const& metadata) {
 	auto handle = reinterpret_cast<HandlerHandle>(address);
 
 	if (m_handlers.find(handle) == m_handlers.end()) {
@@ -27,18 +27,18 @@ geode::Result<HandlerHandle> Pool::createHandler(void* address, HandlerMetadata 
 		GEODE_UNWRAP(m_handlers[handle]->interveneFunction());
 	}
 
-	return geode::Ok(std::move(handle));
+	return Ok(std::move(handle));
 }
 
-geode::Result<> Pool::removeHandler(HandlerHandle const& handle) {
+Result<> Pool::removeHandler(HandlerHandle const& handle) {
 	if (m_handlers.find(handle) == m_handlers.end()) {
-		return geode::Err("Handler not found");
+		return Err(Error::HandlerNotFound);
 	}
 	m_handlers[handle]->clearHooks();
 	if (!m_runtimeInterveningDisabled) {
 		GEODE_UNWRAP(m_handlers[handle]->restoreFunction());
 	}
-	return geode::Ok();
+	return Ok();
 }
 
 Handler& Pool::getHandler(HandlerHandle const& handle) {
@@ -86,13 +86,13 @@ void* Pool::getCommonHandlerStatic(void* originalFunction, size_t uniqueIndex, p
 	return Pool::get().getCommonHandler(originalFunction, uniqueIndex, trampolineOffset, commonHandler, handlerType	);
 }
 
-geode::Result<> Pool::disableRuntimeIntervening(void* commonHandlerSpace) {
+Result<> Pool::disableRuntimeIntervening(void* commonHandlerSpace) {
 	if (m_runtimeInterveningDisabled) {
-		return geode::Ok();
+		return Ok();
 	}
 
 	if (!commonHandlerSpace) {
-		return geode::Err("Common handler space is null");
+		return Err(Error::CommonHandlerNotGiven);
 	}
 
 	auto handler = reinterpret_cast<void*>(&Pool::getCommonHandlerStatic);
@@ -100,7 +100,7 @@ geode::Result<> Pool::disableRuntimeIntervening(void* commonHandlerSpace) {
 
 	m_runtimeInterveningDisabled = true;
 
-	return geode::Ok();
+	return Ok();
 }
 
 std::optional<FunctionInformationReturn> Pool::getFunctionInformation(void* address) noexcept {

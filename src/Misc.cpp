@@ -2,6 +2,6 @@
 
 using namespace tulip::hook;
 
-geode::Result<void*> Misc::followJumps(void* address) {
-	return geode::Err("Implement followJumps in platform");
+Result<void*> Misc::followJumps(void* address) {
+	return Err(Error{Error::NotImplemented, "followJumps"});
 }

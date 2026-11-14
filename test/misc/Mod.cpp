@@ -49,7 +49,7 @@ __declspec(noinline) bool __cdecl MenuLayer_init(CCObject* self) {
 	auto ret = MenuLayer_init_o(self);
 	std::cout << "Original returned: " << ret << "\n";
 	std::cout << std::endl;
-	
+
 	return ret;
 }
 
@@ -114,7 +114,7 @@ __declspec(noinline) CCObject* __cdecl TextArea_create2(CoolString str, char con
 	printf("disableColor: %08x\n", disableColor);
 
 	// lmao test
-	
+
 	// static const char* breh = "What's up guys Max0r here I would like to officially announce TulipHook works";
 
 	// str[0] = reinterpret_cast<int>(breh);
@@ -153,7 +153,7 @@ void makeHookAndWrapper(void* target, T* func, U** orig) {
 
 	auto handleResult = createHandler(target, metadata);
 	if (!handleResult) {
-		std::cout << "unable to create handler: " << handleResult.unwrapErr() << "\n";
+		std::cout << "unable to create handler: " << handleResult.unwrapErr().toString() << "\n";
 		exit(1);
 	}
 	auto handle = handleResult.unwrap();
@@ -172,7 +172,7 @@ void makeHookAndWrapper(void* target, T* func, U** orig) {
 	auto wrapped = createWrapper(target, std::move(wrapperMetadata));
 
 	if (wrapped.isErr()) {
-		std::cout << "unable to create wrapper: " << wrapped.unwrapErr() << "\n";
+		std::cout << "unable to create wrapper: " << wrapped.unwrapErr().toString() << "\n";
 		exit(1);
 	}
 
@@ -196,7 +196,7 @@ DWORD WINAPI MainThread(void* module) {
 
 	std::cout << "Hooking MenuLayer::onMoreGames\n";
 	makeHookAndWrapper<ThiscallConvention>(onMoreGames_address, &MenuLayer_onMoreGames, &MenuLayer_onMoreGames_o);
-	
+
 	std::cout << "Hooking GJDropDownLayer::init\n";
 	makeHookAndWrapper<MembercallConvention>((void*)(getBase() + 0x113530), &GJDropDownLayer_init, &GJDropDownLayer_init_o);
 
@@ -205,10 +205,10 @@ DWORD WINAPI MainThread(void* module) {
 
 	std::cout << "Hooking TextArea::create again\n";
 	makeHookAndWrapper<OptcallConvention>((void*)(getBase() + 0x33270), &TextArea_create2, &TextArea_create_o2);
-	
+
 	std::cout << "Hooking CCLabelBMFont::create\n";
 	makeHookAndWrapper<CdeclConvention>((void*)(getCocosBase() + 0x9c570), &CCLabelBMFont_create, &CCLabelBMFont_create_o);
-	
+
 	std::cout << std::endl;
 	return 0;
 }
@@ -219,4 +219,3 @@ DWORD WINAPI DllMain(HINSTANCE module, DWORD reason, LPVOID) {
 	}
 	return TRUE;
 }
-

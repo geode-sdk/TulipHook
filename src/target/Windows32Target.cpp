@@ -23,6 +23,30 @@ Target& Target::get() {
 #include "../Handler.hpp"
 #include "../Wrapper.hpp"
 
+#include <Windows.h>
+#include <string>
+
+std::string Windows32Target::getLastError() {
+    char* buffer = nullptr;
+
+    DWORD size = FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        nullptr,
+        GetLastError(),
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        reinterpret_cast<char*>(&buffer),
+        0,
+        nullptr
+    );
+
+    std::string message = std::string(buffer, size);
+    LocalFree(buffer);
+
+    return message;
+}
+
 PVOID __declspec(dllexport) GeodeFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase) {
 	auto const pc = reinterpret_cast<void*>(AddrBase);
 	auto const function = Target::get().getRegisteredFunction(pc);
@@ -39,58 +63,58 @@ PVOID __declspec(dllexport) GeodeFunctionTableAccess64(HANDLE hProcess, DWORD64 
 	return nullptr;
 }
 
-geode::Result<> Windows32Target::allocatePage() {
+Result<> Windows32Target::allocatePage() {
 	m_allocatedPage = VirtualAlloc(nullptr, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READ);
 
 	if (!m_allocatedPage) {
-		return geode::Err("Unable to allocate memory: " + std::to_string(GetLastError()));
+		return Err(Error{Error::AllocatePageFail, this->getLastError()});
 	}
 
 	m_currentOffset = 0;
 	m_remainingOffset = 0x10000;
 
-	return geode::Ok();
+	return Ok();
 }
 
-geode::Result<uint32_t> Windows32Target::getProtection(void* address) {
+Result<uint32_t> Windows32Target::getProtection(void* address) {
 	MEMORY_BASIC_INFORMATION information;
 
 	if (!VirtualQuery(address, &information, sizeof(MEMORY_BASIC_INFORMATION))) {
-		return geode::Err("Unable to query memory protection information");
+		return Err(Error{Error::GetProtectionFail, this->getLastError()});
 	}
 
-	return geode::Ok(information.Protect);
+	return Ok(information.Protect);
 }
 
-geode::Result<> Windows32Target::protectMemory(void* address, size_t size, uint32_t protection) {
+Result<> Windows32Target::protectMemory(void* address, size_t size, uint32_t protection) {
 	DWORD oldProtection;
 
 	if (!VirtualProtect(address, size, protection, &oldProtection)) {
-		return geode::Err("Unable to apply memory protection");
+		return Err(Error{Error::ProtectMemoryFail, this->getLastError()});
 	}
 
-	return geode::Ok();
+	return Ok();
 }
 
-geode::Result<> Windows32Target::rawWriteMemory(void* destination, void const* source, size_t size) {
+Result<> Windows32Target::rawWriteMemory(void* destination, void const* source, size_t size) {
 	std::memcpy(destination, source, size);
 
-	return geode::Ok();
+	return Ok();
 }
 
 uint32_t Windows32Target::getWritableProtection() {
 	return PAGE_READWRITE;
 }
 
-geode::Result<csh> Windows32Target::openCapstone() {
+Result<csh> Windows32Target::openCapstone() {
 	cs_err status;
 
 	status = cs_open(CS_ARCH_X86, CS_MODE_32, &m_capstone);
 	if (status != CS_ERR_OK) {
-		return geode::Err("Couldn't open capstone");
+		return Err(Error{Error::CapstoneError, cs_strerror(status)});
 	}
 
-	return geode::Ok(m_capstone);
+	return Ok(m_capstone);
 }
 
 std::unique_ptr<BaseGenerator> Windows32Target::getGenerator() {

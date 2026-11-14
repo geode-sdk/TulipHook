@@ -127,28 +127,21 @@ std::vector<uint8_t> ArmV7Generator::intervenerBytes(int64_t original, int64_t h
 		return std::move(a.m_buffer);
 	}
 }
-geode::Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer, size_t targetSize) {
+Result<BaseGenerator::RelocateReturn> ArmV7Generator::relocatedBytes(int64_t original, int64_t relocated, std::span<uint8_t const> originalBuffer, size_t targetSize) {
 	auto originMem = new CodeMemBlock(Target::get().getRealPtr((void*)original), targetSize);
 	auto relocatedMem = new CodeMemBlock();
 	// idk about arm thumb stuff help me
 	std::array<uint8_t, 0x100> relocatedBuffer;
-
-	static thread_local std::string error;
-	error = "";
 
 	// did i ever told you that i hate dobby?
 	GenRelocateCodeAndBranch(const_cast<uint8_t*>(originalBuffer.data()) + 1, relocatedBuffer.data(), originMem, relocatedMem, +[](void* dest, void const* src, size_t size) {
 		std::memcpy(dest, src, size);
 	});
 
-	if (!error.empty()) {
-		return geode::Err(std::move(error));
-	}
-
 	if (relocatedMem->size == 0) {
-		return geode::Err("Failed to relocate original function");
+		return Err(Error{Error::FailedToRelocate, "unknown dobby error"});
 	}
 	std::vector<uint8_t> relocatedBufferVec(relocatedMem->size);
 	std::memcpy(relocatedBufferVec.data(), relocatedBuffer.data(), relocatedMem->size);
-	return geode::Ok(RelocateReturn{std::move(relocatedBufferVec), originMem->size});
+	return Ok(RelocateReturn{std::move(relocatedBufferVec), originMem->size});
 }

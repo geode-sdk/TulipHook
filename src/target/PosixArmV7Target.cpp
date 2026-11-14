@@ -15,16 +15,16 @@ Target& Target::get() {
 	return ret;
 }
 
-geode::Result<csh> PosixArmV7Target::openCapstone() {
+Result<csh> PosixArmV7Target::openCapstone() {
 	//cs_err status;
 
 	//status = cs_open(CS_ARCH_ARM, CS_MODE_32, &m_capstone);
 
 	//if (status != CS_ERR_OK) {
-		return geode::Err("Couldn't open capstone");
+		return Err(Error{Error::CapstoneError});
 	//}
 
-	//return geode::Ok(m_capstone);
+	//return Ok(m_capstone);
 }
 
 std::unique_ptr<BaseGenerator> PosixArmV7Target::getGenerator() {

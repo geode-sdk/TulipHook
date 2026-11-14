@@ -2,7 +2,7 @@
 
 using namespace tulip::hook;
 
-geode::Result<void*> Target::allocateArea(size_t size) {
+Result<void*> Target::allocateArea(size_t size) {
 	if (m_remainingOffset < size) {
 		GEODE_UNWRAP(this->allocatePage());
 	}
@@ -12,22 +12,22 @@ geode::Result<void*> Target::allocateArea(size_t size) {
 	m_remainingOffset -= size;
 	m_currentOffset += size;
 
-	return geode::Ok(reinterpret_cast<void*>(ret));
+	return Ok(reinterpret_cast<void*>(ret));
 }
 
-geode::Result<void*> Target::peekArea() {
+Result<void*> Target::peekArea() {
 	if (m_remainingOffset == 0) {
 		GEODE_UNWRAP(this->allocatePage());
 	}
 
 	auto ret = reinterpret_cast<uintptr_t>(m_allocatedPage) + m_currentOffset;
 
-	return geode::Ok(reinterpret_cast<void*>(ret));	
+	return Ok(reinterpret_cast<void*>(ret));
 }
 
-geode::Result<> Target::writeMemory(void* destination, void const* source, size_t size) {
+Result<> Target::writeMemory(void* destination, void const* source, size_t size) {
 	GEODE_UNWRAP_INTO(auto oldProtection, this->getProtection(destination));
-	
+
 	GEODE_UNWRAP(this->protectMemory(destination, size, this->getWritableProtection()));
 
 	GEODE_UNWRAP(this->rawWriteMemory(destination, source, size));
@@ -36,7 +36,7 @@ geode::Result<> Target::writeMemory(void* destination, void const* source, size_
 		// restore old protection
 		GEODE_UNWRAP(this->protectMemory(destination, size, oldProtection));
 	}
-	return geode::Ok();
+	return Ok();
 }
 
 void Target::closeCapstone() {

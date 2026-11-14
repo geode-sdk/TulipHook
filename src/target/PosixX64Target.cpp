@@ -13,15 +13,15 @@ Target& Target::get() {
 	return ret;
 }
 
-geode::Result<csh> PosixX64Target::openCapstone() {
+Result<csh> PosixX64Target::openCapstone() {
 	cs_err status;
 
 	status = cs_open(CS_ARCH_X86, CS_MODE_64, &m_capstone);
 	if (status != CS_ERR_OK) {
-		return geode::Err("Couldn't open capstone");
+		return Err(Error{Error::CapstoneError, cs_strerror(status)});
 	}
 
-	return geode::Ok(m_capstone);
+	return Ok(m_capstone);
 }
 
 std::unique_ptr<BaseGenerator> PosixX64Target::getGenerator() {

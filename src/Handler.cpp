@@ -31,9 +31,9 @@ std::unique_ptr<Handler> Handler::create(void* address, HandlerMetadata const& m
 
 Handler::~Handler() {}
 
-geode::Result<> Handler::init() {
+Result<> Handler::init() {
 	if (Pool::get().m_runtimeInterveningDisabled) {
-		return geode::Err("Runtime intervening is disabled");
+		return Err(Error::RuntimeInterveneDisabled);
 	}
 
 	std::stringstream ss;
@@ -157,7 +157,7 @@ geode::Result<> Handler::init() {
 
 	this->addOriginal();
 
-	return geode::Ok();
+	return Ok();
 }
 
 void Handler::addOriginal() {
@@ -242,9 +242,9 @@ void Handler::reorderFunctions() {
 	});
 }
 
-geode::Result<> Handler::interveneFunction() {
+Result<> Handler::interveneFunction() {
 	if (Pool::get().m_runtimeInterveningDisabled) {
-		return geode::Err("Runtime intervening is disabled");
+		return Err(Error::RuntimeInterveneDisabled);
 	}
 	return Target::get().writeMemory(
 		(void*)Target::get().getRealPtr(m_address),
@@ -253,9 +253,9 @@ geode::Result<> Handler::interveneFunction() {
 	);
 }
 
-geode::Result<> Handler::restoreFunction() {
+Result<> Handler::restoreFunction() {
 	if (Pool::get().m_runtimeInterveningDisabled) {
-		return geode::Err("Runtime intervening is disabled");
+		return Err(Error::RuntimeInterveneDisabled);
 	}
 	return Target::get().writeMemory(
 		(void*)Target::get().getRealPtr(m_address),
