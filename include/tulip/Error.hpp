@@ -46,4 +46,12 @@ namespace tulip::hook {
 
     using geode::Ok;
     using geode::Err;
+
+	inline std::string format_as(Error const& err) {
+	    return err.toString();
+	}
+	
+	inline std::ostream& operator<<(std::ostream& os, Error const& err) {
+	    return os << err.toString();
+	}
 }
