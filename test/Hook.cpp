@@ -39,7 +39,7 @@ void makeWrapper(FunctionPtrType& out) {
 	auto wrapped =
 		createWrapper(reinterpret_cast<void*>(static_cast<FunctionPtrType>(&function<N>)), wrapperMetadata);
 
-	ASSERT_FALSE(wrapped.isErr()) << "Failed to create wrapper: " << wrapped.unwrapErr();
+	ASSERT_FALSE(wrapped.isErr()) << "Failed to create wrapper: " << wrapped.unwrapErr().toString();
 
 	out = reinterpret_cast<FunctionPtrType>(wrapped.unwrap());
 
@@ -58,7 +58,7 @@ void makeHandler(HandlerHandle& out) {
 	auto handle =
 		createHandler(reinterpret_cast<void*>(static_cast<FunctionPtrType>(&function<N>)), handlerMetadata);
 
-	ASSERT_FALSE(handle.isErr()) << "Failed to create handler: " << handle.unwrapErr();
+	ASSERT_FALSE(handle.isErr()) << "Failed to create handler: " << handle.unwrapErr().toString();
 
 	out = handle.unwrap();
 }
@@ -247,7 +247,7 @@ TEST_F(HookTest, SingleHookCheckParams) {
 
 	auto handleRes = createHandler(reinterpret_cast<void*>(&checkParams), handlerMetadata);
 
-	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr();
+	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr().toString();
 
 	auto handle = handleRes.unwrap();
 
@@ -294,7 +294,7 @@ TEST_F(HookTest, SingleHookCheckStructParams) {
 
 	auto handleRes = createHandler(reinterpret_cast<void*>(&checkStructParams), handlerMetadata);
 
-	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr();
+	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr().toString();
 
 	auto handle = handleRes.unwrap();
 
@@ -339,7 +339,7 @@ TEST_F(HookTest, SmallStruct128Return) {
 
 	auto handleRes = createHandler(reinterpret_cast<void*>(&checkSmallStruct128), handlerMetadata);
 
-	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr();
+	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr().toString();
 
 	auto handle = handleRes.unwrap();
 
@@ -369,7 +369,7 @@ TEST_F(HookTest, SmallStruct64Return) {
 
 	auto handleRes = createHandler(reinterpret_cast<void*>(&checkSmallStruct64), handlerMetadata);
 
-	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr();
+	ASSERT_FALSE(handleRes.isErr()) << "Failed to create handler: " << handleRes.unwrapErr().toString();
 
 	auto handle = handleRes.unwrap();
 
