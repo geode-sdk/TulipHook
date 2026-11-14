@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <Platform.hpp>
+#include "Platform.hpp"
 #include <Geode/Result.hpp>
 
 namespace tulip::hook {
@@ -25,12 +25,8 @@ namespace tulip::hook {
 
         constexpr ~Error() = default;
         constexpr Error() = default;
-        constexpr Error(Error const&) = default;
-        constexpr Error(Error&&) = default;
         constexpr Error(decltype(Unknown) value) : m_value(value) {}
         Error(decltype(Unknown) value, std::string message) : m_value(value), m_message(message) {}
-        constexpr Error& operator=(Error const&) = default;
-        constexpr Error& operator=(Error&&) = default;
         constexpr Error& operator=(decltype(Unknown) value) {
             m_value = value;
             return *this;
@@ -48,13 +44,6 @@ namespace tulip::hook {
     template <class OkType = void>
     using Result = geode::Result<OkType, Error>;
 
-    template <class... Args>
-    decltype(auto) Ok(Args&&... args) {
-        return geode::Ok(std::forward<Args>(args)...);
-    }
-
-    template <class... Args>
-    decltype(auto) Err(Args&&... args) {
-        return geode::Err(std::forward<Args>(args)...);
-    }
+    using geode::Ok;
+    using geode::Err;
 }
