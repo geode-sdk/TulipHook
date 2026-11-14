@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <ostream>
 #include "Platform.hpp"
 #include <Geode/Result.hpp>
 
