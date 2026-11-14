@@ -8,6 +8,7 @@ using namespace tulip::hook;
 
 #include <mach/vm_map.h> /* vm_allocate()        */
 #include <mach/mach_init.h> /* mach_task_self()     */
+#include <mach/error.h>
 
 // TXM (iOS 26) workaround, having the debug server do all the allocating and patching
 
