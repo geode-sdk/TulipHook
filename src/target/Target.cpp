@@ -30,6 +30,12 @@ Result<> Target::writeMemory(void* destination, void const* source, size_t size)
 
 	GEODE_UNWRAP(this->protectMemory(destination, size, this->getWritableProtection()));
 
+	if (!m_originalBytes.contains(destination)) {
+		auto& orig = m_originalBytes[destination];
+		orig.resize(size);
+		std::memcpy(orig.data(), destination, size);
+	}
+
 	GEODE_UNWRAP(this->rawWriteMemory(destination, source, size));
 
 	if (oldProtection != this->getWritableProtection()) {
@@ -37,6 +43,15 @@ Result<> Target::writeMemory(void* destination, void const* source, size_t size)
 		GEODE_UNWRAP(this->protectMemory(destination, size, oldProtection));
 	}
 	return Ok();
+}
+
+Result<> Target::restoreMemory(void* destination) {
+	auto it = m_originalBytes.find(destination);
+	if (it == m_originalBytes.end()) {
+		return Err(Error(Error::RestoreMemoryFail, "No original bytes stored for this address"));
+	}
+
+	return writeMemory(destination, it->second.data(), it->second.size());
 }
 
 void Target::closeCapstone() {

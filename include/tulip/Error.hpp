@@ -19,6 +19,7 @@ namespace tulip::hook {
             ProtectMemoryFail,
             WriteMemoryFail,
             CapstoneError,
+            RestoreMemoryFail,
         };
 
         decltype(Unknown) m_value = Unknown;

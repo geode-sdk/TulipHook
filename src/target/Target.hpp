@@ -33,6 +33,7 @@ namespace tulip::hook {
 		std::function<void(std::string_view)> m_logCallback;
 
 		std::map<void*, RegisteredFunction> m_registeredFunctions;
+		std::unordered_map<void*, std::vector<uint8_t>> m_originalBytes;
 
 	public:
 		static Target& get();
@@ -43,6 +44,7 @@ namespace tulip::hook {
 		Result<void*> peekArea();
 
 		virtual Result<> writeMemory(void* destination, void const* source, size_t size);
+		virtual Result<> restoreMemory(void* destination);
 
 		virtual Result<csh> openCapstone() = 0;
 		void closeCapstone();
