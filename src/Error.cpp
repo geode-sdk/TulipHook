@@ -32,6 +32,9 @@ std::string tulip::hook::Error::toString() const {
         case CapstoneError:
             if (m_message.size()) return "Capstone error: " + m_message;
             return "Capstone error";
+        case RestoreMemoryFail:
+            if (m_message.size()) return "Failed to restore memory: " + m_message;
+            return "Failed to restore memory";
     }
     return "";
 }

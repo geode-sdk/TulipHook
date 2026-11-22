@@ -35,6 +35,10 @@ Result<> tulip::hook::writeMemory(void* destination, void const* source, size_t 
 	return Target::get().writeMemory(destination, source, size);
 }
 
+Result<> tulip::hook::restoreMemory(void* destination) noexcept {
+	return Target::get().restoreMemory(destination);
+}
+
 Result<void*> tulip::hook::followJumps(void* address) noexcept {
 	return Misc::followJumps(address);
 }
