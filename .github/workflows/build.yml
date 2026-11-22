@@ -33,14 +33,14 @@ jobs:
           id: macos-x64
           os: macos-15-intel
           build_tests: true
-          extra_flags: "-DCMAKE_BUILD_TYPE=Debug"
+          extra_flags: "-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES=\"x86_64\""
           out_paths: './build/src/libTulipHook.a'
 
         - name: 'macOS (m1)'
           id: macos-arm64
           os: macos-latest
           build_tests: true
-          extra_flags: "-DCMAKE_BUILD_TYPE=Debug"
+          extra_flags: "-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_ARCHITECTURES=\"arm64\""
           out_paths: './build/src/libTulipHook.a'
 
         - name: 'Android Armv7'
@@ -68,7 +68,7 @@ jobs:
           id: ios-arm
           os: macos-latest
           build_tests: false
-          extra_flags: "-DTULIP_BUILD_DYNAMIC=ON -DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=iOS"
+          extra_flags: "-DTULIP_BUILD_DYNAMIC=ON -DTULIP_DONT_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_ARCHITECTURES=\"arm64\""
           out_paths: './build/src/libTulipHook.dylib'
 
         - name: 'Linux (x64)'
