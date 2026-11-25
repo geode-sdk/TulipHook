@@ -36,6 +36,11 @@ namespace tulip::hook {
             return m_value;
         }
 
+        constexpr Error(const Error&) = default;
+        constexpr Error& operator=(const Error&) = default;
+        constexpr Error(Error&&) noexcept = default;
+        constexpr Error& operator=(Error&&) noexcept = default;
+
         TULIP_HOOK_DLL std::string toString() const;
         operator std::string() const {
             return this->toString();
@@ -51,7 +56,7 @@ namespace tulip::hook {
 	inline std::string format_as(Error const& err) {
 	    return err.toString();
 	}
-	
+
 	inline std::ostream& operator<<(std::ostream& os, Error const& err) {
 	    return os << err.toString();
 	}
